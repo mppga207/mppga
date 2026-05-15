@@ -18,7 +18,7 @@ export function PortalTabs() {
       <div className="mx-auto max-w-[1140px]">
         <nav
           aria-label="Dashboard sections"
-          className="flex gap-7 overflow-x-auto px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-7 touch-pan-x overflow-x-auto px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {portalTabs.map((tab) => {
             const active = isActive(pathname, tab.href);
