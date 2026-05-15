@@ -406,6 +406,20 @@ correlating column to `election_ballots` is forbidden.
 manual logging. LMS sync, if it ships, will add an `lms_record_id`
 column and a sync table; do not pre-build either.
 
+### 4.3 Member-facing CE and ethics UI — deferred to a future version
+
+Per `@CLAUDE.md` § 1, the member dashboard tabs for CE tracking and
+the Code of ethics are hidden. The page files at
+`app/(portal)/dashboard/ce` and `app/(portal)/dashboard/ethics`
+remain in the codebase, and the `ce_credits` and `compliance_logs`
+tables stay on the schema with their RLS policies intact — saved
+for when these features are unshelved. Do NOT re-add the tabs to
+`lib/mppga/portal/tabs.ts` or surface CE / ethics chrome in the
+member portal without explicit instruction.
+
+The admin-side CE approval workflow (`ce_credits.status` flips from
+`Pending` → `Approved` by an admin) is part of the same deferral.
+
 -----
 
 ## 5. RLS policies

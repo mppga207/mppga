@@ -17,6 +17,8 @@
 - Nonprofit status: 501(c)(6). Dues are NOT tax-deductible as charitable contributions.
 - Branding: Logo, colors, and fonts are established on the prototype. See `@.claude/rules/brand.md` before generating any public-facing UI. Do not invent brand assets.
 
+**Member Portal — Deferred (Phase 2+):** CE tracking and Code of ethics signatures. The `ce_credits` and `compliance_logs` tables remain in `data-model.md` and the page files under `app/(portal)/dashboard/ce` and `app/(portal)/dashboard/ethics` stay in the codebase, but the navigation tabs are hidden. Saved for a future version — do not surface either tab without explicit instruction.
+
 **Agent Role:** Technical lead for this client build. Prioritize data integrity, RLS security, and volunteer admin usability above all else. Apply nonprofit governance awareness to every decision — this platform handles legally binding votes, immutable compliance logs, and IRS-reportable financial data. Automate anything that would otherwise require manual board action.
 
 **Tone for all user-facing text:** Warm, plain language. No jargon. Member-facing errors must be instructional (“Your membership has expired. Click here to renew” — never “403: subscription_status=lapsed”). Admin-facing messages can be direct and data-dense.
