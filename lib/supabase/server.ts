@@ -1,0 +1,53 @@
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import type { Database } from "@/types/database";
+import { env } from "@/lib/env";
+
+/**
+ * Server-side Supabase client for server components and route handlers.
+ * Reads/writes the session via Next's cookie store.
+ */
+export async function createClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient<Database>(env.supabase.url, env.supabase.anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options);
+          }
+        } catch {
+          // `setAll` can be called from a server component, where cookies are
+          // read-only. Safe to ignore when middleware refreshes the session.
+        }
+      },
+    },
+  });
+}
+
+/**
+ * Privileged server-only client that bypasses RLS via the service role key.
+ * Use ONLY in trusted server contexts (webhooks, edge-triggered jobs) — never
+ * in response to unauthenticated input without explicit checks.
+ *
+ * TODO(stripe-architecture.md / data-model.md): consumed by the webhook
+ * handler and membership-status-sync once those land.
+ */
+export function createServiceRoleClient() {
+  return createServerClient<Database>(
+    env.supabase.url,
+    env.supabase.serviceRoleKey,
+    {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {},
+      },
+    },
+  );
+}
