@@ -24,10 +24,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${inter.variable} ${fraunces.variable} bg-mppga-page text-mppga-ink font-sans antialiased`}
-      >
+    <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+      <body className="bg-mppga-page text-mppga-ink font-sans antialiased">
         {children}
       </body>
     </html>
