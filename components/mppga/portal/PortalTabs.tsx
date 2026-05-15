@@ -15,30 +15,10 @@ export function PortalTabs() {
 
   return (
     <div className="border-b border-mppga-divider bg-mppga-page">
-      <div className="mx-auto max-w-[1140px] px-6">
-        <div className="md:hidden">
-          <label className="sr-only" htmlFor="portal-tab-select">
-            Dashboard section
-          </label>
-          <select
-            id="portal-tab-select"
-            value={portalTabs.find((t) => isActive(pathname, t.href))?.href ?? "/dashboard"}
-            onChange={(e) => {
-              window.location.href = e.target.value;
-            }}
-            className="my-3 w-full rounded-md border border-mppga-divider bg-mppga-card px-3 py-2 text-sm text-mppga-ink"
-          >
-            {portalTabs.map((tab) => (
-              <option key={tab.href} value={tab.href}>
-                {tab.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
+      <div className="mx-auto max-w-[1140px]">
         <nav
           aria-label="Dashboard sections"
-          className="hidden gap-8 overflow-x-auto md:flex"
+          className="flex gap-7 overflow-x-auto px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {portalTabs.map((tab) => {
             const active = isActive(pathname, tab.href);
