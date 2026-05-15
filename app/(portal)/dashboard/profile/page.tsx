@@ -14,7 +14,6 @@ export default function ProfilePage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Your profile"
-        description="The details we use to keep in touch and to verify your membership. Editing comes online in the next phase."
         actions={
           <Button variant="secondary" disabled>
             Edit profile

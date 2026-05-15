@@ -26,7 +26,6 @@ export default function BillingPage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Billing"
-        description="Your membership, your payment history, and a direct line to update your card."
         actions={
           <Button variant="primary" disabled>
             Manage in Stripe

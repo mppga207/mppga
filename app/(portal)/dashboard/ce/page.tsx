@@ -26,7 +26,6 @@ export default function CEPage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="CE & certifications"
-        description="Track your continuing education hours and keep your credentials on file."
         actions={
           <Button variant="secondary" disabled>
             Upload certificate

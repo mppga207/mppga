@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 type PortalPageHeaderProps = {
   eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
   actions?: ReactNode;
 };
 
@@ -24,9 +24,11 @@ export function PortalPageHeader({
             {title}
             <span className="text-mppga-ink">.</span>
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-mppga-ink-soft">
-            {description}
-          </p>
+          {description ? (
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-mppga-ink-soft">
+              {description}
+            </p>
+          ) : null}
         </div>
         {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
       </div>

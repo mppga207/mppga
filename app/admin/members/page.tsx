@@ -4,17 +4,11 @@ import { Card } from "@/components/mppga/admin/Card";
 export default function AdminMembersPage() {
   return (
     <div className="space-y-10">
-      <AdminPageHeader
-        title="Members"
-        description="The roster — search, filter, and act on every active, pending, and lapsed groomer in the association."
-      />
+      <AdminPageHeader title="Members" />
 
-      <Card
-        title="Members table"
-        description="The filterable members table lands here in the next phase. Until then this is a stub."
-      >
+      <Card title="Members table">
         <div className="px-6 py-10 text-center text-sm text-mppga-ink-muted">
-          Coming soon.
+          No members yet.
         </div>
       </Card>
     </div>

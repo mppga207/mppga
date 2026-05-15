@@ -19,10 +19,7 @@ const swatches: readonly Swatch[] = [
 export default function AdminSettingsPage() {
   return (
     <div className="space-y-10">
-      <AdminPageHeader
-        title="Settings"
-        description="Branding, mission statement, and the social channels that point back to the association."
-      />
+      <AdminPageHeader title="Settings" />
 
       <Card
         title="Branding"
@@ -84,7 +81,7 @@ export default function AdminSettingsPage() {
         description="Shown on the Home page and in the welcome email. Keep it under two sentences."
       >
         <div className="px-6 py-10 text-center text-sm text-mppga-ink-muted">
-          Editor lands here next.
+          Not set.
         </div>
       </Card>
 
@@ -93,7 +90,7 @@ export default function AdminSettingsPage() {
         description="Public links shown in the footer and on the Contact page."
       >
         <div className="px-6 py-10 text-center text-sm text-mppga-ink-muted">
-          Editor lands here next.
+          No channels added yet.
         </div>
       </Card>
     </div>

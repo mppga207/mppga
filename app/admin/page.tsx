@@ -11,10 +11,7 @@ const summaryCards: Array<{ label: string; value: string; note: string }> = [
 export default function AdminOverviewPage() {
   return (
     <div className="space-y-10">
-      <AdminPageHeader
-        title="Overview"
-        description="A snapshot of where the association stands today — membership health, money, and what's next on the calendar."
-      />
+      <AdminPageHeader title="Overview" />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {summaryCards.map((card) => (
@@ -30,10 +27,7 @@ export default function AdminOverviewPage() {
         ))}
       </div>
 
-      <Card
-        title="Recent activity"
-        description="Cross-cutting feed will land here once Supabase is wired up."
-      >
+      <Card title="Recent activity">
         <div className="px-6 py-10 text-center text-sm text-mppga-ink-muted">
           No activity yet.
         </div>
