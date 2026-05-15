@@ -49,10 +49,10 @@ All tokens defined in `app/globals.css` under the `mppga-` namespace. Never use 
 
 |Role                                    |Family    |Tailwind class|
 |----------------------------------------|----------|--------------|
-|Titles, large numbers, editorial moments|Newsreader|`font-serif`  |
+|Titles, large numbers, editorial moments|Fraunces  |`font-serif`  |
 |Body, UI, labels, inputs                |Inter     |`font-sans`   |
 
-Max 2 typefaces. Never introduce a third. Newsreader is for brand/editorial moments only — do not use it for body copy, form labels, or error messages.
+Max 2 typefaces. Never introduce a third. Fraunces is for brand/editorial moments only — do not use it for body copy, form labels, or error messages.
 
 -----
 
