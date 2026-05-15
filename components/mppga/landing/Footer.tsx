@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const explore = [
-  { href: "/clients/mppga/about", label: "About" },
-  { href: "/clients/mppga/events", label: "Events" },
-  { href: "/clients/mppga/join", label: "Join" },
+  { href: "/about", label: "About" },
+  { href: "/events", label: "Events" },
+  { href: "/join", label: "Join" },
 ];
 
 export function Footer() {

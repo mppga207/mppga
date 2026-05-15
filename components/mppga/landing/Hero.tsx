@@ -47,14 +47,14 @@ export function Hero() {
             className="mt-10 flex flex-wrap items-center gap-4"
           >
             <Button
-              href="/clients/mppga/join"
+              href="/join"
               size="lg"
               className="shadow-lg shadow-mppga-teal/20"
             >
               Join Now &mdash; $45/yr
             </Button>
             <Button
-              href="/clients/mppga/events"
+              href="/events"
               variant="ghost"
               size="lg"
               className="group"

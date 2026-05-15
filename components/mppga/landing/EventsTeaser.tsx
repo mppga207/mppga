@@ -71,7 +71,7 @@ export function EventsTeaser() {
             </h2>
           </div>
           <Link
-            href="/clients/mppga/events"
+            href="/events"
             className="group inline-flex items-center gap-1.5 text-sm font-medium text-mppga-teal transition-colors hover:text-mppga-teal-hover"
           >
             See all events
@@ -131,7 +131,7 @@ export function EventsTeaser() {
                   </span>
                 </p>
                 <Button
-                  href="/clients/mppga/events"
+                  href="/events"
                   variant="secondary"
                   className="mt-5 w-fit"
                 >

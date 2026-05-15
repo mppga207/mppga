@@ -2,17 +2,17 @@ import Link from "next/link";
 import { Button } from "@/components/mppga/ui/button";
 
 const links = [
-  { href: "/clients/mppga", label: "Home" },
-  { href: "/clients/mppga/about", label: "About" },
-  { href: "/clients/mppga/events", label: "Events" },
-  { href: "/clients/mppga/contact", label: "Contact" },
+  { href: "/", label: "Home" },
+  { href: "/about", label: "About" },
+  { href: "/events", label: "Events" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export function Nav() {
   return (
     <header className="sticky top-0 z-40 border-b border-mppga-divider bg-mppga-page/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1140px] items-center justify-between px-6">
-        <Link href="/clients/mppga" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-md bg-mppga-teal font-serif text-lg text-white">
             M
           </span>

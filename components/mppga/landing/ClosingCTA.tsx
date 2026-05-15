@@ -54,7 +54,7 @@ export function ClosingCTA() {
 
         <motion.div variants={fadeUp} className="mt-10">
           <Button
-            href="/clients/mppga/join"
+            href="/join"
             variant="inverse"
             size="lg"
             className="shadow-2xl shadow-mppga-gold/20"
