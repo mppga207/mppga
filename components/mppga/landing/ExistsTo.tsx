@@ -1,40 +1,69 @@
-const purposes: ReadonlyArray<{ title: string; body: string }> = [
-  {
-    title: "Raise the standard of grooming",
-    body: "Continuing education, mentorship, and a shared code of ethics — practical, ongoing, and led by working groomers.",
-  },
-  {
-    title: "Connect pet owners to trusted care",
-    body: "A statewide directory of vetted, member-listed grooming professionals, searchable by location and services.",
-  },
-  {
-    title: "Build a community of practice",
-    body: "Workshops, regional meetups, and a private space to share work, ask questions, and support one another.",
-  },
+"use client";
+
+import { motion } from "framer-motion";
+import { fadeUp, stagger, viewportOnce } from "./motion";
+
+const objectives = [
+  "Promote advancement in all areas of groomer education and best practices.",
+  "Encourage professionalism, humane animal care, and high standards in groomer conduct.",
+  "Build a strong network of Maine groomers who share knowledge, resources, and opportunities.",
+  "Advocate for consistent safety and sanitation practices that protect pets, groomers, and the public.",
 ];
 
 export function ExistsTo() {
   return (
-    <section className="border-b border-mppga-divider bg-mppga-page">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-teal">
-          What we exist to do
-        </p>
-        <h2 className="mt-4 max-w-2xl font-serif text-3xl text-mppga-ink">
-          Three things we set out to do, every year.
-        </h2>
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {purposes.map((p) => (
-            <div
-              key={p.title}
-              className="rounded-lg border border-mppga-divider bg-mppga-card p-6"
+    <motion.section
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      variants={stagger}
+      className="relative overflow-hidden bg-mppga-teal-deep py-24 text-white"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 0)",
+          backgroundSize: "28px 28px",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-mppga-gold/15 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-mppga-teal/30 blur-3xl"
+      />
+
+      <div className="relative mx-auto max-w-[1140px] px-6">
+        <motion.div variants={fadeUp}>
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-mppga-gold">
+            Our purpose
+          </p>
+          <h2 className="mt-3 font-serif text-3xl tracking-tight text-white md:text-5xl">
+            MPPGA exists to:
+          </h2>
+        </motion.div>
+
+        <ul className="mt-14 grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-x-14 md:gap-y-10">
+          {objectives.map((text, i) => (
+            <motion.li
+              key={i}
+              variants={fadeUp}
+              className="group flex items-start gap-5"
             >
-              <h3 className="font-serif text-xl text-mppga-ink">{p.title}</h3>
-              <p className="mt-3 text-mppga-ink-soft">{p.body}</p>
-            </div>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-mppga-gold/40 bg-mppga-gold/10 font-serif text-base font-medium text-mppga-gold transition-colors group-hover:border-mppga-gold group-hover:bg-mppga-gold group-hover:text-mppga-teal-darker">
+                {i + 1}
+              </span>
+              <p className="text-base leading-relaxed text-white/90 md:text-lg">
+                {text}
+              </p>
+            </motion.li>
           ))}
-        </div>
+        </ul>
       </div>
-    </section>
+    </motion.section>
   );
 }

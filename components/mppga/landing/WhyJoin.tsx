@@ -1,59 +1,90 @@
-import { ButtonLink } from "@/components/mppga/ui/button";
+"use client";
 
-const benefits: ReadonlyArray<{ title: string; body: string }> = [
+import { motion } from "framer-motion";
+import { GraduationCap, ShieldCheck, Users } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { fadeUp, stagger, viewportOnce } from "./motion";
+
+type Pillar = {
+  icon: LucideIcon;
+  title: string;
+  body: string;
+};
+
+const pillars: Pillar[] = [
   {
-    title: "Statewide directory listing",
-    body: "Pet owners across Maine find your business by location and the services you offer.",
+    icon: Users,
+    title: "Community & Support",
+    body: "Connecting groomers, salon owners, mobile stylists, educators, and apprentices throughout Maine for collaboration, support, and professional advancement.",
   },
   {
-    title: "Continuing education credits",
-    body: "Track your CE hours and access member-only workshops and certifications.",
+    icon: ShieldCheck,
+    title: "Safety & Standards",
+    body: "We embrace the PPGSA Standards of Care, Safety and Sanitation — created by grooming professionals to ensure humane practice and clean, safe environments for pets in every salon.",
   },
   {
-    title: "Member event pricing",
-    body: "Discounted rates on every MPPGA workshop, clinic, and the annual meeting.",
-  },
-  {
-    title: "Voting rights",
-    body: "Professional members elect the board and shape the direction of the association.",
-  },
-  {
-    title: "Code of ethics",
-    body: "Show pet owners and peers that you have signed on to a shared standard of care.",
-  },
-  {
-    title: "Peer community",
-    body: "A private space to share work, ask questions, and learn from groomers across the state.",
+    icon: GraduationCap,
+    title: "Education & Growth",
+    body: "We support continuing education, workshops, and professional development that helps Maine groomers stay connected and thrive.",
   },
 ];
 
 export function WhyJoin() {
   return (
-    <section className="border-b border-mppga-divider">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-teal">
-          Why join
-        </p>
-        <h2 className="mt-4 max-w-2xl font-serif text-3xl text-mppga-ink">
-          Membership built around the day-to-day work.
-        </h2>
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {benefits.map((b) => (
-            <div
-              key={b.title}
-              className="rounded-lg border border-mppga-divider bg-mppga-card p-6"
-            >
-              <h3 className="font-serif text-lg text-mppga-ink">{b.title}</h3>
-              <p className="mt-2 text-sm text-mppga-ink-soft">{b.body}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-12">
-          <ButtonLink href="/join" variant="primary" size="lg">
-            See membership tiers
-          </ButtonLink>
+    <motion.section
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      variants={stagger}
+      className="border-b border-mppga-divider bg-mppga-page py-24"
+    >
+      <div className="mx-auto max-w-[1140px] px-6">
+        <motion.div
+          variants={fadeUp}
+          className="flex flex-wrap items-end justify-between gap-4"
+        >
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-mppga-teal">
+              What we do
+            </p>
+            <h2 className="mt-3 font-serif text-3xl tracking-tight text-mppga-ink md:text-4xl">
+              Three pillars.
+            </h2>
+          </div>
+          <div
+            aria-hidden
+            className="hidden h-px flex-1 bg-gradient-to-l from-transparent via-mppga-gold/40 to-transparent md:block"
+          />
+        </motion.div>
+
+        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {pillars.map((p) => {
+            const Icon = p.icon;
+            return (
+              <motion.article
+                key={p.title}
+                variants={fadeUp}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-mppga-divider bg-mppga-card p-7 shadow-sm transition-shadow hover:shadow-xl hover:shadow-mppga-teal/10"
+              >
+                <span
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-mppga-teal via-mppga-gold to-mppga-teal opacity-0 transition-opacity group-hover:opacity-100"
+                />
+                <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-mppga-teal-tint to-mppga-sand text-mppga-teal-deep ring-1 ring-mppga-gold/30">
+                  <Icon className="h-6 w-6" strokeWidth={1.6} />
+                </span>
+                <h3 className="mt-5 font-serif text-2xl text-mppga-ink">
+                  {p.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
+                  {p.body}
+                </p>
+              </motion.article>
+            );
+          })}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

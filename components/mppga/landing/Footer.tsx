@@ -1,63 +1,62 @@
 import Link from "next/link";
 
-const associationLinks: ReadonlyArray<{ href: string; label: string }> = [
+const explore = [
   { href: "/about", label: "About" },
-  { href: "/join", label: "Join MPPGA" },
   { href: "/events", label: "Events" },
-  { href: "/contact", label: "Contact" },
+  { href: "/join", label: "Join" },
 ];
 
 export function Footer() {
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="bg-mppga-teal-darker text-mppga-teal-tint">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        <div className="grid gap-12 md:grid-cols-3">
+    <footer className="border-t border-mppga-divider bg-mppga-page py-16">
+      <div className="mx-auto max-w-[1140px] px-6">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
           <div>
-            <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-md bg-mppga-teal-tint font-serif text-lg text-mppga-teal-deep">
-                M
-              </span>
-              <span className="font-serif text-lg text-white">MPPGA</span>
-            </div>
-            <p className="mt-4 max-w-xs text-sm text-mppga-teal-tint">
-              Maine Professional Pet Groomers Association — a 501(c)(6)
-              nonprofit trade association for groomers across the state.
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-white">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-mppga-ink-muted">
               Association
             </p>
-            <ul className="mt-4 space-y-2">
-              {associationLinks.map((link) => (
-                <li key={link.href}>
+            <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
+              Maine Professional Pet Groomers Association
+              <br />
+              PO Box &mdash;, Portland, ME
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-mppga-ink-muted">
+              Explore
+            </p>
+            <ul className="mt-4 space-y-2 text-sm">
+              {explore.map((l) => (
+                <li key={l.href}>
                   <Link
-                    href={link.href}
-                    className="text-sm text-mppga-teal-tint hover:text-white"
+                    href={l.href}
+                    className="text-mppga-ink-soft transition-colors hover:text-mppga-teal"
                   >
-                    {link.label}
+                    {l.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
+
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-white">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-mppga-ink-muted">
               Contact
             </p>
-            <p className="mt-4 text-sm">
-              <a
-                href="mailto:hello@mppga.org"
-                className="text-mppga-teal-tint hover:text-white"
-              >
-                hello@mppga.org
-              </a>
+            <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
+              hello@mppga.org
+              <br />
+              (207) 555-0117
             </p>
           </div>
         </div>
-        <div className="mt-12 border-t border-mppga-teal-deep pt-6 text-xs text-mppga-teal-tint">
-          © {new Date().getFullYear()} Maine Professional Pet Groomers
-          Association. All rights reserved.
+
+        <div className="mt-14 flex flex-wrap items-center justify-between gap-2 border-t border-mppga-divider pt-6 text-xs text-mppga-ink-muted">
+          <span>&copy; {year} Maine Professional Pet Groomers Association</span>
+          <span>Prototype build</span>
         </div>
       </div>
     </footer>
