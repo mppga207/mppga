@@ -1,0 +1,4 @@
+project_id = "mppga"
+
+[functions.membership-status-sync]
+verify_jwt = false

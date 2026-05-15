@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  /* Teal — brand primary */
+  --color-mppga-teal: #477376;
+  --color-mppga-teal-hover: #3a5f62;
+  --color-mppga-teal-deep: #2c4a4d;
+  --color-mppga-teal-darker: #1f3537;
+  --color-mppga-teal-tint: #eef3f3;
+
+  /* Surface */
+  --color-mppga-page: #fafaf7;
+  --color-mppga-card: #ffffff;
+  --color-mppga-divider: #e5e5e0;
+
+  /* Ink */
+  --color-mppga-ink: #1a1a1a;
+  --color-mppga-ink-soft: #4b4b4b;
+  --color-mppga-ink-muted: #7a7a75;
+
+  /* Accent — warm, decorative only */
+  --color-mppga-sand: #f5efe6;
+  --color-mppga-sand-deep: #ebe2d2;
+  --color-mppga-gold: #c9a961;
+  --color-mppga-gold-soft: #e8d5a8;
+
+  /* Typography */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+}
