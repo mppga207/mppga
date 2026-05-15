@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 type AdminPageHeaderProps = {
   title: string;
-  description: string;
+  description?: string;
   actions?: ReactNode;
 };
 
@@ -20,9 +20,11 @@ export function AdminPageHeader({
         {title}
         <span className="text-mppga-ink">.</span>
       </h1>
-      <p className="mt-4 max-w-2xl text-base leading-relaxed text-mppga-ink-soft">
-        {description}
-      </p>
+      {description ? (
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-mppga-ink-soft">
+          {description}
+        </p>
+      ) : null}
       {actions ? <div className="mt-6">{actions}</div> : null}
     </header>
   );

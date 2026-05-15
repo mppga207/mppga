@@ -38,7 +38,6 @@ export default function DashboardOverviewPage() {
     <div className="space-y-10">
       <PortalPageHeader
         title={`Welcome back, ${firstName}`}
-        description="Here's a quick look at your membership, your upcoming events, and anything that needs your attention."
         actions={
           <Button href="/dashboard/billing" variant="secondary">
             Manage membership
@@ -102,11 +101,7 @@ export default function DashboardOverviewPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card
-          title="Upcoming events"
-          description="Your confirmed and waitlisted RSVPs."
-          className="lg:col-span-2"
-        >
+        <Card title="Upcoming events" className="lg:col-span-2">
           {upcoming.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-mppga-ink-muted">
               No upcoming events. Browse the calendar to find one.

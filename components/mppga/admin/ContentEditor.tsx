@@ -91,20 +91,6 @@ export function ContentEditor() {
   return (
     <>
       <div className="space-y-6 pb-32">
-        <div className="flex gap-3 rounded-md border border-mppga-sand-deep bg-mppga-sand p-4 text-sm text-mppga-teal-darker">
-          <span aria-hidden className="mt-0.5 text-mppga-gold">
-            ⓘ
-          </span>
-          <div>
-            <p className="font-medium">Demo mode — changes won&rsquo;t persist yet.</p>
-            <p className="mt-1 text-mppga-ink-soft">
-              The form below mirrors the final editor. Once Supabase is connected
-              (Phase 2), Save will push edits straight to the public landing in
-              real time.
-            </p>
-          </div>
-        </div>
-
         <Card
           title="Hero"
           description="Top of the landing — headline, sub-copy, and primary CTAs."

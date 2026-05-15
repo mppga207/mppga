@@ -19,7 +19,6 @@ export default function EthicsPage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Code of ethics"
-        description="Every member signs the code of ethics annually. It's a small ritual that reminds all of us what this association stands for."
         actions={
           signed ? null : (
             <Button variant="primary" disabled>
@@ -55,16 +54,13 @@ export default function EthicsPage() {
         </div>
       </Card>
 
-      <Card title="The code (preview)" description="The full text will live here once published.">
+      <Card title="The code">
         <div className="space-y-4 px-6 py-6 text-sm leading-relaxed text-mppga-ink-soft">
           <p>
             Members of the Maine Professional Pet Groomers Association commit to the welfare, comfort, and dignity of every animal in their care, and to honest, respectful conduct with clients, peers, and the public.
           </p>
           <p>
             We hold ourselves to current standards of safe handling, sanitation, and continuing education, and we welcome accountability when we fall short.
-          </p>
-          <p className="text-mppga-ink-muted">
-            The full code of ethics — published by the board — appears here once finalized.
           </p>
         </div>
       </Card>

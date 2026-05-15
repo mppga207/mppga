@@ -46,7 +46,6 @@ export default function MyEventsPage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Your events"
-        description="Everything you've registered for — confirmed, waitlisted, and past attendance."
         actions={
           <Button href="/events" variant="primary">
             Browse events

@@ -4,17 +4,11 @@ import { Card } from "@/components/mppga/admin/Card";
 export default function AdminEmailsPage() {
   return (
     <div className="space-y-10">
-      <AdminPageHeader
-        title="Emails"
-        description="Send timing, template copy, and the manual announcements that go out to the membership."
-      />
+      <AdminPageHeader title="Emails" />
 
-      <Card
-        title="Templates and timing"
-        description="Renewal reminders, dunning, event reminders, and announcement composer will land here next."
-      >
+      <Card title="Templates and timing">
         <div className="px-6 py-10 text-center text-sm text-mppga-ink-muted">
-          Coming soon.
+          No templates configured yet.
         </div>
       </Card>
     </div>
