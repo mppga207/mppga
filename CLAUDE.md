@@ -2,7 +2,7 @@
 
 ## 1. Project Identity
 
-**Client:** Maine Professional Pet Groomers Association (MPPGA) — a 501(c)(6) nonprofit professional trade association for pet groomers statewide in Maine. Public-facing site lives at `https://www.afterload.io/clients/mppga` (prototype). Production domain TBD`. Contact: TBD`.
+**Client:** Maine Professional Pet Groomers Association (MPPGA) — a 501(c)(6) nonprofit professional trade association for pet groomers statewide in Maine. Public-facing site lives at `https://www.afterload.io/clients/mppga` (prototype). Production domain TBD. Contact: TBD.
 
 **Purpose:** A custom-built membership platform replacing off-the-shelf AMS products (Wild Apricot, MemberClicks, etc.). Handles full member lifecycle: application + board approval, tiered dues billing, member portal, public geolocated directory, CE tracking, code of ethics compliance logging, volunteer admin tools, event ticketing, and board elections. Volunteer-run board with limited technical capacity — every feature must reduce manual email, spreadsheet, and approval tasks.
 
