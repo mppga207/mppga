@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, GraduationCap, MapPin, ShieldCheck } from "lucide-react";
+import { CalendarDays, MapPin, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/mppga/admin/Card";
 import { Button } from "@/components/mppga/ui/button";
 import { PortalPageHeader } from "@/components/mppga/portal/PortalPageHeader";
@@ -159,12 +159,6 @@ export default function DashboardOverviewPage() {
               icon={<MapPin className="h-4 w-4" strokeWidth={1.8} />}
               label="Edit directory listing"
               note="What the public sees"
-            />
-            <QuickLink
-              href="/dashboard/ce"
-              icon={<GraduationCap className="h-4 w-4" strokeWidth={1.8} />}
-              label="Log CE credits"
-              note="Upload a certificate"
             />
             <QuickLink
               href="/events"
