@@ -247,6 +247,7 @@ type SiteSettingsRow = {
   id: UUID;
   contact_email: string;
   contact_phone: string | null;
+  logo_path: string | null;
   updated_at: Timestamp;
 }
 
