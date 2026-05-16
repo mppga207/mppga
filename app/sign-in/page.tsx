@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Nav } from "@/components/mppga/landing/Nav";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { SignInForm } from "@/components/mppga/auth/SignInForm";
+import { Button } from "@/components/mppga/ui/button";
 
 export const metadata = {
   title: "Sign in · MPPGA",
@@ -37,6 +38,23 @@ export default function SignInPage() {
             Join MPPGA
           </Link>
         </p>
+
+        <div className="mt-10 rounded-lg border border-dashed border-mppga-divider bg-mppga-sand/40 p-4">
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
+            Preview (temporary)
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-mppga-ink-soft">
+            Skip auth and jump straight into a dashboard. Remove before launch.
+          </p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <Button href="/dashboard" variant="secondary" className="flex-1">
+              Member dashboard
+            </Button>
+            <Button href="/admin" variant="secondary" className="flex-1">
+              Admin dashboard
+            </Button>
+          </div>
+        </div>
       </main>
 
       <Footer />
