@@ -194,7 +194,7 @@ export default function JoinPage() {
 
                     <div className="mt-7">
                       <Button
-                        href={`#apply?tier=${tier.slug}`}
+                        href="#apply"
                         variant={tier.featured ? "primary" : "secondary"}
                         className="w-full"
                       >
