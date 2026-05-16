@@ -44,7 +44,7 @@ export async function invokeMembershipStatusSync(
       "Content-Type": "application/json",
       // The Edge Function gates itself on this header matching the
       // service role key — see supabase/functions/membership-status-sync.
-      Authorization: `Bearer ${env.supabase.serviceRoleKey}`,
+      Authorization: `Bearer ${env.supabase.secretKey}`,
     },
     body: JSON.stringify(body),
   });

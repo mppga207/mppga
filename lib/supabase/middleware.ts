@@ -23,13 +23,13 @@ export async function updateSession(
   // public pages still render; protected routes will error at the page
   // layer with a real configuration message instead of taking the whole
   // site down.
-  if (!env.supabase.url || !env.supabase.anonKey) {
+  if (!env.supabase.url || !env.supabase.publishableKey) {
     return response;
   }
 
   const supabase = createServerClient<Database>(
     env.supabase.url,
-    env.supabase.anonKey,
+    env.supabase.publishableKey,
     {
       cookies: {
         getAll() {

@@ -18,9 +18,9 @@ export const env = {
 
   supabase: {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-    get serviceRoleKey(): string {
-      return requireServerEnv("SUPABASE_SERVICE_ROLE_KEY");
+    publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
+    get secretKey(): string {
+      return requireServerEnv("SUPABASE_SECRET_KEY");
     },
   },
 
