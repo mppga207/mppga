@@ -20,9 +20,8 @@ export default function CheckoutPreviewPage() {
             Almost there, Sarah
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-mppga-ink-soft">
-            Your application was approved by the board. Add your payment details
-            to activate your membership and unlock the directory, events, and
-            member resources.
+            Add your payment details below to activate your membership and
+            unlock the directory, events, and member resources.
           </p>
         </div>
 
@@ -347,7 +346,7 @@ function OrderSummary() {
             <Check /> Member pricing at all MPPGA events
           </li>
           <li className="flex gap-2">
-            <Check /> Voting rights at the annual meeting
+            <Check /> Connection to a statewide groomer community
           </li>
           <li className="flex gap-2">
             <Check /> Access to member-only resources
