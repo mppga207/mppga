@@ -4,6 +4,15 @@ import type { Database } from "@/types/database";
 import { env } from "@/lib/env";
 
 /**
+ * True only when the Supabase URL + anon key are present. When false,
+ * the portal pages render in "preview mode" with placeholder data so
+ * the prototype is still demoable without a provisioned backend.
+ */
+export function isSupabaseConfigured(): boolean {
+  return Boolean(env.supabase.url && env.supabase.anonKey);
+}
+
+/**
  * Server-side Supabase client for server components and route handlers.
  * Reads/writes the session via Next's cookie store.
  */

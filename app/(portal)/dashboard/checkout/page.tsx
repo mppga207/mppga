@@ -1,8 +1,9 @@
 import Link from "next/link";
 
 import { startSubscriptionCheckout } from "@/lib/stripe/actions";
-import { requireSession } from "@/lib/supabase/session";
+import { isPreviewSession, requireSession } from "@/lib/supabase/session";
 import { createClient } from "@/lib/supabase/server";
+import { previewCheckoutTier } from "@/lib/mppga/portal/preview";
 import { Button } from "@/components/mppga/ui/button";
 
 export const metadata = {
@@ -38,20 +39,9 @@ export default async function CheckoutPage({
   // Two queries instead of an embedded join: the handwritten Database
   // type doesn't declare relationships. Will collapse once
   // `supabase gen types` runs against a real project.
-  const supabase = await createClient();
-  const { data: membership } = await supabase
-    .from("memberships")
-    .select("tier_id")
-    .eq("profile_id", session.user.id)
-    .maybeSingle();
-
-  const { data: tier } = membership?.tier_id
-    ? await supabase
-        .from("tiers")
-        .select("name, description, annual_dues_cents, stripe_price_id")
-        .eq("id", membership.tier_id)
-        .maybeSingle()
-    : { data: null };
+  const tier = isPreviewSession(session)
+    ? previewCheckoutTier()
+    : await loadCheckoutTier(session.user.id);
 
   const stripeReady = Boolean(tier?.stripe_price_id);
 
@@ -134,6 +124,24 @@ export default async function CheckoutPage({
       </p>
     </main>
   );
+}
+
+async function loadCheckoutTier(profileId: string) {
+  const supabase = await createClient();
+  const { data: membership } = await supabase
+    .from("memberships")
+    .select("tier_id")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+
+  if (!membership?.tier_id) return null;
+
+  const { data: tier } = await supabase
+    .from("tiers")
+    .select("name, description, annual_dues_cents, stripe_price_id")
+    .eq("id", membership.tier_id)
+    .maybeSingle();
+  return tier;
 }
 
 function CheckoutErrorBanner({ code }: { code: string }) {
