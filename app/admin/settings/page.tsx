@@ -1,9 +1,8 @@
-import { Upload } from "lucide-react";
-
 import { AdminPageHeader } from "@/components/mppga/admin/AdminPageHeader";
 import { Card } from "@/components/mppga/admin/Card";
 import { SettingsTabs } from "@/components/mppga/admin/SettingsTabs";
-import { Button } from "@/components/mppga/ui/button";
+import { LogoUploader } from "@/components/mppga/admin/LogoUploader";
+import { loadSiteLogo } from "@/lib/admin/branding-data";
 import { requireAdmin } from "@/lib/supabase/session";
 
 type Swatch = {
@@ -19,8 +18,22 @@ const swatches: readonly Swatch[] = [
   { label: "Divider", hex: "#e5e5e0", className: "bg-mppga-divider" },
 ] as const;
 
-export default async function AdminSettingsPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function readParam(value: string | string[] | undefined): string | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+export default async function AdminSettingsPage({ searchParams }: PageProps) {
   await requireAdmin();
+  const sp = await searchParams;
+  const ok = readParam(sp.ok);
+  const error = readParam(sp.error);
+  const logo = await loadSiteLogo();
+
   return (
     <div className="space-y-10">
       <AdminPageHeader
@@ -30,31 +43,14 @@ export default async function AdminSettingsPage() {
 
       <SettingsTabs active="/admin/settings" />
 
+      <Flash ok={ok} error={error} />
+
       <Card
         title="Branding"
         description="Logo, colors, and typography that travel across the site and emails."
       >
         <div className="space-y-8 px-6 py-6">
-          <section>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
-              Logo
-            </p>
-            <div className="mt-3 flex items-center gap-5 rounded-md border border-dashed border-mppga-divider p-5">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md bg-mppga-teal font-serif text-3xl text-white">
-                M
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-mppga-ink">Placeholder mark</p>
-                <p className="mt-1 text-sm text-mppga-ink-soft">
-                  PNG / SVG recommended &middot; transparent background
-                </p>
-              </div>
-              <Button variant="secondary" disabled>
-                <Upload className="h-4 w-4" strokeWidth={1.8} />
-                Upload
-              </Button>
-            </div>
-          </section>
+          <LogoUploader logoUrl={logo.logoUrl} />
 
           <section>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
@@ -81,27 +77,64 @@ export default async function AdminSettingsPage() {
                 </div>
               ))}
             </div>
+            <p className="mt-3 text-xs text-mppga-ink-muted">
+              Colors are defined in <code className="font-mono">app/globals.css</code>{" "}
+              under the <code className="font-mono">mppga-</code> namespace. Editing
+              them is a code change for now — surfacing a UI editor is deferred.
+            </p>
           </section>
         </div>
       </Card>
 
       <Card
         title="Mission statement"
-        description="Shown on the Home page and in the welcome email. Keep it under two sentences."
+        description="Shown on the Home page and in the welcome email."
       >
-        <div className="px-6 py-10 text-center text-sm text-mppga-ink-muted">
-          Not set.
+        <div className="px-6 py-6 text-sm text-mppga-ink-soft">
+          Edit the home-page hero copy from the{" "}
+          <a
+            href="/admin/content"
+            className="text-mppga-teal hover:text-mppga-teal-hover"
+          >
+            Content tab
+          </a>
+          .
         </div>
       </Card>
+    </div>
+  );
+}
 
-      <Card
-        title="Social channels"
-        description="Public links shown in the footer and on the Contact page."
-      >
-        <div className="px-6 py-10 text-center text-sm text-mppga-ink-muted">
-          No channels added yet.
-        </div>
-      </Card>
+function Flash({
+  ok,
+  error,
+}: {
+  ok: string | null;
+  error: string | null;
+}) {
+  if (error) {
+    const map: Record<string, string> = {
+      no_file: "Pick an image file first.",
+      invalid_type: "Use a PNG, JPG, SVG, or WebP image.",
+      too_large: "Image is larger than 2 MB.",
+    };
+    return (
+      <div className="rounded-md border border-mppga-sand-deep bg-mppga-sand px-4 py-3 text-sm text-mppga-ink">
+        {map[error] ?? `Something went wrong: ${error}.`}
+      </div>
+    );
+  }
+  if (!ok) return null;
+  const message =
+    ok === "logo_uploaded"
+      ? "Logo uploaded. It now appears in the header and emails."
+      : ok === "logo_removed"
+        ? "Logo removed. Falling back to the placeholder mark."
+        : null;
+  if (!message) return null;
+  return (
+    <div className="rounded-md border border-mppga-teal bg-mppga-teal-tint px-4 py-3 text-sm text-mppga-teal-deep">
+      {message}
     </div>
   );
 }
