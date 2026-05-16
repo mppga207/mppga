@@ -48,7 +48,7 @@ export function Footer() {
               Contact
             </p>
             <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
-              hello@mppga.org
+              mppga207@gmail.com
               <br />
               (207) 555-0117
             </p>

@@ -54,15 +54,15 @@ because each one is consumed by the next.
 None of these can be deferred past the start of the affected track.
 Resolve them before opening that track's first PR.
 
-| # | Question | Affects | Source |
-|---|---|---|---|
-| 1 | **Geocoder provider** — Mapbox / Google / Nominatim | Track 5 (directory edit), Track 8 | `directory-search.md` §4.1 |
-| 2 | **Tier pricing** — annual_dues_cents for Student, Professional, Corporate | Track 3 (subscription Checkout), Track 1 (seed migration) | `CLAUDE.md` §1 |
-| 3 | **Production domain** | Track 3 (Stripe live keys), Track 4 (Resend domain verification) | `CLAUDE.md` §1 |
-| 4 | **Renewal-receipt template** — new key vs. reuse `welcome` | Track 4 | `stripe-architecture.md` §6.2 |
-| 5 | **`/directory`** — Phase 1 acceleration or Phase 2 as planned | Track 8 timing | `CLAUDE.md` §1 |
-| 6 | **Stripe invoice number prefix** — per environment | Track 3 | `stripe-architecture.md` §5.2 |
-| 7 | **Email "from" address** for Resend (likely `hello@mppga.org` or `noreply@mppga.org`) | Track 4 | `email-automation.md` §6 |
+| # | Question | Affects | Source | Status |
+|---|---|---|---|---|
+| 1 | **Geocoder provider** — Mapbox / Google / Nominatim | Track 5 (directory edit), Track 8 | `directory-search.md` §4.1 | Deferred to Track 5 (client, 2026-05-16) |
+| 2 | **Tier pricing** — annual_dues_cents for Student, Professional, Corporate | Track 3 (subscription Checkout), Track 1 (seed migration) | `CLAUDE.md` §1 | Resolved 2026-05-16: $25 / $75 / $200 (seeded as 2500 / 7500 / 20000 cents) |
+| 3 | **Production domain** | Track 3 (Stripe live keys), Track 4 (Resend domain verification) | `CLAUDE.md` §1 | Open |
+| 4 | **Renewal-receipt template** — new key vs. reuse `welcome` | Track 4 | `stripe-architecture.md` §6.2 | Open |
+| 5 | **`/directory`** — Phase 1 acceleration or Phase 2 as planned | Track 8 timing | `CLAUDE.md` §1 | Open |
+| 6 | **Stripe invoice number prefix** — per environment | Track 3 | `stripe-architecture.md` §5.2 | Open |
+| 7 | **Email "from" address** for Resend | Track 4 | `email-automation.md` §6 | Resolved 2026-05-16: `mppga207@gmail.com`. Also the seed value for `site_settings.contact_email`; Track 6 wires admin editing so a single change propagates everywhere. |
 
 A decision shipped as a one-line note in this file is enough to unblock
 work; don't wait for a full doc update.

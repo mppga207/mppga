@@ -388,10 +388,10 @@ export default function JoinPage() {
                   Application submission is being wired up. In the meantime,
                   please email{" "}
                   <a
-                    href="mailto:hello@mppga.org"
+                    href="mailto:mppga207@gmail.com"
                     className="text-mppga-teal hover:text-mppga-teal-hover"
                   >
-                    hello@mppga.org
+                    mppga207@gmail.com
                   </a>{" "}
                   with your name, location, and preferred tier.
                 </p>

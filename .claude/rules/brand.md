@@ -109,7 +109,7 @@ Max 2 typefaces. Never introduce a third. Fraunces is for brand/editorial moment
 
 - Subject lines: sentence case, no emoji.
 - Body: warm and direct. Plain text fallback must always be included.
-- Every email must include the org name (Maine Professional Pet Groomers Association) and contact email (`hello@mppga.org`) in the footer.
+- Every email must include the org name (Maine Professional Pet Groomers Association) and contact email (`mppga207@gmail.com`) in the footer.
 - Dues receipts must include the 501(c)(6) disclaimer. See `@.claude/rules/stripe-architecture.md`.
 
 -----

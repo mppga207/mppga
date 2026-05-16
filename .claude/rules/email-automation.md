@@ -202,7 +202,7 @@ All templates are stored in Resend and referenced by key. Admin can edit templat
 Every email must include in the footer:
 
 - Organization name: Maine Professional Pet Groomers Association
-- Contact: `hello@mppga.org`
+- Contact: `mppga207@gmail.com`
 - Unsubscribe link (Resend-managed)
 - For dues receipts only: 501(c)(6) disclaimer — “Dues paid to MPPGA are not deductible as charitable contributions for federal income tax purposes but may be deductible as ordinary business expenses.”
 

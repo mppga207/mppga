@@ -345,6 +345,27 @@ without explicit instruction.
 | `message` | `text` | Nullable. |
 | `created_at` | `timestamptz` | Auto |
 
+### 3.15 `site_settings`
+
+Singleton row. Single source of truth for the publicly displayed
+contact email and phone number for the association. Read by the
+public footer, Contact page, dashboard support links, and every
+email footer. Editable from the admin Settings → Contact & site
+info tab (`admin-portal.md` §6.5) — changing the email or phone
+here propagates everywhere automatically, with no other code
+edits required.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | `uuid` | PK. Pinned to `00000000-0000-0000-0000-000000000002` via CHECK. |
+| `contact_email` | `text` | Required. Seeded with `mppga207@gmail.com`. |
+| `contact_phone` | `text` | Nullable. |
+| `updated_at` | `timestamptz` | Auto |
+
+A `CHECK (id = '00000000-0000-0000-0000-000000000002'::uuid)`
+constraint and the implicit PK uniqueness enforce the singleton
+invariant.
+
 -----
 
 ## 4. Deferred subsystems
@@ -540,6 +561,13 @@ RLS enabled, no permissive policies. Effectively read/write
 forbidden for every role until voting ships and `voting.md` is
 authored. Bypassing the table from a Postgres function is a
 constraint violation.
+
+### 5.16 `site_settings`
+
+- SELECT: public (anon + authenticated + admin). The contact email
+  and phone are public-facing by definition.
+- UPDATE: admin only.
+- INSERT / DELETE: forbidden — singleton row is seeded in migration.
 
 -----
 

@@ -57,10 +57,10 @@ export default function ProfilePage() {
           We&rsquo;ll email you a one-time sign-in link whenever you need to log in.
           If you need to update the email on file, contact us at{" "}
           <a
-            href="mailto:hello@mppga.org"
+            href="mailto:mppga207@gmail.com"
             className="text-mppga-teal hover:text-mppga-teal-hover"
           >
-            hello@mppga.org
+            mppga207@gmail.com
           </a>
           .
         </div>

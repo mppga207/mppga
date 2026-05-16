@@ -13,8 +13,8 @@ const channels = [
   {
     icon: Mail,
     label: "Email",
-    value: "hello@mppga.org",
-    href: "mailto:hello@mppga.org",
+    value: "mppga207@gmail.com",
+    href: "mailto:mppga207@gmail.com",
     note: "Best for membership questions and general inquiries.",
   },
   {
@@ -134,10 +134,10 @@ export default function ContactPage() {
                   Form submission is being wired up. In the meantime, please
                   email{" "}
                   <a
-                    href="mailto:hello@mppga.org"
+                    href="mailto:mppga207@gmail.com"
                     className="text-mppga-teal hover:text-mppga-teal-hover"
                   >
-                    hello@mppga.org
+                    mppga207@gmail.com
                   </a>{" "}
                   directly.
                 </p>
