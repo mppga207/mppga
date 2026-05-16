@@ -14,6 +14,7 @@ export default function ProfilePage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Your profile"
+        description="The personal details we keep on file. Editing lands soon — until then, email us to update anything."
         actions={
           <Button variant="secondary" disabled>
             Edit profile
