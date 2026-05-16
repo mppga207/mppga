@@ -71,7 +71,7 @@ above. It must:
 
 - Read with the service role's privileges (SECURITY DEFINER, search
   path locked to `public`).
-- Return `'member'` / `'Pending_Approval'` defaults if the profile
+- Return `'member'` / `'Awaiting_Payment'` defaults if the profile
   or membership row hasn't been written yet (race condition during
   signup).
 - Never raise. A raised exception breaks login. On any internal
@@ -136,8 +136,7 @@ shape access:
 | `Grace_Period` | full access; pages render the renewal banner from `CLAUDE.md` §4 |
 | `Lapsed` | redirect to `/renew` (CLAUDE.md constraint #7 — never 403) |
 | `Suspended` | redirect to `/renew` with a `?reason=suspended` query; the page surfaces an admin-contact message |
-| `Pending_Approval` | redirect to `/dashboard/pending` (single page that explains "we're reviewing your application") |
-| `Awaiting_Payment` | redirect to `/dashboard/checkout` (single page that resumes the join flow) |
+| `Awaiting_Payment` | redirect to `/dashboard/checkout` (single page that hosts the Stripe Checkout link) |
 
 A non-admin authenticated user trying to access `/admin/*` is
 redirected to `/dashboard`, then re-evaluated by the table above.
@@ -253,23 +252,26 @@ The join flow at `/join`:
 1. Member enters email + name + tier selection on the marketing
    page.
 2. Server action calls `supabase.auth.signInWithOtp()` to send a
-   magic link. (`shouldCreateUser: true` — the default.)
+   magic link. The tier slug travels in `options.data.tier_slug`
+   so the auth callback can finish setup. (`shouldCreateUser: true`
+   — the default.)
 3. `auth.users` row created on first link click. The
    `create_profile_on_signup` trigger inserts `profiles` with
    `role = 'member'` (see `data-model.md` §7).
-4. A separate server action — invoked after the user lands on the
-   post-callback page — inserts the `memberships` row with
-   `tier_id` and `status = 'Pending_Approval'` (service role; see
-   `data-model.md` §5.4 RLS).
-5. The board reviews and approves. Approval moves status to
-   `Awaiting_Payment`. The user receives an email with a Stripe
-   Checkout link.
+4. The `/auth/callback` route exchanges the code, reads
+   `user_metadata.tier_slug`, and inserts the `memberships` row
+   with `tier_id` resolved against `tiers.slug` and
+   `status = 'Awaiting_Payment'` via the service-role client
+   (`data-model.md` §5.4 RLS). The insert is idempotent on
+   `profile_id`.
+5. Member lands on `/dashboard/checkout` (middleware redirects
+   anything else in `/dashboard/*` while status is
+   `Awaiting_Payment`). The page hosts the Stripe Checkout link.
 6. Successful payment moves status to `Active` via the Stripe
-   webhook.
+   webhook — there is no board-review step.
 
-The `Pending_Approval` and `Awaiting_Payment` redirects in § 3.1
-keep partially-onboarded users out of the dashboard until they're
-ready.
+The `Awaiting_Payment` redirect in § 3.1 keeps newly-signed-up
+members on the payment page until dues clear.
 
 ### 6.2 Sign-in
 
@@ -345,9 +347,10 @@ non-_next/static asset path needed session-aware caching headers.
 If a user clicks the magic link faster than the
 `create_profile_on_signup` trigger fires (rare but possible), the
 auth hook returns default claims (`role = 'member'`,
-`membership_status = 'Pending_Approval'`) and middleware sends them
-to `/dashboard/pending`. The pending page polls the profile row and
-auto-advances when ready. No error to the user.
+`membership_status = 'Awaiting_Payment'`) and middleware sends them
+to `/dashboard/checkout`. The callback's idempotent membership
+insert catches up on the next request once the trigger runs. No
+error to the user.
 
 ### 9.2 Admin demoted mid-session
 

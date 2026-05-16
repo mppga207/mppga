@@ -35,7 +35,7 @@ the next where the chain demands it.
 | # | Track | Blocks | Owned-by spec |
 |---|---|---|---|
 | 1 | Foundation — schema, RLS, types, session helpers, real middleware | everything | `data-model.md`, `auth-middleware.md` |
-| 2 | Member lifecycle — status sync function, application flow, board approval | 3, 5, 6, 7 | `auth-middleware.md`, `data-model.md` §4 |
+| 2 | Member lifecycle — status sync function, magic-link signup, auto-accept on payment | 3, 5, 6, 7 | `auth-middleware.md`, `data-model.md` §4 |
 | 3 | Stripe billing — webhook, Customer Portal, subscription Checkout, dunning | 5 (billing tab), 6 (members admin), 7 | `stripe-architecture.md` |
 | 4 | Resend email layer — send helper, dedup log, templates, scheduled cron | 6 (admin emails) | `email-automation.md` |
 | 5 | Member portal data wiring — profile, directory, events, billing tab | — | `admin-portal.md` §5, `directory-search.md` §5 |
@@ -132,25 +132,65 @@ Track 1.
    `auth.admin.signOut(scope: 'others')` after status writes
    (`auth-middleware.md` §2.2).
 2. **`/join` application server action.** Magic-link signup via
-   `signInWithOtp`, post-callback inserts the `memberships` row in
-   `Pending_Approval` using the service-role client
+   `signInWithOtp`. The tier slug travels in `options.data` so the
+   auth-callback route can create the `memberships` row in
+   `Awaiting_Payment` via the service-role client
    (`auth-middleware.md` §6.1).
 3. **Auth callback route** at `/auth/callback/route.ts` — exchanges
-   the code, writes cookies, redirects to `next`.
-4. **`/dashboard/pending`** + **`/dashboard/checkout`** pages —
-   destination for Pending_Approval and Awaiting_Payment per
-   `auth-middleware.md` §3.1. Current middleware routes there but no
-   pages exist.
-5. **Board approval server action** — admin-only, transitions
-   Pending_Approval → Awaiting_Payment, writes `approved_at` and
-   `approved_by_profile_id`, queues the approval email.
+   the code, writes cookies, materializes the membership row on
+   first sign-in, and redirects to `next` (default `/dashboard`,
+   which middleware then routes to `/dashboard/checkout` for new
+   members).
+4. **`/dashboard/checkout`** page — destination for
+   Awaiting_Payment per `auth-middleware.md` §3.1. Hosts the
+   Stripe Checkout link (stub until Track 3 wires the real session
+   creator).
 
 ### Done-when
 
 - A new email completes the join form, gets a magic link, lands on
-  `/dashboard/pending`.
-- Board approves from `/admin/members` and the member's portal flips
-  to `/dashboard/checkout`.
+  `/dashboard/checkout`, and sees the "Complete your dues" CTA.
+- The first successful `invoice.paid` webhook from Track 3 flips
+  the member to `Active` and the next request lands on
+  `/dashboard`.
+
+### Status (2026-05-16)
+
+Shipped:
+
+- Schema migration `20260516000007_remove_board_approval.sql` drops
+  `Pending_Approval` from the status enum, defaults the column to
+  `Awaiting_Payment`, removes the `approved_at` /
+  `approved_by_profile_id` columns, and updates the JWT-claims
+  hook's default.
+- `supabase/functions/membership-status-sync/index.ts` is the real
+  state machine. Single-member and `{ sweep: true }` modes.
+  Service-role-gated via the Authorization header. Calls
+  `auth.admin.signOut(user_id, 'others')` after every write.
+- `/join` form is wired through `joinMembership` server action;
+  `/sign-in` is rewritten as a magic-link form via
+  `signInWithMagicLink`. Both stash tier slug / full name in
+  `options.data` and route through `/auth/callback`.
+- `/auth/callback/route.ts` exchanges the code, idempotently
+  inserts the `memberships` row in `Awaiting_Payment` via
+  `createPendingMembership`, and redirects to `next`.
+- `/dashboard/checkout` page reads the member's tier + dues and
+  shows a stub Stripe CTA.
+- `lib/email/send.ts` writes `email_send_log` rows with the dedup
+  key and console-logs the would-be payload; Track 4 swaps the
+  console.log for the real Resend call.
+
+Outstanding (waiting on other tracks):
+
+- Real Stripe Checkout link on `/dashboard/checkout` — Track 3.
+- Welcome email fired by webhook on first `invoice.paid` —
+  Track 3 + Track 4.
+- Daily cron that POSTs `{ sweep: true }` to the Edge Function —
+  Track 3 (alongside dunning cron).
+- Bind the `handle_auth_jwt_claims` hook in each Supabase
+  environment (Dashboard → Auth → Hooks → Custom Access Token).
+  Deploy `supabase functions deploy membership-status-sync` per
+  environment.
 
 -----
 

@@ -4,7 +4,6 @@ import { Card } from "@/components/mppga/admin/Card";
 import { Button } from "@/components/mppga/ui/button";
 
 const statusChips = [
-  "Pending approval",
   "Awaiting payment",
   "Active",
   "Grace period",

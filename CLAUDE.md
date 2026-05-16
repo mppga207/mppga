@@ -4,7 +4,7 @@
 
 **Client:** Maine Professional Pet Groomers Association (MPPGA) — a 501(c)(6) nonprofit professional trade association for pet groomers statewide in Maine. Public-facing site lives at `https://www.afterload.io/clients/mppga` (prototype). Production domain TBD. Contact: TBD.
 
-**Purpose:** A custom-built membership platform replacing off-the-shelf AMS products (Wild Apricot, MemberClicks, etc.). Handles full member lifecycle: application + board approval, tiered dues billing, member portal, public geolocated directory, CE tracking, code of ethics compliance logging, volunteer admin tools, event ticketing, and board elections. Volunteer-run board with limited technical capacity — every feature must reduce manual email, spreadsheet, and approval tasks.
+**Purpose:** A custom-built membership platform replacing off-the-shelf AMS products (Wild Apricot, MemberClicks, etc.). Handles full member lifecycle: self-serve signup with auto-acceptance on successful payment, tiered dues billing, member portal, public geolocated directory, CE tracking, code of ethics compliance logging, volunteer admin tools, event ticketing, and board elections. Volunteer-run board with limited technical capacity — every feature must reduce manual email, spreadsheet, and approval tasks.
 
 **Public Website — In Scope (Phase 1):** Home, About/Mission, Join Membership, Events, Contact.
 
@@ -34,7 +34,7 @@
 - **Auth:** Supabase Auth (JWT with custom claims: `role`, `membership_status`) — NEVER roll custom auth
 - **Payments:** Stripe Billing (subscriptions) + Stripe Checkout (one-off event tickets) + Stripe Customer Portal
 - **Storage:** Supabase Storage (signed URLs for CE certificates, member documents)
-- **Email:** Resend (transactional: renewals, dunning, welcome, approval, event confirmations)
+- **Email:** Resend (transactional: renewals, dunning, welcome, event confirmations)
 - **Geospatial:** PostGIS on Supabase for radius-based directory search
 - **Package Manager:** pnpm — NEVER use npm or yarn
 - **Deployment:** Vercel (CLI or GitHub integration)
@@ -74,16 +74,19 @@ See `@.claude/rules/data-model.md` for full field specs, RLS policies, and migra
 Member lifecycle flows through these statuses only. Never add statuses without updating all consuming logic.
 
 ```
-Pending_Approval → Awaiting_Payment → Active → Grace_Period → Lapsed
-                                             ↘ Suspended
-                                             ↘ Honorary
+Awaiting_Payment → Active → Grace_Period → Lapsed
+                         ↘ Suspended
+                         ↘ Honorary
 ```
 
+- `Awaiting_Payment` = signed up, email verified, dues not yet paid. Redirected to /dashboard/checkout on every route.
 - `Active` = full portal + directory access + event member pricing
 - `Grace_Period` = read-only portal, no directory listing, renewal prompt on every page
 - `Lapsed` = redirect to /renew on every authenticated route
-- `Suspended` = admin-only override, requires board action
+- `Suspended` = admin-only override, requires admin action
 - `Honorary` = lifetime access, no billing, admin-assigned only
+
+There is no board-review step. A successful magic-link signup creates the membership row in `Awaiting_Payment`; the first successful Stripe invoice promotes it to `Active`. Admins can still manually flip status (suspend, grant Honorary) via the status-override path.
 
 Grace period = 30 days from `expires_at`. Status transitions handled exclusively by the Supabase Edge Function in `functions/membership-status-sync`. NEVER apply transition logic in client-side code.
 

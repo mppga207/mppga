@@ -57,7 +57,7 @@ Companion specs:
 | Name | Allowed values |
 |---|---|
 | `profile_role` | `member`, `admin` |
-| `membership_status` | `Pending_Approval`, `Awaiting_Payment`, `Active`, `Grace_Period`, `Lapsed`, `Suspended`, `Honorary` |
+| `membership_status` | `Awaiting_Payment`, `Active`, `Grace_Period`, `Lapsed`, `Suspended`, `Honorary` |
 | `billing_status` | `current`, `past_due`, `unpaid`, `canceled`, `incomplete`, `incomplete_expired`, `trialing` (mirrors Stripe `subscription.status`) |
 | `event_status` | `draft`, `published` |
 | `event_pricing_tier` | `member`, `guest` |
@@ -147,13 +147,11 @@ business rules, not Stripe states.
 | `id` | `uuid` | PK |
 | `profile_id` | `uuid` | FK → `profiles.id` `ON DELETE CASCADE`. Unique — one membership per profile. |
 | `tier_id` | `uuid` | FK → `tiers.id` `ON DELETE RESTRICT`. |
-| `status` | `membership_status` | Default `Pending_Approval`. Written only by the `membership-status-sync` Edge Function (CLAUDE.md constraint #2). |
+| `status` | `membership_status` | Default `Awaiting_Payment`. Written only by the `membership-status-sync` Edge Function (CLAUDE.md constraint #2). |
 | `billing_status` | `billing_status` | Nullable. Mirrors Stripe. Null for `Honorary`. |
 | `stripe_customer_id` | `text` | Nullable. Unique. |
 | `stripe_subscription_id` | `text` | Nullable. Unique. |
 | `expires_at` | `timestamptz` | Nullable. Drives renewal reminders and grace transitions. Null for `Honorary`. |
-| `approved_at` | `timestamptz` | Nullable. Set when board moves from `Pending_Approval`. |
-| `approved_by_profile_id` | `uuid` | Nullable. FK → `profiles.id`. |
 | `created_at` | `timestamptz` | Auto |
 | `updated_at` | `timestamptz` | Auto |
 

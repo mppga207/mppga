@@ -76,9 +76,9 @@ Sort by `expires_at` ascending by default — soon-to-expire surfaces first.
 
 ### Filters (top of table)
 
-- **Status:** multi-select chips. All seven CLAUDE.md statuses:
-  `Pending_Approval | Awaiting_Payment | Active | Grace_Period | Lapsed |
-  Suspended | Honorary`. Default: none selected (show all).
+- **Status:** multi-select chips. All six CLAUDE.md statuses:
+  `Awaiting_Payment | Active | Grace_Period | Lapsed | Suspended |
+  Honorary`. Default: none selected (show all).
 - **Tier:** dropdown from the `tiers` table.
 - **City:** dropdown from distinct `directory_listings.city`.
 - **Specialty:** dropdown from `directory_listings.specialties`.
