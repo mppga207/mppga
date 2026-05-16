@@ -179,7 +179,7 @@ function EventDetail({ event }: { event: MockEvent }) {
                   </Button>
                 )}
                 <p className="text-center text-xs text-mppga-ink-muted">
-                  <Link href="/dashboard" className="hover:text-mppga-teal">
+                  <Link href="/sign-in" className="hover:text-mppga-teal">
                     Sign in
                   </Link>{" "}
                   for member pricing, or{" "}

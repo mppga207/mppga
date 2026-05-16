@@ -33,7 +33,7 @@ export function Nav() {
 
         <div className="flex items-center gap-2">
           <Button
-            href="/dashboard"
+            href="/sign-in"
             variant="ghost"
             className="hidden sm:inline-flex"
           >

@@ -4,51 +4,32 @@ import { motion } from "framer-motion";
 import { ArrowRight, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/mppga/ui/button";
+import { mockEvents } from "@/lib/mppga/admin/mockEvents";
 import { fadeUp, stagger, viewportOnce } from "./motion";
 
-type SampleEvent = {
-  month: string;
-  day: string;
-  city: string;
-  title: string;
-  body: string;
-  memberPrice: number;
-  guestPrice: number;
-};
+const monthFmt = new Intl.DateTimeFormat("en-US", { month: "short" });
+const dayFmt = new Intl.DateTimeFormat("en-US", { day: "2-digit" });
 
-const events: SampleEvent[] = [
-  {
-    month: "Jun",
-    day: "14",
-    city: "Portland, ME",
-    title: "Safe Handling Workshop",
-    body: "Hands-on session covering restraint, muzzling, and reading stress signals.",
-    memberPrice: 20,
-    guestPrice: 40,
-  },
-  {
-    month: "Jul",
-    day: "09",
-    city: "Bangor, ME",
-    title: "Hand-Scissoring Clinic",
-    body: "Demo + practice cuts on poodle and bichon coats with a certified judge.",
-    memberPrice: 35,
-    guestPrice: 65,
-  },
-  {
-    month: "Sep",
-    day: "21",
-    city: "Augusta, ME",
-    title: "Annual MPPGA Meeting",
-    body: "Year in review, board elections, member dinner, and CEU panel.",
-    memberPrice: 0,
-    guestPrice: 25,
-  },
-];
+function formatPrice(cents: number): string {
+  if (cents === 0) return "Free";
+  return `$${(cents / 100).toFixed(0)}`;
+}
 
-const formatMember = (n: number) => (n === 0 ? "Free" : `$${n}`);
+function pickTeaserEvents() {
+  const now = Date.now();
+  return mockEvents
+    .filter(
+      (e) => e.status === "Published" && new Date(e.date).getTime() >= now,
+    )
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 3);
+}
 
 export function EventsTeaser() {
+  const events = pickTeaserEvents();
+
+  if (events.length === 0) return null;
+
   return (
     <motion.section
       initial="hidden"
@@ -83,63 +64,71 @@ export function EventsTeaser() {
         </motion.div>
 
         <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {events.map((e) => (
-            <motion.article
-              key={e.title}
-              variants={fadeUp}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-mppga-divider bg-mppga-card shadow-sm transition-shadow hover:shadow-xl hover:shadow-mppga-teal/10"
-            >
-              <div className="relative flex h-28 items-center gap-3 bg-mppga-teal-deep px-5">
-                <div
-                  aria-hidden
-                  className="absolute inset-0 opacity-30"
-                  style={{
-                    background:
-                      "radial-gradient(60% 100% at 80% 30%, rgba(201,169,97,0.4), transparent 70%)",
-                  }}
-                />
-                <div className="relative flex flex-col items-center rounded-md bg-white/10 px-3 py-2 backdrop-blur-sm">
-                  <span className="text-[10px] uppercase tracking-[0.18em] text-mppga-gold-soft">
-                    {e.month}
-                  </span>
-                  <span className="font-serif text-2xl leading-none text-white">
-                    {e.day}
-                  </span>
-                </div>
-                <div className="relative flex items-center gap-1.5 text-xs text-white/80">
-                  <Calendar className="h-3.5 w-3.5" strokeWidth={1.8} />
-                  {e.city}
-                </div>
-              </div>
-
-              <div className="flex flex-1 flex-col p-6">
-                <h3 className="font-serif text-xl leading-snug text-mppga-ink">
-                  {e.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
-                  {e.body}
-                </p>
-                <p className="mt-4 text-sm text-mppga-ink-soft">
-                  Member{" "}
-                  <span className="font-medium text-mppga-ink">
-                    {formatMember(e.memberPrice)}
-                  </span>{" "}
-                  &middot; Guest{" "}
-                  <span className="font-medium text-mppga-ink">
-                    ${e.guestPrice}
-                  </span>
-                </p>
-                <Button
-                  href="/events"
-                  variant="secondary"
-                  className="mt-5 w-fit"
+          {events.map((event) => {
+            const start = new Date(event.date);
+            return (
+              <motion.article
+                key={event.id}
+                variants={fadeUp}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="group flex flex-col overflow-hidden rounded-2xl border border-mppga-divider bg-mppga-card shadow-sm transition-shadow hover:shadow-xl hover:shadow-mppga-teal/10"
+              >
+                <Link
+                  href={`/events/${event.id}`}
+                  className="relative flex h-28 items-center gap-3 bg-mppga-teal-deep px-5"
                 >
-                  RSVP
-                </Button>
-              </div>
-            </motion.article>
-          ))}
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 opacity-30"
+                    style={{
+                      background:
+                        "radial-gradient(60% 100% at 80% 30%, rgba(201,169,97,0.4), transparent 70%)",
+                    }}
+                  />
+                  <div className="relative flex flex-col items-center rounded-md bg-white/10 px-3 py-2 backdrop-blur-sm">
+                    <span className="text-[10px] uppercase tracking-[0.18em] text-mppga-gold-soft">
+                      {monthFmt.format(start)}
+                    </span>
+                    <span className="font-serif text-2xl leading-none text-white">
+                      {dayFmt.format(start)}
+                    </span>
+                  </div>
+                  <div className="relative flex items-center gap-1.5 text-xs text-white/80">
+                    <Calendar className="h-3.5 w-3.5" strokeWidth={1.8} />
+                    {event.location}
+                  </div>
+                </Link>
+
+                <div className="flex flex-1 flex-col p-6">
+                  <Link href={`/events/${event.id}`} className="group/title">
+                    <h3 className="font-serif text-xl leading-snug text-mppga-ink group-hover/title:text-mppga-teal-deep">
+                      {event.title}
+                    </h3>
+                  </Link>
+                  <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-mppga-ink-soft">
+                    {event.description}
+                  </p>
+                  <p className="mt-4 text-sm text-mppga-ink-soft">
+                    Member{" "}
+                    <span className="font-medium text-mppga-ink">
+                      {formatPrice(event.memberPrice)}
+                    </span>{" "}
+                    &middot; Guest{" "}
+                    <span className="font-medium text-mppga-ink">
+                      {formatPrice(event.guestPrice)}
+                    </span>
+                  </p>
+                  <Button
+                    href={`/events/${event.id}`}
+                    variant="secondary"
+                    className="mt-5 w-fit"
+                  >
+                    View details
+                  </Button>
+                </div>
+              </motion.article>
+            );
+          })}
         </div>
       </div>
     </motion.section>
