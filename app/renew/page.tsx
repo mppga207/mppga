@@ -1,10 +1,20 @@
 import Link from "next/link";
 import { CalendarCheck2, CreditCard, MailQuestion, ShieldCheck } from "lucide-react";
+
 import { Nav } from "@/components/mppga/landing/Nav";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { Button } from "@/components/mppga/ui/button";
-import { MembershipBadge } from "@/components/mppga/portal/MembershipBadge";
-import { mockMember, statusLabel } from "@/lib/mppga/portal/mockMember";
+import {
+  MembershipBadge,
+  statusLabel,
+} from "@/components/mppga/portal/MembershipBadge";
+import { requireSession } from "@/lib/supabase/session";
+import { loadMemberOverview } from "@/lib/mppga/portal/data";
+import {
+  openCustomerPortal,
+  startSubscriptionCheckout,
+} from "@/lib/stripe/actions";
+import type { MembershipStatus } from "@/types/database";
 
 export const metadata = {
   title: "Renew · MPPGA",
@@ -18,11 +28,16 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-// Status-aware copy for the renewal page. Per auth-middleware.md §3.1 the
-// /renew route is reachable from Lapsed, Grace_Period, and Suspended. Other
-// statuses are routed elsewhere by middleware, so we fall back to a generic
-// "Your membership" headline rather than try to handle the full enum.
-function renewalCopy(status: typeof mockMember.status) {
+interface RenewPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function readParam(value: string | string[] | undefined): string | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+function renewalCopy(status: MembershipStatus) {
   switch (status) {
     case "Lapsed":
       return {
@@ -45,6 +60,13 @@ function renewalCopy(status: typeof mockMember.status) {
         body:
           "A board member placed your account on hold. Reach out and we’ll work it out together — renewal is paused until then.",
       };
+    case "Awaiting_Payment":
+      return {
+        eyebrow: "Welcome",
+        headline: "One last step — complete your dues.",
+        body:
+          "Your account is ready. Pay your annual dues to unlock the member portal, the directory listing, and member event pricing.",
+      };
     default:
       return {
         eyebrow: "Membership",
@@ -55,13 +77,21 @@ function renewalCopy(status: typeof mockMember.status) {
   }
 }
 
-export default function RenewPage() {
-  // Shell stage: read from the mock member fixture. When session-aware
-  // reads land per auth-middleware.md §4.3, swap to requireSession() and
-  // pull membership_status off app_metadata.
-  const status = mockMember.status;
+export default async function RenewPage({ searchParams }: RenewPageProps) {
+  const session = await requireSession("/renew");
+  const [params, member] = await Promise.all([
+    searchParams,
+    loadMemberOverview(session),
+  ]);
+
+  const status = member.status;
   const copy = renewalCopy(status);
-  const isSuspended = status === "Suspended";
+  const reason = readParam(params["reason"]);
+  const portalError = readParam(params["portal_error"]);
+  const checkoutError = readParam(params["error"]);
+
+  const isSuspended = status === "Suspended" || reason === "suspended";
+  const hasStripe = Boolean(member.stripeCustomerId);
 
   return (
     <div className="min-h-screen bg-mppga-page text-mppga-ink">
@@ -92,14 +122,25 @@ export default function RenewPage() {
                 Membership summary
               </p>
               <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <SummaryRow label="Tier" value={mockMember.tierName} />
+                <SummaryRow
+                  label="Tier"
+                  value={member.tierName ?? "Not yet assigned"}
+                />
                 <SummaryRow
                   label="Member since"
-                  value={dateFmt.format(new Date(mockMember.memberSinceISO))}
+                  value={
+                    member.memberSinceISO
+                      ? dateFmt.format(new Date(member.memberSinceISO))
+                      : "—"
+                  }
                 />
                 <SummaryRow
                   label="Expires"
-                  value={dateFmt.format(new Date(mockMember.expiresAtISO))}
+                  value={
+                    member.expiresAt
+                      ? dateFmt.format(new Date(member.expiresAt))
+                      : "—"
+                  }
                 />
                 <SummaryRow label="Status" value={statusLabel(status)} />
               </div>
@@ -114,25 +155,39 @@ export default function RenewPage() {
                   invoice. You’ll be back on the directory within minutes of a
                   successful payment.
                 </p>
+
+                {portalError || checkoutError ? (
+                  <p className="mt-4 rounded-md border border-mppga-divider bg-mppga-sand px-4 py-3 text-sm text-mppga-ink-soft">
+                    We couldn&rsquo;t open the billing portal just now. Try again
+                    in a moment, or email{" "}
+                    <a
+                      href="mailto:mppga207@gmail.com"
+                      className="text-mppga-teal hover:text-mppga-teal-hover"
+                    >
+                      mppga207@gmail.com
+                    </a>
+                    .
+                  </p>
+                ) : null}
+
                 <div className="mt-5 flex flex-wrap items-center gap-3">
-                  <Button size="lg" disabled={isSuspended}>
-                    {isSuspended ? "Renewal paused" : "Open billing portal"}
-                  </Button>
+                  {hasStripe ? (
+                    <form action={openCustomerPortal}>
+                      <Button type="submit" size="lg" disabled={isSuspended}>
+                        {isSuspended ? "Renewal paused" : "Open billing portal"}
+                      </Button>
+                    </form>
+                  ) : (
+                    <form action={startSubscriptionCheckout}>
+                      <Button type="submit" size="lg" disabled={isSuspended}>
+                        {isSuspended ? "Renewal paused" : "Pay dues now"}
+                      </Button>
+                    </form>
+                  )}
                   <Button href="/dashboard/billing" variant="ghost" size="lg">
                     View past invoices
                   </Button>
                 </div>
-                <p className="mt-4 text-xs text-mppga-ink-muted">
-                  Stripe Customer Portal link is being wired up. In the meantime,
-                  email{" "}
-                  <a
-                    href="mailto:mppga207@gmail.com"
-                    className="text-mppga-teal hover:text-mppga-teal-hover"
-                  >
-                    mppga207@gmail.com
-                  </a>{" "}
-                  and we’ll send you a renewal link by hand.
-                </p>
               </div>
             </div>
 

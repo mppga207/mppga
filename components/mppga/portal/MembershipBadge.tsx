@@ -1,13 +1,9 @@
 import { StatusBadge } from "@/components/mppga/admin/StatusBadge";
-import {
-  type MembershipStatus,
-  statusLabel,
-} from "@/lib/mppga/portal/mockMember";
+import type { MembershipStatus } from "@/types/database";
 
 type Tone = "teal" | "neutral" | "warn" | "muted";
 
 const toneByStatus: Record<MembershipStatus, Tone> = {
-  Pending_Approval: "muted",
   Awaiting_Payment: "warn",
   Active: "teal",
   Grace_Period: "warn",
@@ -15,6 +11,10 @@ const toneByStatus: Record<MembershipStatus, Tone> = {
   Suspended: "muted",
   Honorary: "teal",
 };
+
+export function statusLabel(status: MembershipStatus): string {
+  return status.replace(/_/g, " ");
+}
 
 export function MembershipBadge({ status }: { status: MembershipStatus }) {
   return <StatusBadge label={statusLabel(status)} tone={toneByStatus[status]} />;

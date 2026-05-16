@@ -1,7 +1,8 @@
 import { Card } from "@/components/mppga/admin/Card";
-import { Button } from "@/components/mppga/ui/button";
 import { PortalPageHeader } from "@/components/mppga/portal/PortalPageHeader";
-import { mockMember } from "@/lib/mppga/portal/mockMember";
+import { ProfileEditForm } from "@/components/mppga/portal/ProfileEditForm";
+import { requireSession } from "@/lib/supabase/session";
+import { loadMemberOverview } from "@/lib/mppga/portal/data";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -9,41 +10,43 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const session = await requireSession("/dashboard/profile");
+  const member = await loadMemberOverview(session);
+
   return (
     <div className="space-y-10">
       <PortalPageHeader
         title="Your profile"
-        description="The personal details we keep on file. Editing lands soon — until then, email us to update anything."
-        actions={
-          <Button variant="secondary" disabled>
-            Edit profile
-          </Button>
-        }
+        description="The personal details we keep on file. Email changes go through the board — everything else is yours to edit."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Personal info">
-          <dl className="divide-y divide-mppga-divider">
-            <ReadOnlyRow label="Full name" value={mockMember.fullName} />
-            <ReadOnlyRow label="Email" value={mockMember.email} />
-            <ReadOnlyRow label="City" value={mockMember.city} />
-            <ReadOnlyRow
-              label="Member since"
-              value={dateFmt.format(new Date(mockMember.memberSinceISO))}
-            />
-          </dl>
+          <ProfileEditForm
+            initialFullName={member.fullName}
+            initialPhone={member.phone}
+            email={member.email}
+          />
         </Card>
 
         <Card title="Affiliation">
           <dl className="divide-y divide-mppga-divider">
             <ReadOnlyRow
               label="Tier"
-              value={mockMember.tierName}
+              value={member.tierName ?? "Not yet assigned"}
             />
             <ReadOnlyRow
               label="Organization"
-              value={mockMember.organizationName ?? "—"}
+              value={member.organizationName ?? "—"}
+            />
+            <ReadOnlyRow
+              label="Member since"
+              value={
+                member.memberSinceISO
+                  ? dateFmt.format(new Date(member.memberSinceISO))
+                  : "—"
+              }
             />
           </dl>
         </Card>
