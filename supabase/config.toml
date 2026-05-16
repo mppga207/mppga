@@ -2,3 +2,12 @@ project_id = "mppga"
 
 [functions.membership-status-sync]
 verify_jwt = false
+
+[functions.dunning-cron]
+verify_jwt = false
+
+[functions.renewal-reminders-cron]
+verify_jwt = false
+
+[functions.event-reminders-cron]
+verify_jwt = false

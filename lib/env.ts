@@ -33,4 +33,17 @@ export const env = {
     },
     publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "",
   },
+
+  resend: {
+    get apiKey(): string {
+      return requireServerEnv("RESEND_API_KEY");
+    },
+    // From-address defaults to the client-confirmed sender. Resend
+    // requires a domain-verified address in production; for local / CI
+    // runs without a verified domain, sends will surface a Resend-side
+    // error.
+    fromEmail: process.env.RESEND_FROM_EMAIL ?? "mppga207@gmail.com",
+    fromName:
+      process.env.RESEND_FROM_NAME ?? "Maine Professional Pet Groomers Association",
+  },
 } as const;

@@ -184,7 +184,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
   const supabase = createServiceRoleClient();
   const { data: membership, error } = await supabase
     .from("memberships")
-    .select("id, profile_id")
+    .select("id, profile_id, tier_id")
     .eq("stripe_subscription_id", subscriptionId)
     .maybeSingle();
   if (error) throw new Error(`memberships lookup failed: ${error.message}`);
@@ -221,14 +221,52 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
     reason: "invoice.paid",
   });
 
-  await sendTransactional({
+  // Welcome fires once per membership (dedup key uses profile_id, so
+  // any subsequent invoice.paid is skipped). Renewals get a separate
+  // template keyed on the invoice id so each renewal fires its own
+  // receipt (stripe-architecture.md §6.2, decision #4 in
+  // phase-1-buildout.md §3).
+  const [profile, tier] = await Promise.all([
+    lookupProfile(membership.profile_id),
+    lookupTier(membership.tier_id),
+  ]);
+  const recipient = profile?.email ?? "";
+  const fullName = profile?.full_name ?? "there";
+  const tierName = tier?.name ?? "MPPGA";
+  const amountPaid = formatAmount(invoice.amount_paid, invoice.currency);
+  const expiresFormatted = formatDate(periodEnd);
+
+  const welcomeResult = await sendTransactional({
     template: "welcome",
-    to: await lookupProfileEmail(membership.profile_id),
+    to: recipient,
     triggerType: "webhook",
     profileId: membership.profile_id,
-    referenceId: subscriptionId,
-    data: { event: "invoice.paid", invoice_id: invoice.id },
+    referenceId: membership.profile_id,
+    vars: {
+      full_name: fullName,
+      tier_name: tierName,
+      amount_paid: amountPaid,
+    },
   });
+
+  // Renewals (the welcome was skipped as a duplicate) get the
+  // renewal-receipt template instead, deduped on the invoice id so
+  // a webhook redelivery doesn't double-send.
+  if (welcomeResult.status === "skipped_duplicate") {
+    await sendTransactional({
+      template: "renewal-receipt",
+      to: recipient,
+      triggerType: "webhook",
+      profileId: membership.profile_id,
+      referenceId: invoice.id ?? null,
+      vars: {
+        full_name: fullName,
+        tier_name: tierName,
+        amount_paid: amountPaid,
+        expires_at: expiresFormatted,
+      },
+    });
+  }
 }
 
 /**
@@ -254,15 +292,22 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice): Promise<void> {
     .update({ billing_status: "past_due" })
     .eq("id", membership.id);
 
+  const profile = await lookupProfile(membership.profile_id);
+  const portalUrl = `${env.siteUrl}/dashboard/billing`;
+
   await sendTransactional({
     template: "dunning",
-    to: await lookupProfileEmail(membership.profile_id),
+    to: profile?.email ?? "",
     triggerType: "webhook",
     profileId: membership.profile_id,
     // Dedup key includes the invoice ID so each retry sends a fresh email
     // for that specific failure attempt (`email-automation.md` §3.3).
     referenceId: invoice.id ?? null,
-    data: { event: "invoice.payment_failed", invoice_id: invoice.id },
+    vars: {
+      full_name: profile?.full_name ?? "there",
+      customer_portal_url: portalUrl,
+      amount_due: formatAmount(invoice.amount_due, invoice.currency),
+    },
   });
 }
 
@@ -356,12 +401,55 @@ function readSubscriptionId(invoice: Stripe.Invoice): string | null {
   return null;
 }
 
-async function lookupProfileEmail(profileId: string): Promise<string> {
+async function lookupProfile(
+  profileId: string,
+): Promise<{ email: string; full_name: string } | null> {
   const supabase = createServiceRoleClient();
   const { data } = await supabase
     .from("profiles")
-    .select("email")
+    .select("email, full_name")
     .eq("id", profileId)
     .maybeSingle();
-  return data?.email ?? "";
+  return data ?? null;
+}
+
+async function lookupTier(
+  tierId: string,
+): Promise<{ name: string } | null> {
+  const supabase = createServiceRoleClient();
+  const { data } = await supabase
+    .from("tiers")
+    .select("name")
+    .eq("id", tierId)
+    .maybeSingle();
+  return data ?? null;
+}
+
+function formatAmount(
+  cents: number | null | undefined,
+  currency: string | null | undefined,
+): string {
+  if (cents === null || cents === undefined) return "";
+  const code = (currency ?? "usd").toUpperCase();
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+    }).format(cents / 100);
+  } catch {
+    return `${(cents / 100).toFixed(2)} ${code}`;
+  }
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "";
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
 }
