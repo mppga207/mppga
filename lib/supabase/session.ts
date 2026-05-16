@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import type { MembershipStatus, ProfileRole } from "@/types/database";
 
 /**
@@ -13,6 +13,34 @@ export interface AppSession {
   user: User;
   role: ProfileRole;
   membershipStatus: MembershipStatus;
+}
+
+/**
+ * Sentinel UUID used by the preview session. Data loaders check for this
+ * id (or `!isSupabaseConfigured()`) to swap in mock fixtures so the
+ * portal stays demoable before Supabase is provisioned. Never matches a
+ * real auth.users id because Supabase issues v4 UUIDs with non-zero
+ * version bits.
+ */
+export const PREVIEW_USER_ID = "00000000-0000-0000-0000-000000000000";
+
+export function isPreviewSession(session: AppSession): boolean {
+  return session.user.id === PREVIEW_USER_ID;
+}
+
+function buildPreviewSession(): AppSession {
+  // Minimal User shape — we only ever read id / email off it. The rest
+  // is filled in to satisfy the type without pretending to be a real
+  // Supabase user.
+  const user = {
+    id: PREVIEW_USER_ID,
+    email: "preview@mppga.example",
+    app_metadata: { role: "member", membership_status: "Active" },
+    user_metadata: {},
+    aud: "authenticated",
+    created_at: new Date(0).toISOString(),
+  } as unknown as User;
+  return { user, role: "member", membershipStatus: "Active" };
 }
 
 function readClaims(user: User): {
@@ -46,8 +74,12 @@ function isMembershipStatus(value: unknown): value is MembershipStatus {
  * Returns the verified session for the current request, or null if the
  * user is anonymous. Uses `auth.getUser()` so the JWT is re-verified
  * against Supabase rather than trusted from the cookie alone.
+ *
+ * Returns null when Supabase isn't configured so callers can decide
+ * between redirecting, rendering empty, or falling back to preview mode.
  */
 export async function getSession(): Promise<AppSession | null> {
+  if (!isSupabaseConfigured()) return null;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
@@ -60,16 +92,22 @@ export async function getSession(): Promise<AppSession | null> {
 /**
  * Requires an authenticated session. Anonymous callers are redirected to
  * `/sign-in?next=<original>` so they land back where they started.
+ *
+ * When Supabase isn't configured we return a preview session instead of
+ * crashing on `createServerClient("", "")`. This keeps the temporary
+ * sign-in preview buttons working before the backend is provisioned;
+ * once env vars are set, the real auth path takes over.
  */
 export async function requireSession(nextPath?: string): Promise<AppSession> {
-  const session = await getSession();
-  if (!session) {
-    const target = nextPath
-      ? `/sign-in?next=${encodeURIComponent(nextPath)}`
-      : "/sign-in";
-    redirect(target);
+  if (!isSupabaseConfigured()) {
+    return buildPreviewSession();
   }
-  return session;
+  const session = await getSession();
+  if (session) return session;
+  const target = nextPath
+    ? `/sign-in?next=${encodeURIComponent(nextPath)}`
+    : "/sign-in";
+  redirect(target);
 }
 
 /**

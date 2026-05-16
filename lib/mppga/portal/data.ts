@@ -1,7 +1,12 @@
 import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
-import type { AppSession } from "@/lib/supabase/session";
+import { isPreviewSession, type AppSession } from "@/lib/supabase/session";
+import {
+  previewDirectoryListing,
+  previewMemberOverview,
+  previewRegistrations,
+} from "@/lib/mppga/portal/preview";
 import type {
   BillingStatus,
   EventPaymentStatus,
@@ -63,6 +68,7 @@ export interface MemberRegistration {
  */
 export const loadMemberOverview = cache(
   async (session: AppSession): Promise<MemberOverview> => {
+    if (isPreviewSession(session)) return previewMemberOverview();
     const supabase = await createClient();
     const profileId = session.user.id;
 
@@ -122,6 +128,7 @@ export const loadMemberOverview = cache(
 
 export const loadDirectoryListing = cache(
   async (session: AppSession): Promise<MemberDirectoryListing | null> => {
+    if (isPreviewSession(session)) return previewDirectoryListing();
     const supabase = await createClient();
     const { data } = await supabase
       .from("directory_listings")
@@ -172,6 +179,7 @@ interface EventRow {
 
 export const loadMemberRegistrations = cache(
   async (session: AppSession): Promise<MemberRegistration[]> => {
+    if (isPreviewSession(session)) return previewRegistrations();
     const supabase = await createClient();
     const { data: regs } = await supabase
       .from("event_registrations")

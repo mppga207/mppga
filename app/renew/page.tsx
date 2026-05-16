@@ -8,6 +8,7 @@ import {
   MembershipBadge,
   statusLabel,
 } from "@/components/mppga/portal/MembershipBadge";
+import { PreviewModeBanner } from "@/components/mppga/portal/PreviewModeBanner";
 import { requireSession } from "@/lib/supabase/session";
 import { loadMemberOverview } from "@/lib/mppga/portal/data";
 import {
@@ -96,6 +97,7 @@ export default async function RenewPage({ searchParams }: RenewPageProps) {
   return (
     <div className="min-h-screen bg-mppga-page text-mppga-ink">
       <Nav />
+      <PreviewModeBanner />
 
       <main>
         <section className="border-b border-mppga-divider bg-mppga-page py-20 md:py-24">
