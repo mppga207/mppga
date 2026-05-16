@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Calendar, MapPin, Users } from "lucide-react";
+
 import { Nav } from "@/components/mppga/landing/Nav";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { Button } from "@/components/mppga/ui/button";
-import { mockEvents, type MockEvent } from "@/lib/mppga/admin/mockEvents";
+import { reserveSpotAction } from "@/lib/events/actions";
+import { loadEventById } from "@/lib/events/load-event";
+import type { EventWithStatus } from "@/lib/events/load-event";
 
 type PageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -32,38 +36,60 @@ function formatTimeRange(start: Date, end?: Date): string {
   return `${timeFormatter.format(start)} – ${timeFormatter.format(end)}`;
 }
 
-export function generateStaticParams() {
-  return mockEvents
-    .filter((e) => e.status === "Published")
-    .map((e) => ({ id: e.id }));
+function readParam(value: string | string[] | undefined): string | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
-  const event = mockEvents.find((e) => e.id === id);
+  const event = await loadEventById(id);
   if (!event) return { title: "Event not found · MPPGA" };
   return {
     title: `${event.title} · MPPGA`,
-    description: event.description,
+    description: event.description ?? undefined,
   };
 }
 
-export default async function EventDetailPage({ params }: PageProps) {
+export default async function EventDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
-  const event = mockEvents.find((e) => e.id === id);
-  if (!event || event.status !== "Published") {
+  const event = await loadEventById(id);
+  const sp = await searchParams;
+  const registrationMessage = readParam(sp["registration"]);
+  const checkoutCancelled = readParam(sp["checkout"]) === "cancelled";
+
+  if (!event || event.status !== "published") {
     notFound();
   }
 
-  return <EventDetail event={event} />;
+  return (
+    <EventDetail
+      event={event}
+      registrationMessage={registrationMessage}
+      checkoutCancelled={checkoutCancelled}
+    />
+  );
 }
 
-function EventDetail({ event }: { event: MockEvent }) {
+function EventDetail({
+  event,
+  registrationMessage,
+  checkoutCancelled,
+}: {
+  event: EventWithStatus;
+  registrationMessage: string | null;
+  checkoutCancelled: boolean;
+}) {
   const start = new Date(event.date);
   const end = event.endDate ? new Date(event.endDate) : undefined;
-  const spotsLeft = event.capacity - event.rsvps;
-  const fillPct = Math.min(100, Math.round((event.rsvps / event.capacity) * 100));
-  const isFull = spotsLeft <= 0;
+  const spotsLeft = event.capacity - event.confirmedCount;
+  const fillPct = Math.min(
+    100,
+    Math.round((event.confirmedCount / event.capacity) * 100),
+  );
+  const isFull = event.isFull;
+  const banner = bannerForMessage(registrationMessage, checkoutCancelled);
+  const waitlistOpen = isFull && event.waitlistEnabled;
 
   return (
     <div className="min-h-screen bg-mppga-page text-mppga-ink">
@@ -80,6 +106,12 @@ function EventDetail({ event }: { event: MockEvent }) {
           <span className="mx-2">/</span>
           <span className="text-mppga-ink-soft">{event.title}</span>
         </nav>
+
+        {banner ? (
+          <div className="mb-6 rounded-md border border-mppga-divider bg-mppga-sand px-4 py-3 text-sm text-mppga-ink-soft">
+            {banner}
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px]">
           <article>
@@ -109,29 +141,18 @@ function EventDetail({ event }: { event: MockEvent }) {
               <DetailRow
                 icon={<Users className="h-4 w-4" strokeWidth={1.8} />}
                 label="Capacity"
-                value={`${event.rsvps} of ${event.capacity} registered`}
+                value={`${event.confirmedCount} of ${event.capacity} registered`}
               />
             </dl>
 
-            <section className="mt-10 border-t border-mppga-divider pt-8">
-              <h2 className="font-serif text-2xl text-mppga-ink">About this event</h2>
-              <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-mppga-ink-soft">
-                {event.description}
-              </p>
-            </section>
-
-            <section className="mt-10 border-t border-mppga-divider pt-8">
-              <h2 className="font-serif text-2xl text-mppga-ink">What to bring</h2>
-              <ul className="mt-4 space-y-2 text-sm text-mppga-ink-soft">
-                <li>· A notepad — we&rsquo;ll cover a lot</li>
-                <li>· Your own scissors if you have a favorite pair</li>
-                <li>· Lunch is provided for full-day events</li>
-              </ul>
-              <p className="mt-4 text-xs italic text-mppga-ink-muted">
-                Detailed agenda and what-to-bring list will be sent to all
-                registered attendees one week before the event.
-              </p>
-            </section>
+            {event.description ? (
+              <section className="mt-10 border-t border-mppga-divider pt-8">
+                <h2 className="font-serif text-2xl text-mppga-ink">About this event</h2>
+                <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-mppga-ink-soft">
+                  {event.description}
+                </p>
+              </section>
+            ) : null}
           </article>
 
           <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -143,18 +164,18 @@ function EventDetail({ event }: { event: MockEvent }) {
               <div className="mt-5 space-y-4">
                 <PriceRow
                   label="Member price"
-                  price={formatPrice(event.memberPrice)}
+                  price={formatPrice(event.memberPriceCents)}
                   highlight
                 />
                 <PriceRow
                   label="Guest price"
-                  price={formatPrice(event.guestPrice)}
+                  price={formatPrice(event.guestPriceCents)}
                 />
               </div>
 
               <div className="mt-6 border-t border-mppga-divider pt-5">
                 <div className="flex items-center justify-between text-xs text-mppga-ink-soft">
-                  <span>{event.rsvps} registered</span>
+                  <span>{event.confirmedCount} registered</span>
                   <span>{spotsLeft > 0 ? `${spotsLeft} left` : "Full"}</span>
                 </div>
                 <div
@@ -168,14 +189,26 @@ function EventDetail({ event }: { event: MockEvent }) {
                 </div>
               </div>
 
-              <div className="mt-6 space-y-3">
-                {isFull ? (
-                  <Button size="lg" className="w-full" variant="secondary">
-                    Join the waitlist
+              <form action={reserveSpotAction} className="mt-6 space-y-3">
+                <input type="hidden" name="event_id" value={event.id} />
+                {isFull && !event.waitlistEnabled ? (
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="w-full"
+                    variant="secondary"
+                    disabled
+                  >
+                    Sold out
                   </Button>
                 ) : (
-                  <Button size="lg" className="w-full">
-                    Reserve your spot
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full"
+                    variant={waitlistOpen ? "secondary" : "primary"}
+                  >
+                    {waitlistOpen ? "Join the waitlist" : "Reserve your spot"}
                   </Button>
                 )}
                 <p className="text-center text-xs text-mppga-ink-muted">
@@ -188,7 +221,7 @@ function EventDetail({ event }: { event: MockEvent }) {
                   </Link>
                   .
                 </p>
-              </div>
+              </form>
             </div>
 
             <p className="mt-4 rounded-md border border-mppga-divider bg-mppga-page p-4 text-[11px] leading-relaxed text-mppga-ink-muted">
@@ -202,6 +235,29 @@ function EventDetail({ event }: { event: MockEvent }) {
       <Footer />
     </div>
   );
+}
+
+function bannerForMessage(
+  registrationMessage: string | null,
+  checkoutCancelled: boolean,
+): string | null {
+  if (checkoutCancelled) {
+    return "No charge was made. You can try again whenever you're ready.";
+  }
+  switch (registrationMessage) {
+    case "waitlisted":
+      return "You're on the waitlist. We'll email you if a spot opens up.";
+    case "already_registered":
+      return "You're already registered for this event.";
+    case "event_full":
+      return "This event filled up before we could save your spot.";
+    case "missing_event":
+      return "We couldn't find that event. Try refreshing.";
+    case "error":
+      return "Something went wrong. Try again in a moment, or email mppga207@gmail.com.";
+    default:
+      return null;
+  }
 }
 
 function DetailRow({

@@ -7,14 +7,21 @@ import {
   Mail,
   MapPin,
 } from "lucide-react";
+
 import { Nav } from "@/components/mppga/landing/Nav";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { Button } from "@/components/mppga/ui/button";
-import { mockEvents, type MockEvent } from "@/lib/mppga/admin/mockEvents";
+import { requireSession } from "@/lib/supabase/session";
+import { createClient } from "@/lib/supabase/server";
+import type {
+  EventPaymentStatus,
+  EventPricingTier,
+  EventRegistrationStatus,
+} from "@/types/database";
 
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ session_id?: string; pricing?: string }>;
+  searchParams: Promise<{ session_id?: string }>;
 };
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -39,13 +46,27 @@ function formatTimeRange(start: Date, end?: Date): string {
   return `${timeFmt.format(start)} – ${timeFmt.format(end)}`;
 }
 
+interface RegistrationView {
+  id: string;
+  pricePaid: number;
+  pricingTier: EventPricingTier;
+  paymentStatus: EventPaymentStatus;
+  status: EventRegistrationStatus;
+}
+
+interface EventView {
+  id: string;
+  title: string;
+  date: string;
+  endDate: string | null;
+  location: string;
+}
+
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
-  const event = mockEvents.find((e) => e.id === id);
-  if (!event) return { title: "Confirmation · MPPGA" };
   return {
-    title: `You're in: ${event.title} · MPPGA`,
-    description: `Confirmation for ${event.title}.`,
+    title: `Event confirmation · MPPGA`,
+    description: `Confirmation for event ${id}.`,
   };
 }
 
@@ -54,37 +75,73 @@ export default async function EventConfirmationPage({
   searchParams,
 }: PageProps) {
   const { id } = await params;
-  const { session_id, pricing } = await searchParams;
-  const event = mockEvents.find((e) => e.id === id);
+  const { session_id } = await searchParams;
+  const session = await requireSession(`/events/${id}/confirmation`);
 
-  // Per auth-middleware.md §3.2: 404 (not 403) if the confirmation can't be
-  // tied to a real event the requester owns. Shell stage trusts the URL —
-  // production will resolve the registration via the user-scoped client.
-  if (!event || event.status !== "Published") {
+  const supabase = await createClient();
+
+  // RLS ensures the requester can only see their own registration row.
+  // Per auth-middleware.md §3.2 — 404, not 403, when no row matches.
+  const { data: registration } = await supabase
+    .from("event_registrations")
+    .select(
+      "id, event_id, price_paid, pricing_tier, payment_status, status",
+    )
+    .eq("event_id", id)
+    .eq("profile_id", session.user.id)
+    .neq("status", "cancelled")
+    .order("registered_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!registration) {
     notFound();
   }
 
-  const pricingTier: "member" | "guest" = pricing === "guest" ? "guest" : "member";
-  const pricePaid =
-    pricingTier === "member" ? event.memberPrice : event.guestPrice;
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, title, date, end_date, location, status")
+    .eq("id", id)
+    .maybeSingle();
+  if (!event || event.status !== "published") {
+    notFound();
+  }
 
-  return <Confirmation event={event} pricePaid={pricePaid} pricingTier={pricingTier} sessionId={session_id} />;
+  return (
+    <Confirmation
+      event={{
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        endDate: event.end_date,
+        location: event.location,
+      }}
+      registration={{
+        id: registration.id,
+        pricePaid: registration.price_paid,
+        pricingTier: registration.pricing_tier,
+        paymentStatus: registration.payment_status,
+        status: registration.status,
+      }}
+      sessionId={session_id}
+    />
+  );
 }
 
 function Confirmation({
   event,
-  pricePaid,
-  pricingTier,
+  registration,
   sessionId,
 }: {
-  event: MockEvent;
-  pricePaid: number;
-  pricingTier: "member" | "guest";
+  event: EventView;
+  registration: RegistrationView;
   sessionId: string | undefined;
 }) {
   const start = new Date(event.date);
   const end = event.endDate ? new Date(event.endDate) : undefined;
-  const isFree = pricePaid === 0;
+  const isFree = registration.paymentStatus === "free";
+  const isPending = registration.paymentStatus === "pending";
+  const isWaitlisted = registration.status === "waitlisted";
 
   return (
     <div className="min-h-screen bg-mppga-page text-mppga-ink">
@@ -112,15 +169,21 @@ function Confirmation({
           </span>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-teal">
-              You’re in
+              {isWaitlisted ? "Waitlisted" : "You’re in"}
             </p>
             <h1 className="mt-2 font-serif text-3xl leading-tight text-mppga-ink md:text-5xl">
-              See you at {event.title}.
+              {isWaitlisted
+                ? `You're on the waitlist for ${event.title}.`
+                : `See you at ${event.title}.`}
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft md:text-base">
-              {isFree
-                ? "Your seat is confirmed. A confirmation email is on its way with everything you need to know."
-                : "Your payment went through and your seat is confirmed. A receipt and confirmation email are on the way."}
+              {isWaitlisted
+                ? "We'll email you the moment a spot opens up."
+                : isFree
+                  ? "Your seat is confirmed. A confirmation email is on its way with everything you need to know."
+                  : isPending
+                    ? "We received your registration. Payment is still being processed — you'll get a receipt once it clears."
+                    : "Your payment went through and your seat is confirmed. A receipt and confirmation email are on the way."}
             </p>
           </div>
         </header>
@@ -151,11 +214,11 @@ function Confirmation({
             />
             <DetailRow
               icon={<CheckCircle2 className="h-4 w-4" strokeWidth={1.8} />}
-              label={isFree ? "Registration" : "Amount paid"}
+              label={isFree ? "Registration" : "Amount"}
               value={
                 isFree
                   ? "Free · member"
-                  : `${formatPrice(pricePaid)} · ${pricingTier === "member" ? "member" : "guest"} price`
+                  : `${formatPrice(registration.pricePaid)} · ${registration.pricingTier} price`
               }
             />
           </dl>

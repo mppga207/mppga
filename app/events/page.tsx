@@ -1,7 +1,7 @@
 import { Nav } from "@/components/mppga/landing/Nav";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { PublicEventCard } from "@/components/mppga/events/PublicEventCard";
-import { mockEvents } from "@/lib/mppga/admin/mockEvents";
+import { loadPublishedEvents } from "@/lib/events/load-event";
 
 export const metadata = {
   title: "Events · MPPGA",
@@ -9,13 +9,13 @@ export const metadata = {
     "Workshops, clinics, and mixers from the Maine Professional Pet Groomers Association.",
 };
 
-export default function EventsPage() {
+export default async function EventsPage() {
+  const events = await loadPublishedEvents();
   const now = Date.now();
-  const published = mockEvents.filter((e) => e.status === "Published");
-  const upcoming = published
+  const upcoming = events
     .filter((e) => new Date(e.date).getTime() >= now)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const past = published
+  const past = events
     .filter((e) => new Date(e.date).getTime() < now)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

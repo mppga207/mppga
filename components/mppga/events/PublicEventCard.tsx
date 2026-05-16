@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
-import type { MockEvent } from "@/lib/mppga/admin/mockEvents";
+
+import type { PublicEvent } from "@/lib/events/load-event";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   weekday: "short",
@@ -21,11 +22,11 @@ function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(0)}`;
 }
 
-export function PublicEventCard({ event }: { event: MockEvent }) {
+export function PublicEventCard({ event }: { event: PublicEvent }) {
   const start = new Date(event.date);
-  const spotsLeft = event.capacity - event.rsvps;
+  const spotsLeft = event.capacity - event.confirmedCount;
   const isAlmostFull = spotsLeft > 0 && spotsLeft <= 5;
-  const isFull = spotsLeft <= 0;
+  const isFull = event.isFull;
 
   return (
     <Link
@@ -56,26 +57,28 @@ export function PublicEventCard({ event }: { event: MockEvent }) {
         </div>
       </div>
 
-      <p className="px-6 pb-6 text-sm leading-relaxed text-mppga-ink-soft">
-        {event.description}
-      </p>
+      {event.description ? (
+        <p className="px-6 pb-6 text-sm leading-relaxed text-mppga-ink-soft">
+          {event.description}
+        </p>
+      ) : null}
 
       <div className="mt-auto flex items-center justify-between border-t border-mppga-divider bg-mppga-page px-6 py-4">
         <div className="flex items-baseline gap-1.5 text-sm">
           <span className="font-medium text-mppga-ink">
-            {formatPrice(event.memberPrice)}
+            {formatPrice(event.memberPriceCents)}
           </span>
           <span className="text-xs text-mppga-ink-muted">members</span>
           <span className="text-mppga-ink-muted">·</span>
           <span className="font-medium text-mppga-ink">
-            {formatPrice(event.guestPrice)}
+            {formatPrice(event.guestPriceCents)}
           </span>
           <span className="text-xs text-mppga-ink-muted">guests</span>
         </div>
 
         {isFull ? (
           <span className="text-xs font-medium text-mppga-ink-muted">
-            Waitlist open
+            {event.waitlistEnabled ? "Waitlist open" : "Full"}
           </span>
         ) : isAlmostFull ? (
           <span className="text-xs font-medium text-mppga-teal">

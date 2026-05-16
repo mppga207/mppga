@@ -320,6 +320,24 @@ export type Database = {
         Args: { event: JsonValue };
         Returns: JsonValue;
       };
+      reserve_event_spot: {
+        Args: {
+          p_event_id: UUID;
+          p_profile_id: UUID;
+          p_pricing_tier: EventPricingTier;
+          p_price_cents: number;
+          p_payment_status?: EventPaymentStatus;
+        };
+        Returns: EventRegistrationsRow;
+      };
+      promote_next_waitlisted: {
+        Args: { p_event_id: UUID };
+        Returns: EventRegistrationsRow | null;
+      };
+      expire_stale_pending_registrations: {
+        Args: { p_expiry_hours: number };
+        Returns: { registration_id: UUID; event_id: UUID }[];
+      };
     };
     Enums: Record<string, never>;
   };
