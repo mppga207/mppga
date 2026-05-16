@@ -126,10 +126,10 @@ export default function RenewPage() {
                   Stripe Customer Portal link is being wired up. In the meantime,
                   email{" "}
                   <a
-                    href="mailto:hello@mppga.org"
+                    href="mailto:mppga207@gmail.com"
                     className="text-mppga-teal hover:text-mppga-teal-hover"
                   >
-                    hello@mppga.org
+                    mppga207@gmail.com
                   </a>{" "}
                   and we’ll send you a renewal link by hand.
                 </p>
@@ -174,10 +174,10 @@ export default function RenewPage() {
                     A board member needs to lift the hold before renewal can
                     proceed. Send a note to{" "}
                     <a
-                      href="mailto:hello@mppga.org"
+                      href="mailto:mppga207@gmail.com"
                       className="text-mppga-teal hover:text-mppga-teal-hover"
                     >
-                      hello@mppga.org
+                      mppga207@gmail.com
                     </a>{" "}
                     and we’ll get back to you.
                   </p>

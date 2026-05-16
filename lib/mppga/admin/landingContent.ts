@@ -131,7 +131,7 @@ export const defaultLandingContent: LandingContent = {
     associationLine1: "Maine Professional Pet Groomers Association",
     associationLine2: "PO Box —, Portland, ME",
     contactLabel: "Contact",
-    contactEmail: "hello@mppga.org",
+    contactEmail: "mppga207@gmail.com",
     contactPhone: "(207) 555-0117",
   },
 };
