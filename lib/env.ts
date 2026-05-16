@@ -13,8 +13,21 @@ function requireServerEnv(key: string): string {
   return value;
 }
 
+// Vercel exposes VERCEL_URL (per-deployment) and VERCEL_PROJECT_PRODUCTION_URL
+// (stable production domain) without a protocol. Falls back to localhost for
+// `pnpm dev`.
+function resolveSiteUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  const vercelHost =
+    process.env.VERCEL_ENV === "production"
+      ? process.env.VERCEL_PROJECT_PRODUCTION_URL
+      : process.env.VERCEL_URL;
+  if (vercelHost) return `https://${vercelHost}`;
+  return "http://localhost:3000";
+}
+
 export const env = {
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  siteUrl: resolveSiteUrl(),
 
   supabase: {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
