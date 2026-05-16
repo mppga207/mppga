@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/mppga/ui/button";
 import { mockEvents } from "@/lib/mppga/admin/mockEvents";
 import { fadeUp, stagger, viewportOnce } from "./motion";
+import { PhotoPlaceholder } from "./PhotoPlaceholder";
 
 const monthFmt = new Intl.DateTimeFormat("en-US", { month: "short" });
 const dayFmt = new Intl.DateTimeFormat("en-US", { day: "2-digit" });
@@ -64,8 +65,9 @@ export function EventsTeaser() {
         </motion.div>
 
         <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {events.map((event) => {
+          {events.map((event, i) => {
             const start = new Date(event.date);
+            const tone = i % 2 === 0 ? "deep" : "teal";
             return (
               <motion.article
                 key={event.id}
@@ -75,25 +77,26 @@ export function EventsTeaser() {
               >
                 <Link
                   href={`/events/${event.id}`}
-                  className="relative flex h-28 items-center gap-3 bg-mppga-teal-deep px-5"
+                  className="relative block"
+                  aria-label={event.title}
                 >
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 opacity-30"
-                    style={{
-                      background:
-                        "radial-gradient(60% 100% at 80% 30%, rgba(201,169,97,0.4), transparent 70%)",
-                    }}
+                  <PhotoPlaceholder
+                    tone={tone}
+                    label={`Photo · ${event.location}`}
+                    className="aspect-[16/10]"
+                    rounded="rounded-none"
+                    showIcon={false}
                   />
-                  <div className="relative flex flex-col items-center rounded-md bg-white/10 px-3 py-2 backdrop-blur-sm">
-                    <span className="text-[10px] uppercase tracking-[0.18em] text-mppga-gold-soft">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+                  <div className="absolute left-5 top-5 flex flex-col items-center rounded-md bg-white/95 px-3 py-2 shadow-md ring-1 ring-mppga-divider">
+                    <span className="text-[10px] uppercase tracking-[0.18em] text-mppga-teal">
                       {monthFmt.format(start)}
                     </span>
-                    <span className="font-serif text-2xl leading-none text-white">
+                    <span className="font-serif text-2xl leading-none text-mppga-teal-darker">
                       {dayFmt.format(start)}
                     </span>
                   </div>
-                  <div className="relative flex items-center gap-1.5 text-xs text-white/80">
+                  <div className="absolute bottom-4 left-5 right-5 flex items-center gap-1.5 text-xs text-white drop-shadow">
                     <Calendar className="h-3.5 w-3.5" strokeWidth={1.8} />
                     {event.location}
                   </div>

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Quote } from "lucide-react";
 import { fadeUp, stagger, viewportOnce } from "./motion";
+import { PhotoPlaceholder } from "./PhotoPlaceholder";
 
 export function WhoWeAre() {
   return (
@@ -13,8 +14,8 @@ export function WhoWeAre() {
       variants={stagger}
       className="relative border-b border-mppga-divider bg-mppga-sand py-24"
     >
-      <div className="mx-auto grid max-w-[1140px] grid-cols-1 gap-14 px-6 md:grid-cols-[1fr_1.25fr]">
-        <motion.div variants={fadeUp}>
+      <div className="mx-auto grid max-w-[1140px] grid-cols-1 gap-12 px-6 md:grid-cols-[1fr_1.15fr] md:gap-14">
+        <motion.div variants={fadeUp} className="flex flex-col">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-mppga-teal">
             Who we are
           </p>
@@ -22,6 +23,22 @@ export function WhoWeAre() {
             Built by Maine groomers, for Maine groomers.
           </h2>
           <div className="mt-6 h-px w-16 bg-mppga-gold" />
+
+          <motion.div variants={fadeUp} className="relative mt-10">
+            <PhotoPlaceholder
+              tone="sand"
+              label="Photo placeholder · Maine grooming team"
+              className="aspect-[4/5] shadow-xl shadow-mppga-teal/10 md:aspect-[3/4]"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -bottom-6 -right-6 hidden h-28 w-28 rounded-full border border-mppga-gold/40 md:block"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -left-4 -top-4 hidden h-20 w-20 rounded-full border border-mppga-teal/20 md:block"
+            />
+          </motion.div>
         </motion.div>
 
         <div className="space-y-6">
@@ -47,6 +64,21 @@ export function WhoWeAre() {
             of pet grooming in Maine and promote growth in the industry for
             years to come.
           </motion.p>
+
+          <motion.div variants={fadeUp} className="grid grid-cols-2 gap-4">
+            <PhotoPlaceholder
+              tone="teal"
+              label="Photo · grooming detail"
+              className="aspect-[4/3] shadow-sm"
+              rounded="rounded-xl"
+            />
+            <PhotoPlaceholder
+              tone="sand"
+              label="Photo · workshop in session"
+              className="aspect-[4/3] shadow-sm"
+              rounded="rounded-xl"
+            />
+          </motion.div>
 
           <motion.blockquote
             variants={fadeUp}
