@@ -150,6 +150,7 @@ Do not infer. Read the relevant file before engaging with each subsystem.
 - Voting system logic: `@.claude/rules/voting.md`
 - Event ticketing flow: `@.claude/rules/events.md`
 - Brand: colors, fonts, logo usage: `@.claude/rules/brand.md`
+- Phase 1 buildout — sequenced punch list, blocking decisions, track dependencies: `@.claude/rules/phase-1-buildout.md`
 
 -----
 
