@@ -4,11 +4,16 @@ import { motion } from "framer-motion";
 import { GraduationCap, ShieldCheck, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { fadeUp, stagger, viewportOnce } from "./motion";
+import { PhotoPlaceholder } from "./PhotoPlaceholder";
+
+type PillarTone = "teal" | "sand";
 
 type Pillar = {
   icon: LucideIcon;
   title: string;
   body: string;
+  photoLabel: string;
+  tone: PillarTone;
 };
 
 const pillars: Pillar[] = [
@@ -16,16 +21,22 @@ const pillars: Pillar[] = [
     icon: Users,
     title: "Community & Support",
     body: "Connecting groomers, salon owners, mobile stylists, educators, and apprentices throughout Maine for collaboration, support, and professional advancement.",
+    photoLabel: "Photo · members gathering",
+    tone: "teal",
   },
   {
     icon: ShieldCheck,
     title: "Safety & Standards",
     body: "We embrace the PPGSA Standards of Care, Safety and Sanitation — created by grooming professionals to ensure humane practice and clean, safe environments for pets in every salon.",
+    photoLabel: "Photo · salon at work",
+    tone: "sand",
   },
   {
     icon: GraduationCap,
     title: "Education & Growth",
     body: "We support continuing education, workshops, and professional development that helps Maine groomers stay connected and thrive.",
+    photoLabel: "Photo · workshop instruction",
+    tone: "teal",
   },
 ];
 
@@ -65,21 +76,37 @@ export function WhyJoin() {
                 key={p.title}
                 variants={fadeUp}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-mppga-divider bg-mppga-card p-7 shadow-sm transition-shadow hover:shadow-xl hover:shadow-mppga-teal/10"
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-mppga-divider bg-mppga-card shadow-sm transition-shadow hover:shadow-xl hover:shadow-mppga-teal/10"
               >
                 <span
                   aria-hidden
-                  className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-mppga-teal via-mppga-gold to-mppga-teal opacity-0 transition-opacity group-hover:opacity-100"
+                  className="absolute inset-x-0 top-0 z-10 h-0.5 bg-gradient-to-r from-mppga-teal via-mppga-gold to-mppga-teal opacity-0 transition-opacity group-hover:opacity-100"
                 />
-                <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-mppga-teal-tint to-mppga-sand text-mppga-teal-deep ring-1 ring-mppga-gold/30">
-                  <Icon className="h-6 w-6" strokeWidth={1.6} />
-                </span>
-                <h3 className="mt-5 font-serif text-2xl text-mppga-ink">
-                  {p.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
-                  {p.body}
-                </p>
+
+                <div className="relative">
+                  <PhotoPlaceholder
+                    tone={p.tone}
+                    label={p.photoLabel}
+                    className="aspect-[16/10]"
+                    rounded="rounded-none"
+                    showIcon={false}
+                  />
+                  <span
+                    aria-hidden
+                    className="absolute -bottom-7 left-7 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-mppga-teal-tint to-mppga-sand text-mppga-teal-deep shadow-md ring-1 ring-mppga-gold/30"
+                  >
+                    <Icon className="h-6 w-6" strokeWidth={1.6} />
+                  </span>
+                </div>
+
+                <div className="flex flex-1 flex-col p-7 pt-12">
+                  <h3 className="font-serif text-2xl text-mppga-ink">
+                    {p.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
+                    {p.body}
+                  </p>
+                </div>
               </motion.article>
             );
           })}
