@@ -239,6 +239,77 @@ Track 1 (the `memberships` table and tier rows exist), Track 2
 - `/dashboard/billing` "Manage in Stripe" opens a real portal session.
 - A failed test charge fires the dunning email immediately.
 
+### Status (2026-05-16)
+
+Shipped (all code-only — no Stripe account provisioned yet):
+
+- `lib/env.ts` exposes `env.stripe.secretKey`,
+  `env.stripe.webhookSecret`, `env.stripe.publishableKey`.
+- `lib/stripe/client.ts` — lazy SDK init pinned to
+  `apiVersion: '2026-04-22.dahlia'`.
+- `lib/stripe/subscription-checkout.ts` —
+  `createSubscriptionCheckoutSession(profileId)`. Reads tier
+  `stripe_price_id`; tags the session with
+  `metadata.flow = 'billing'` and `metadata.profile_id` so the
+  webhook can route it. Returns structured failure when the tier
+  has no price yet (Stripe not provisioned) instead of throwing.
+- `lib/stripe/customer-portal-session.ts` —
+  `createCustomerPortalSession(profileId)`. Gracefully handles
+  `no_customer` for Awaiting_Payment / Honorary members.
+- `lib/stripe/tier-price-update.ts` — admin-driven dues edit per
+  `stripe-architecture.md` §6.5. `updateTierDues` does the
+  create-new + archive-old + swap-FK + migrate-subscribers dance
+  with `proration_behavior: 'none'`. `seedTierPrice` is the
+  first-time bootstrap path that creates the Stripe Product +
+  initial Price. Track 6 calls these from the admin tier editor.
+- `app/api/webhooks/stripe/route.ts` is the real handler.
+  Signature verification reads the raw body before parsing.
+  Routes `checkout.session.completed`, `invoice.paid`,
+  `invoice.payment_failed`, `customer.subscription.updated`,
+  `customer.subscription.deleted`. Routes
+  `checkout.session.completed` by `metadata.flow` so the same
+  endpoint serves billing + tickets (Track 7 hooks in there).
+  Calls `invokeMembershipStatusSync` for status flips — never
+  writes `memberships.status` directly. Calls
+  `sendTransactional` for receipt / dunning emails — dedup via
+  `email_send_log` lives in that helper.
+- `supabase/functions/dunning-cron/index.ts` — daily sweep over
+  `billing_status = 'past_due'` memberships. Computes the next
+  retry day from `email_settings.dunning_retry_days`, dedups by
+  `(profile_id, 'dunning', subscription_id:day_bucket)` so each
+  retry day fires at most once per past_due episode.
+- `lib/stripe/actions.ts` — server actions
+  `startSubscriptionCheckout` and `openCustomerPortal` that
+  bridge the page-level forms to the Stripe creators above.
+- `/dashboard/checkout` Pay button now submits to
+  `startSubscriptionCheckout`. Falls back to a disabled state with
+  explanatory copy when the selected tier has no
+  `stripe_price_id` yet.
+- `/dashboard/billing` "Manage in Stripe" button submits to
+  `openCustomerPortal`.
+
+Outstanding (waiting on Stripe credentials):
+
+- Run `seedTierPrice` from the admin Tier configuration tab
+  (Track 6) once per tier and per environment to populate
+  `tiers.stripe_product_id` and `tiers.stripe_price_id`. Until
+  then `startSubscriptionCheckout` returns
+  `missing_price` and the page shows the disabled state.
+- `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
+  smoke test once the Stripe CLI is connected to a test-mode
+  account. Verify `invoice.paid` extends `expires_at` and the
+  sync function flips status to `Active`.
+- Configure the customer-receipt footer per environment in the
+  Stripe Dashboard with the 501(c)(6) disclaimer
+  (`stripe-architecture.md` §5.1). Manual step; can't be
+  scripted via the API.
+- Bind the `dunning-cron` Edge Function to a daily schedule via
+  `supabase/config.toml` (or the Dashboard) and deploy with
+  `supabase functions deploy dunning-cron`.
+- Welcome / renewal-receipt / dunning email bodies are stubbed
+  with console.info. Track 4 (Resend) swaps in the real send;
+  call sites stay the same.
+
 -----
 
 ## 7. Track 4 — Resend email layer

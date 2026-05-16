@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/mppga/admin/StatusBadge";
 import { PortalPageHeader } from "@/components/mppga/portal/PortalPageHeader";
 import { MembershipBadge } from "@/components/mppga/portal/MembershipBadge";
 import { mockInvoices, mockMember } from "@/lib/mppga/portal/mockMember";
+import { openCustomerPortal } from "@/lib/stripe/actions";
 
 const longDateFmt = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -28,9 +29,11 @@ export default function BillingPage() {
         title="Billing"
         description="Your membership, payment method, and past invoices — all handled through Stripe's secure billing portal."
         actions={
-          <Button variant="primary" disabled>
-            Manage in Stripe
-          </Button>
+          <form action={openCustomerPortal}>
+            <Button type="submit" variant="primary">
+              Manage in Stripe
+            </Button>
+          </form>
         }
       />
 
