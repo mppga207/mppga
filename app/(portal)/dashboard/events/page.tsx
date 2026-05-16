@@ -1,12 +1,15 @@
 import { CalendarDays, MapPin } from "lucide-react";
+
 import { Card } from "@/components/mppga/admin/Card";
 import { Button } from "@/components/mppga/ui/button";
 import { StatusBadge } from "@/components/mppga/admin/StatusBadge";
 import { PortalPageHeader } from "@/components/mppga/portal/PortalPageHeader";
+import { requireSession } from "@/lib/supabase/session";
 import {
-  mockRegistrations,
-  type MockRegistration,
-} from "@/lib/mppga/portal/mockMember";
+  loadMemberRegistrations,
+  type MemberRegistration,
+} from "@/lib/mppga/portal/data";
+import type { EventPaymentStatus } from "@/types/database";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -14,13 +17,13 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-function formatPrice(cents: number, status: MockRegistration["paymentStatus"]): string {
+function formatPrice(cents: number, status: EventPaymentStatus): string {
   if (status === "free" || cents === 0) return "Free";
   return `$${(cents / 100).toFixed(0)}`;
 }
 
 function paymentTone(
-  status: MockRegistration["paymentStatus"],
+  status: EventPaymentStatus,
 ): "teal" | "neutral" | "warn" | "muted" {
   switch (status) {
     case "paid":
@@ -33,12 +36,15 @@ function paymentTone(
   }
 }
 
-export default function MyEventsPage() {
+export default async function MyEventsPage() {
+  const session = await requireSession("/dashboard/events");
+  const registrations = await loadMemberRegistrations(session);
+
   const now = Date.now();
-  const upcoming = mockRegistrations.filter(
+  const upcoming = registrations.filter(
     (r) => new Date(r.eventDateISO).getTime() >= now,
   );
-  const past = mockRegistrations.filter(
+  const past = registrations.filter(
     (r) => new Date(r.eventDateISO).getTime() < now,
   );
 
@@ -91,7 +97,7 @@ export default function MyEventsPage() {
   );
 }
 
-function RegistrationRow({ registration }: { registration: MockRegistration }) {
+function RegistrationRow({ registration }: { registration: MemberRegistration }) {
   const waitlisted = registration.registrationStatus === "waitlisted";
 
   return (

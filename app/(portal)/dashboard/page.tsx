@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { CalendarDays, MapPin, ShieldCheck } from "lucide-react";
+
 import { Card } from "@/components/mppga/admin/Card";
 import { Button } from "@/components/mppga/ui/button";
 import { PortalPageHeader } from "@/components/mppga/portal/PortalPageHeader";
-import { MembershipBadge } from "@/components/mppga/portal/MembershipBadge";
 import {
-  mockMember,
-  mockRegistrations,
+  MembershipBadge,
   statusLabel,
-} from "@/lib/mppga/portal/mockMember";
+} from "@/components/mppga/portal/MembershipBadge";
+import { requireSession } from "@/lib/supabase/session";
+import {
+  loadDirectoryListing,
+  loadMemberOverview,
+  loadMemberRegistrations,
+} from "@/lib/mppga/portal/data";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -16,23 +21,32 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-const shortDateFmt = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "2-digit",
-  year: "numeric",
-});
+export default async function DashboardOverviewPage() {
+  const session = await requireSession("/dashboard");
+  const [member, listing, registrations] = await Promise.all([
+    loadMemberOverview(session),
+    loadDirectoryListing(session),
+    loadMemberRegistrations(session),
+  ]);
 
-export default function DashboardOverviewPage() {
-  const upcoming = mockRegistrations
+  const now = Date.now();
+  const upcoming = registrations
     .filter((r) => r.registrationStatus !== "cancelled")
-    .filter((r) => new Date(r.eventDateISO).getTime() > Date.now())
+    .filter((r) => new Date(r.eventDateISO).getTime() > now)
     .sort(
       (a, b) =>
         new Date(a.eventDateISO).getTime() - new Date(b.eventDateISO).getTime(),
     )
     .slice(0, 3);
 
-  const firstName = mockMember.fullName.split(" ")[0] ?? mockMember.fullName;
+  const displayName = member.fullName || member.email;
+  const firstName = displayName.split(" ")[0] ?? displayName;
+  const listingCity = listing
+    ? `${listing.city}, ${listing.state}`
+    : null;
+  const listingLive = listing?.isVisible ?? false;
+  const showRenewBanner =
+    member.status === "Grace_Period" || member.status === "Lapsed";
 
   return (
     <div className="space-y-10">
@@ -45,31 +59,22 @@ export default function DashboardOverviewPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="p-5">
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
             Membership
           </p>
           <div className="mt-3">
-            <MembershipBadge status={mockMember.status} />
+            <MembershipBadge status={member.status} />
           </div>
           <p className="mt-3 text-sm text-mppga-ink-soft">
-            {mockMember.tierName} · renews {dateFmt.format(new Date(mockMember.expiresAtISO))}
-          </p>
-        </Card>
-
-        <Card className="p-5">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
-            CE this year
-          </p>
-          <p className="mt-3 font-serif text-3xl tracking-tight text-mppga-teal-deep">
-            {mockMember.ceCreditsThisYear}
-            <span className="text-mppga-ink-muted">
-              /{mockMember.ceCreditsRequired}
-            </span>
-          </p>
-          <p className="mt-2 text-xs text-mppga-ink-soft">
-            hours logged toward your annual requirement
+            {member.tierName ?? "Tier not assigned"}
+            {member.expiresAt ? (
+              <>
+                {" "}
+                · renews {dateFmt.format(new Date(member.expiresAt))}
+              </>
+            ) : null}
           </p>
         </Card>
 
@@ -78,24 +83,22 @@ export default function DashboardOverviewPage() {
             Directory listing
           </p>
           <p className="mt-3 font-serif text-xl text-mppga-ink">
-            {mockMember.directoryListed ? "Live" : "Hidden"}
+            {listing ? (listingLive ? "Live" : "Hidden") : "Not set up"}
           </p>
           <p className="mt-2 text-xs text-mppga-ink-soft">
-            {mockMember.city}
+            {listingCity ?? "Add your business location"}
           </p>
         </Card>
 
         <Card className="p-5">
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
-            Ethics signature
+            Upcoming events
           </p>
-          <p className="mt-3 font-serif text-xl text-mppga-ink">
-            {mockMember.ethicsSignedAtISO ? "On file" : "Not signed"}
+          <p className="mt-3 font-serif text-3xl tracking-tight text-mppga-teal-deep">
+            {upcoming.length}
           </p>
           <p className="mt-2 text-xs text-mppga-ink-soft">
-            {mockMember.ethicsSignedAtISO
-              ? `Signed ${shortDateFmt.format(new Date(mockMember.ethicsSignedAtISO))} · ${mockMember.ethicsVersion}`
-              : "Please sign the current version"}
+            registered for the months ahead
           </p>
         </Card>
       </div>
@@ -134,7 +137,7 @@ export default function DashboardOverviewPage() {
                       <p className="text-mppga-teal-deep">Confirmed</p>
                     )}
                     <Link
-                      href={`/dashboard/events`}
+                      href="/dashboard/events"
                       className="text-mppga-teal hover:text-mppga-teal-hover"
                     >
                       View details
@@ -170,10 +173,10 @@ export default function DashboardOverviewPage() {
         </Card>
       </div>
 
-      {mockMember.status === "Grace_Period" || mockMember.status === "Lapsed" ? (
+      {showRenewBanner ? (
         <Card className="border-mppga-sand-deep bg-mppga-sand p-6">
           <p className="font-serif text-lg text-mppga-ink">
-            Your membership is in {statusLabel(mockMember.status).toLowerCase()}.
+            Your membership is in {statusLabel(member.status).toLowerCase()}.
           </p>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-mppga-ink-soft">
             Renew today to keep your directory listing live and your member event pricing intact.
