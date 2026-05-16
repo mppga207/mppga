@@ -250,6 +250,12 @@ type SiteSettingsRow = {
   updated_at: Timestamp;
 }
 
+type SiteContentRow = {
+  id: UUID;
+  content: JsonValue;
+  updated_at: Timestamp;
+}
+
 type EmailTemplatesRow = {
   id: UUID;
   key: string;
@@ -309,6 +315,7 @@ export type Database = {
         EmailTemplatesRow,
         "key" | "name" | "subject" | "body_html" | "body_text"
       >;
+      site_content: TableSpec<SiteContentRow, never>;
     };
     Views: Record<string, never>;
     Functions: {
