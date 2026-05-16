@@ -301,7 +301,11 @@ Renewal reminders (the heads-up emails 30/7/1 days before expiry)
 come from a scheduled job querying `expires_at`, not from any
 webhook event. See `email-automation.md` §3.2.
 
-### 6.3 Tier changes (proration)
+### 6.3 Per-member tier changes (proration)
+
+Distinct from § 6.5 — this is when an admin moves a single member
+between tiers. § 6.5 is when the price of a tier itself changes for
+everyone on it.
 
 Admin moves a member from Professional to Corporate (or vice versa)
 via the Members admin tab. The flow:
@@ -340,6 +344,105 @@ state machine.
 
 Never delete the `memberships` row. Cancellation is a status, not
 a destruction.
+
+### 6.5 Tier price changes (admin-driven)
+
+The dues amount for a tier is editable from the admin portal
+(Settings → Tier configuration, `admin-portal.md` §6.3). The board
+must never need to log into the Stripe dashboard to change a price.
+
+**Policy: roll over at next renewal, no proration.** Existing
+subscribers keep paying the old amount until their current billing
+period ends, then get charged the new amount on the next renewal
+invoice. No mid-cycle charges, no prorated catch-up, no refunds for
+downgrades. This matches the Wild Apricot / MemberClicks default
+and is the least surprising behavior for volunteer-run nonprofit
+billing.
+
+#### Why a "change" is actually a "create + archive"
+
+Stripe `Price` objects are immutable — you cannot edit a
+`unit_amount` in place. Every dues edit produces a new `Price` and
+retires the old one. The admin sees a single number field; the
+server does the swap.
+
+#### Flow
+
+When an admin saves a new dues amount on a tier:
+
+1. Server action calls `stripe.prices.create({ product:
+   tier.stripe_product_id, unit_amount: newAmountCents, currency:
+   'usd', recurring: { interval: 'year' } })`. Returns the new
+   `price.id`.
+2. Server action calls `stripe.prices.update(oldPriceId, { active:
+   false })` to archive the old Price. Archived Prices can still
+   bill existing subscriptions — they just disappear from
+   Checkout's product picker for new signups.
+3. Update `tiers.stripe_price_id` to the new ID and
+   `tiers.annual_dues_cents` to the new amount in a single
+   transaction.
+4. Query existing `memberships` with this `tier_id` where
+   `status IN ('Active', 'Grace_Period')` and
+   `stripe_subscription_id IS NOT NULL`. For each:
+   `stripe.subscriptions.update(sub_id, { items: [{ id, price:
+   newPriceId }], proration_behavior: 'none' })`. The
+   `proration_behavior: 'none'` flag is what enforces the
+   roll-over-at-renewal policy.
+5. Each subscription update fires
+   `customer.subscription.updated`. The handler is a no-op for
+   these — `billing_status` doesn't change, `expires_at` doesn't
+   change, status doesn't change. The dedup on `tier_id` (already
+   matching the new tier) means no follow-on writes.
+6. Log a single `admin_action_log` row with
+   `action = 'setting_change'`, payload `{ tier_id, old_price_id,
+   new_price_id, old_amount_cents, new_amount_cents,
+   subscriptions_updated: <count> }`. Not `tier_change` — that
+   value is reserved for per-member moves (§ 6.3).
+
+New signups after step 3 use the new Price automatically (the
+Checkout session creator reads `tiers.stripe_price_id`).
+
+#### Admin UX requirements
+
+The Tier configuration save button must surface a confirmation
+before submit:
+
+> Raise Professional dues from $50 → $60?
+>
+> • 47 current Professional members will pay the new amount at
+>   their next renewal.
+> • No charges happen today.
+> • Members in grace period roll over at the same point.
+
+Counts come from the same query in step 4. The wording is the
+contract between the admin's intent and what actually happens — do
+not change one without changing the other.
+
+If the new amount equals the current amount, no-op the save. Don't
+create a Price object for a non-change.
+
+#### Edge cases
+
+- **Honorary members** have `stripe_subscription_id = NULL` and
+  are skipped by the step-4 query. Their `tier_id` may still
+  reference a tier whose price changed — that's fine, they don't
+  bill.
+- **Lapsed / Suspended members** also skipped. If they later
+  reactivate, they sign up against the current (new) Price.
+- **Members mid-dunning** (`billing_status = 'past_due'`) are
+  included in step 4. The price swap doesn't trigger a new charge
+  attempt; the existing dunning cycle continues against the old
+  invoice amount. Next renewal uses the new amount.
+- **Tier with no `stripe_price_id` yet** (newly created tier, never
+  used): step 1 still runs (creates the first Price), step 2 is
+  skipped, step 4 returns zero rows. No subscriptions to migrate.
+
+#### What about discounted / grandfathered cohorts?
+
+Out of scope for v1. If the board ever wants to grandfather a
+specific cohort at the old price, that's a manual Stripe Coupon
+applied to those subscriptions — not a feature in the admin
+portal. Don't pre-build it.
 
 -----
 
@@ -495,3 +598,14 @@ elsewhere (the pattern is set in `lib/env.ts`).
     session.
 12. NEVER delete a `memberships` row on cancellation. Cancellation
     is a status, not a destruction.
+13. NEVER attempt to edit a Stripe `Price` in place. Prices are
+    immutable; a dues change is `create new + archive old + swap
+    the FK on `tiers``, per § 6.5.
+14. NEVER apply a tier-wide price change with default proration
+    behavior. Pass `proration_behavior: 'none'` when updating
+    existing subscriptions so members roll over at next renewal,
+    not mid-cycle (§ 6.5).
+15. NEVER require the board to log into the Stripe dashboard to
+    change a dues amount, event price, or anything else editable
+    from the admin portal. If a workflow needs Stripe dashboard
+    access, that's a missing admin surface, not a feature.

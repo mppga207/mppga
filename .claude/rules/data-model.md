@@ -122,7 +122,8 @@ Tier configuration. Source of truth for pricing and benefit flags
 | `id` | `uuid` | PK |
 | `name` | `text` | Unique. E.g. `Student / Apprentice`, `Professional`, `Corporate / Salon`. |
 | `slug` | `text` | Unique, machine-safe (`student`, `professional`, `corporate`). For URL params and config lookup. |
-| `stripe_price_id` | `text` | Stripe Price object for recurring dues. Nullable for `Honorary`. |
+| `stripe_product_id` | `text` | Stripe Product object. Created once per tier; persists across price changes. Nullable for `Honorary`. Unique when present. |
+| `stripe_price_id` | `text` | Active Stripe Price object for recurring dues. Swapped on every dues edit per `stripe-architecture.md` §6.5. Nullable for `Honorary`. Unique when present. |
 | `annual_dues_cents` | `integer` | Default 0. Honorary is 0. |
 | `voting_rights` | `boolean` | `false` for Student / Apprentice per CLAUDE.md §5. |
 | `directory_listing` | `boolean` | `false` for Student / Apprentice. |
@@ -634,9 +635,11 @@ The initial migration seeds:
 
 - The singleton row in `email_settings` with the defaults from § 3.11.
 - Three rows in `tiers` (Student / Apprentice, Professional,
-  Corporate / Salon) with `annual_dues_cents = 0` and
-  `stripe_price_id = NULL`. The client confirms pricing before
-  these are updated.
+  Corporate / Salon) with `annual_dues_cents = 0`,
+  `stripe_product_id = NULL`, and `stripe_price_id = NULL`. The
+  client confirms pricing before these are updated; the first
+  dues edit in the admin portal creates the Stripe Product and
+  Price together (see `stripe-architecture.md` §6.5 edge cases).
 
 Nothing else is seeded. No example members, no example events. The
 admin UI seeds reality.
