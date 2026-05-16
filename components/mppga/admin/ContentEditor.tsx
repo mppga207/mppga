@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { RotateCcw, Save } from "lucide-react";
+
 import { Card } from "./Card";
 import { Field, TextArea, TextInput } from "./Field";
 import { Button } from "@/components/mppga/ui/button";
+import {
+  resetLandingContent,
+  saveLandingContent,
+} from "@/lib/admin/content-actions";
 import {
   defaultLandingContent,
   type LandingContent,
@@ -20,15 +25,31 @@ function isEqual(a: LandingContent, b: LandingContent): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-export function ContentEditor() {
-  const [content, setContent] = useState<LandingContent>(() =>
-    clone(defaultLandingContent),
-  );
+export interface ContentEditorProps {
+  initialContent: LandingContent;
+  isDefault: boolean;
+  updatedAt: string | null;
+}
 
-  const isDirty = useMemo(
-    () => !isEqual(content, defaultLandingContent),
-    [content],
+export function ContentEditor({
+  initialContent,
+  isDefault,
+  updatedAt,
+}: ContentEditorProps) {
+  const [baseline, setBaseline] = useState<LandingContent>(() =>
+    clone(initialContent),
   );
+  const [content, setContent] = useState<LandingContent>(() =>
+    clone(initialContent),
+  );
+  const [flash, setFlash] = useState<
+    { tone: "ok" | "error"; message: string } | null
+  >(null);
+  const [savedAt, setSavedAt] = useState<string | null>(updatedAt);
+  const [siteIsDefault, setSiteIsDefault] = useState(isDefault);
+  const [pending, startTransition] = useTransition();
+
+  const isDirty = useMemo(() => !isEqual(content, baseline), [content, baseline]);
 
   function patchSection<S extends keyof LandingContent>(
     section: S,
@@ -85,7 +106,53 @@ export function ContentEditor() {
   }
 
   function handleReset() {
-    setContent(clone(defaultLandingContent));
+    setContent(clone(baseline));
+    setFlash(null);
+  }
+
+  function handleSave() {
+    setFlash(null);
+    startTransition(async () => {
+      const result = await saveLandingContent(content);
+      if (result.status === "ok") {
+        setBaseline(clone(content));
+        setSavedAt(result.updatedAt);
+        setSiteIsDefault(false);
+        setFlash({
+          tone: "ok",
+          message: "Saved. Public pages pick up the new copy on next request.",
+        });
+      } else {
+        setFlash({ tone: "error", message: result.reason });
+      }
+    });
+  }
+
+  function handleResetToDefaults() {
+    if (
+      !confirm(
+        "Reset the live site copy to the defaults? This wipes any saved edits.",
+      )
+    ) {
+      return;
+    }
+    setFlash(null);
+    startTransition(async () => {
+      const result = await resetLandingContent();
+      if (result.status === "ok") {
+        const fresh = clone(defaultLandingContent);
+        setBaseline(fresh);
+        setContent(fresh);
+        setSavedAt(result.updatedAt);
+        setSiteIsDefault(true);
+        setFlash({
+          tone: "ok",
+          message: "Reset to defaults. Live site reverted.",
+        });
+      } else {
+        setFlash({ tone: "error", message: result.reason });
+      }
+    });
   }
 
   return (
@@ -472,28 +539,63 @@ export function ContentEditor() {
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-mppga-divider bg-mppga-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-6 py-3">
-          <p className="text-sm text-mppga-ink-soft">
-            {isDirty ? "Unsaved changes" : "No changes"}
-          </p>
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-6 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-mppga-ink-soft">
+              {pending
+                ? "Saving…"
+                : isDirty
+                  ? "Unsaved changes"
+                  : siteIsDefault
+                    ? "Showing defaults — no saved edits"
+                    : "Live"}
+            </p>
+            {savedAt ? (
+              <p className="text-xs text-mppga-ink-muted">
+                Last saved{" "}
+                {new Date(savedAt).toLocaleString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </p>
+            ) : null}
+            {flash ? (
+              <span
+                className={`text-xs ${
+                  flash.tone === "ok"
+                    ? "text-mppga-teal-deep"
+                    : "text-mppga-ink"
+                }`}
+              >
+                {flash.message}
+              </span>
+            ) : null}
+          </div>
           <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              onClick={handleResetToDefaults}
+              disabled={pending || siteIsDefault}
+            >
+              Reset to defaults
+            </Button>
             <Button
               variant="secondary"
               onClick={handleReset}
-              disabled={!isDirty}
+              disabled={pending || !isDirty}
             >
               <RotateCcw className="h-4 w-4" strokeWidth={1.8} />
-              Reset
+              Discard
             </Button>
             <Button
               variant="primary"
-              disabled={!isDirty}
-              onClick={() => {
-                /* Persistence lands in Phase 2 (Supabase wiring). */
-              }}
+              disabled={pending || !isDirty}
+              onClick={handleSave}
             >
               <Save className="h-4 w-4" strokeWidth={1.8} />
-              Save changes
+              {pending ? "Saving…" : "Save changes"}
             </Button>
           </div>
         </div>
