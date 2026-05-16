@@ -1,7 +1,10 @@
 import { Upload } from "lucide-react";
+
 import { AdminPageHeader } from "@/components/mppga/admin/AdminPageHeader";
 import { Card } from "@/components/mppga/admin/Card";
+import { SettingsTabs } from "@/components/mppga/admin/SettingsTabs";
 import { Button } from "@/components/mppga/ui/button";
+import { requireAdmin } from "@/lib/supabase/session";
 
 type Swatch = {
   label: string;
@@ -16,13 +19,16 @@ const swatches: readonly Swatch[] = [
   { label: "Divider", hex: "#e5e5e0", className: "bg-mppga-divider" },
 ] as const;
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+  await requireAdmin();
   return (
     <div className="space-y-10">
       <AdminPageHeader
         title="Settings"
         description="Branding, mission, and the public-facing details that travel across the site and emails."
       />
+
+      <SettingsTabs active="/admin/settings" />
 
       <Card
         title="Branding"
