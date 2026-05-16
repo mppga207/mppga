@@ -23,4 +23,14 @@ export const env = {
       return requireServerEnv("SUPABASE_SERVICE_ROLE_KEY");
     },
   },
+
+  stripe: {
+    get secretKey(): string {
+      return requireServerEnv("STRIPE_SECRET_KEY");
+    },
+    get webhookSecret(): string {
+      return requireServerEnv("STRIPE_WEBHOOK_SECRET");
+    },
+    publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "",
+  },
 } as const;

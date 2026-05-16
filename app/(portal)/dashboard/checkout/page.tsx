@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { startSubscriptionCheckout } from "@/lib/stripe/actions";
 import { requireSession } from "@/lib/supabase/session";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/mppga/ui/button";
@@ -15,15 +16,27 @@ const dollars = (cents: number): string =>
     maximumFractionDigits: 0,
   }).format(cents / 100);
 
-export default async function CheckoutPage() {
-  const session = await requireSession("/dashboard/checkout");
+interface CheckoutPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
 
-  // TODO(track 3 — stripe-architecture.md §6.1): replace these reads
-  // with the membership row + tier needed to create a real subscription
-  // Checkout session. For now we surface the tier price alongside an
-  // explanatory CTA so the page is useful in isolation. Two queries
-  // because the embedded-join syntax needs `Relationships` defined on
-  // the handwritten Database type — easier swapped in once
+function readError(
+  value: string | string[] | undefined,
+): string | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+export default async function CheckoutPage({
+  searchParams,
+}: CheckoutPageProps) {
+  const session = await requireSession("/dashboard/checkout");
+  const params = await searchParams;
+  const errorCode = readError(params["error"]);
+  const wasCancelled = readError(params["checkout"]) === "cancelled";
+
+  // Two queries instead of an embedded join: the handwritten Database
+  // type doesn't declare relationships. Will collapse once
   // `supabase gen types` runs against a real project.
   const supabase = await createClient();
   const { data: membership } = await supabase
@@ -35,10 +48,12 @@ export default async function CheckoutPage() {
   const { data: tier } = membership?.tier_id
     ? await supabase
         .from("tiers")
-        .select("name, description, annual_dues_cents")
+        .select("name, description, annual_dues_cents, stripe_price_id")
         .eq("id", membership.tier_id)
         .maybeSingle()
     : { data: null };
+
+  const stripeReady = Boolean(tier?.stripe_price_id);
 
   return (
     <main className="mx-auto max-w-xl px-6 py-16">
@@ -54,6 +69,15 @@ export default async function CheckoutPage() {
         and your member portal, public directory listing, and event
         member pricing all unlock immediately.
       </p>
+
+      {wasCancelled ? (
+        <p className="mt-6 rounded-md border border-mppga-divider bg-mppga-sand px-4 py-3 text-sm text-mppga-ink-soft">
+          No charge was made. You can resume your payment any time —
+          your account stays open.
+        </p>
+      ) : null}
+
+      {errorCode ? <CheckoutErrorBanner code={errorCode} /> : null}
 
       <div className="mt-8 rounded-2xl border border-mppga-divider bg-mppga-card p-6 shadow-sm">
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
@@ -72,17 +96,24 @@ export default async function CheckoutPage() {
           </span>
         </p>
 
-        <div className="mt-6">
-          <Button size="lg" className="w-full" disabled>
-            Pay with Stripe (Track 3)
+        <form action={startSubscriptionCheckout} className="mt-6">
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            disabled={!stripeReady}
+          >
+            Pay with Stripe
           </Button>
-        </div>
+        </form>
 
-        <p className="mt-3 text-xs text-mppga-ink-muted">
-          Stripe Checkout is being wired in Track 3. Until then, the
-          board will reach out by email with a manual payment link if
-          you’d like to activate early.
-        </p>
+        {!stripeReady ? (
+          <p className="mt-3 text-xs text-mppga-ink-muted">
+            Stripe payments aren’t live yet — the board is configuring
+            Stripe. We’ll email you the moment payment opens up. In the
+            meantime your account stays here, ready to go.
+          </p>
+        ) : null}
       </div>
 
       <p className="mt-8 text-xs leading-relaxed text-mppga-ink-muted">
@@ -102,5 +133,19 @@ export default async function CheckoutPage() {
         and we’ll switch it for you.
       </p>
     </main>
+  );
+}
+
+function CheckoutErrorBanner({ code }: { code: string }) {
+  const message =
+    code === "missing_price"
+      ? "Your tier doesn’t have a payment plan configured yet. The board is finishing setup — try again shortly or email us."
+      : code === "missing_membership"
+        ? "We couldn’t find your membership record. Try signing in again."
+        : "Something went wrong starting checkout. Try again, or email the board if it keeps happening.";
+  return (
+    <p className="mt-6 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      {message}
+    </p>
   );
 }
