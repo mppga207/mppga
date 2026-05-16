@@ -9,7 +9,7 @@ import { env } from "@/lib/env";
  * the prototype is still demoable without a provisioned backend.
  */
 export function isSupabaseConfigured(): boolean {
-  return Boolean(env.supabase.url && env.supabase.anonKey);
+  return Boolean(env.supabase.url && env.supabase.publishableKey);
 }
 
 /**
@@ -19,7 +19,7 @@ export function isSupabaseConfigured(): boolean {
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(env.supabase.url, env.supabase.anonKey, {
+  return createServerClient<Database>(env.supabase.url, env.supabase.publishableKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -49,7 +49,7 @@ export async function createClient() {
 export function createServiceRoleClient() {
   return createServerClient<Database>(
     env.supabase.url,
-    env.supabase.serviceRoleKey,
+    env.supabase.secretKey,
     {
       cookies: {
         getAll() {

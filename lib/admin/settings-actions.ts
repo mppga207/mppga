@@ -115,7 +115,7 @@ export async function promoteToAdminAction(
   // keeps its existing claims until refresh; their next sign-in or
   // token refresh picks up role=admin.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY;
   if (url && key) {
     try {
       await fetch(`${url}/auth/v1/admin/users/${profileId}/logout`, {
@@ -183,7 +183,7 @@ export async function demoteAdminAction(formData: FormData): Promise<void> {
   // Force re-issue of JWT custom claims on next sign-in from the
   // demoted account's other devices.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY;
   if (url && key) {
     try {
       await fetch(`${url}/auth/v1/admin/users/${profileId}/logout`, {

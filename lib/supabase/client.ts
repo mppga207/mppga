@@ -11,6 +11,6 @@ import { env } from "@/lib/env";
 export function createClient() {
   return createBrowserClient<Database>(
     env.supabase.url,
-    env.supabase.anonKey,
+    env.supabase.publishableKey,
   );
 }

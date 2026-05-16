@@ -385,8 +385,9 @@ navigation.
    `/sign-in`, or `/dashboard` per § 3 (CLAUDE.md §10 #7).
 4. NEVER trust `user_metadata` for authorization. Always
    `app_metadata`.
-5. NEVER expose `SUPABASE_SERVICE_ROLE_KEY` to the client. The
-   service-role client is server-only (CLAUDE.md §10 #14).
+5. NEVER expose `SUPABASE_SECRET_KEY` to the client. The
+   secret-key client (formerly "service role") is server-only
+   (CLAUDE.md §10 #14).
 6. NEVER call `createServiceRoleClient()` in response to an
    unauthenticated request without a prior signature / shared-secret
    check.
