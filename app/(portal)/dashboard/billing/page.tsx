@@ -26,6 +26,7 @@ export default function BillingPage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Billing"
+        description="Your membership, payment method, and past invoices — all handled through Stripe's secure billing portal."
         actions={
           <Button variant="primary" disabled>
             Manage in Stripe
@@ -49,14 +50,11 @@ export default function BillingPage() {
               Renews {longDateFmt.format(new Date(mockMember.expiresAtISO))}
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button href="#" variant="secondary">
-              Update payment method
-            </Button>
-            <Button href="#" variant="ghost">
-              Cancel membership
-            </Button>
-          </div>
+          <p className="max-w-xs text-xs leading-relaxed text-mppga-ink-muted">
+            Card updates, cancellation, and invoice downloads all happen
+            inside the Stripe billing portal. The button up top opens it in a
+            new tab once wired.
+          </p>
         </div>
       </Card>
 
@@ -88,13 +86,6 @@ export default function BillingPage() {
                     label={inv.status === "paid" ? "Paid" : inv.status === "open" ? "Open" : "Void"}
                     tone={inv.status === "paid" ? "teal" : inv.status === "open" ? "warn" : "muted"}
                   />
-                  <a
-                    href="#"
-                    aria-disabled
-                    className="text-mppga-teal hover:text-mppga-teal-hover"
-                  >
-                    Receipt
-                  </a>
                 </div>
               </li>
             ))}

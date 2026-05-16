@@ -9,6 +9,7 @@ export default function DirectoryListingPage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Your directory listing"
+        description="How your business appears to pet owners searching for a Maine groomer. Inline editing lands soon."
         actions={
           <Button variant="secondary" disabled>
             Edit listing
