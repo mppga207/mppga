@@ -19,7 +19,10 @@ const swatches: readonly Swatch[] = [
 export default function AdminSettingsPage() {
   return (
     <div className="space-y-10">
-      <AdminPageHeader title="Settings" />
+      <AdminPageHeader
+        title="Settings"
+        description="Branding, mission, and the public-facing details that travel across the site and emails."
+      />
 
       <Card
         title="Branding"
@@ -40,7 +43,7 @@ export default function AdminSettingsPage() {
                   PNG / SVG recommended &middot; transparent background
                 </p>
               </div>
-              <Button variant="secondary">
+              <Button variant="secondary" disabled>
                 <Upload className="h-4 w-4" strokeWidth={1.8} />
                 Upload
               </Button>

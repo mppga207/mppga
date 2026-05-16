@@ -11,7 +11,10 @@ const summaryCards: Array<{ label: string; value: string; note: string }> = [
 export default function AdminOverviewPage() {
   return (
     <div className="space-y-10">
-      <AdminPageHeader title="Overview" />
+      <AdminPageHeader
+        title="Overview"
+        description="A snapshot of the association — membership, applications waiting on board review, upcoming events, and dues collected so far this year."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {summaryCards.map((card) => (
@@ -32,6 +35,11 @@ export default function AdminOverviewPage() {
           No activity yet.
         </div>
       </Card>
+
+      <p className="text-xs italic text-mppga-ink-muted">
+        Numbers above are illustrative until the dashboard is wired to live
+        Supabase queries.
+      </p>
     </div>
   );
 }

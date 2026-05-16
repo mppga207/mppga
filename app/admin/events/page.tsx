@@ -9,6 +9,7 @@ export default function AdminEventsPage() {
     <div className="space-y-10">
       <AdminPageHeader
         title="Events"
+        description="Workshops, clinics, mixers, and the annual meeting. Admins can publish directly — no board approval step."
         actions={
           <Button href="/admin/events/new" variant="primary">
             <Plus className="h-4 w-4" strokeWidth={2} />
