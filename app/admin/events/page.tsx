@@ -1,10 +1,15 @@
 import { Plus } from "lucide-react";
+
 import { AdminPageHeader } from "@/components/mppga/admin/AdminPageHeader";
 import { EventCard } from "@/components/mppga/admin/EventCard";
 import { Button } from "@/components/mppga/ui/button";
-import { mockEvents } from "@/lib/mppga/admin/mockEvents";
+import { loadAdminEvents } from "@/lib/admin/data";
+import { requireAdmin } from "@/lib/supabase/session";
 
-export default function AdminEventsPage() {
+export default async function AdminEventsPage() {
+  await requireAdmin();
+  const events = await loadAdminEvents();
+
   return (
     <div className="space-y-10">
       <AdminPageHeader
@@ -18,11 +23,22 @@ export default function AdminEventsPage() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        {mockEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
-        ))}
-      </div>
+      {events.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-mppga-divider bg-mppga-card p-10 text-center">
+          <p className="font-serif text-lg text-mppga-ink">
+            No events yet.
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-mppga-ink-soft">
+            Create your first event to populate the public events page.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-2">
+          {events.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

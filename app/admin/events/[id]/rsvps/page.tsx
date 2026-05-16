@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+
 import { AdminPageHeader } from "@/components/mppga/admin/AdminPageHeader";
 import { Card } from "@/components/mppga/admin/Card";
 import { Button } from "@/components/mppga/ui/button";
-import { mockEvents } from "@/lib/mppga/admin/mockEvents";
+import { cancelRegistrationAction } from "@/lib/admin/actions";
+import {
+  loadAdminEventRegistrations,
+  loadAdminEvents,
+} from "@/lib/admin/data";
+import { requireAdmin } from "@/lib/supabase/session";
 
 type PageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -17,23 +24,39 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
+const dateTimeFmt = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
-  const event = mockEvents.find((e) => e.id === id);
+  const events = await loadAdminEvents();
+  const event = events.find((e) => e.id === id);
   if (!event) return { title: "Registrations · Admin · MPPGA" };
   return { title: `Registrations · ${event.title} · Admin · MPPGA` };
 }
 
-export default async function AdminEventRsvpsPage({ params }: PageProps) {
+export default async function AdminEventRsvpsPage({
+  params,
+  searchParams,
+}: PageProps) {
+  await requireAdmin();
   const { id } = await params;
-  const event = mockEvents.find((e) => e.id === id);
+  const sp = await searchParams;
+  const ok = typeof sp.ok === "string" ? sp.ok : null;
+  const error = typeof sp.error === "string" ? sp.error : null;
+
+  const events = await loadAdminEvents();
+  const event = events.find((e) => e.id === id);
   if (!event) notFound();
 
-  // Per events.md §3 admin sees both confirmed and waitlisted registrations
-  // and can cancel any of them. Counts are illustrative until the
-  // event_registrations join is wired.
-  const confirmedCount = event.rsvps;
-  const waitlistedCount = 0;
+  const registrations = await loadAdminEventRegistrations(id);
+  const confirmed = registrations.filter((r) => r.status === "confirmed");
+  const waitlisted = registrations.filter((r) => r.status === "waitlisted");
+  const cancelled = registrations.filter((r) => r.status === "cancelled");
 
   return (
     <div className="space-y-10">
@@ -50,75 +73,138 @@ export default async function AdminEventRsvpsPage({ params }: PageProps) {
       <AdminPageHeader
         title="Registrations"
         description={`${event.title} · ${dateFmt.format(new Date(event.date))} · ${event.location}`}
-        actions={
-          <Button variant="secondary" disabled>
-            <Download className="h-4 w-4" strokeWidth={1.8} />
-            Export CSV
-          </Button>
-        }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <CountCard
+      {ok === "cancelled" ? (
+        <div className="rounded-md border border-mppga-teal bg-mppga-teal-tint px-4 py-3 text-sm text-mppga-teal-deep">
+          Registration cancelled. The next waitlisted member has been promoted if there was one.
+        </div>
+      ) : null}
+      {error ? (
+        <div className="rounded-md border border-mppga-sand-deep bg-mppga-sand px-4 py-3 text-sm text-mppga-ink">
+          Something went wrong: {error}.
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Summary label="Confirmed" value={confirmed.length} />
+        <Summary label="Waitlisted" value={waitlisted.length} />
+        <Summary
           label="Capacity"
-          value={String(event.capacity)}
-          note="Hard cap"
-        />
-        <CountCard
-          label="Confirmed"
-          value={String(confirmedCount)}
-          note={`${Math.round((confirmedCount / event.capacity) * 100)}% full`}
-        />
-        <CountCard
-          label="Waitlisted"
-          value={String(waitlistedCount)}
-          note="Auto-promoted on cancellations"
+          value={`${confirmed.length}/${event.capacity}`}
         />
       </div>
 
-      <Card
+      <RegistrationGroup
         title="Confirmed"
-        description="Sorted by registration date. Cancel from the row menu once wired."
-      >
-        <div className="grid grid-cols-[1fr_120px_120px_140px] border-b border-mppga-divider bg-mppga-page px-6 py-3 text-[11px] font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
-          <span>Member</span>
-          <span>Pricing</span>
-          <span>Payment</span>
-          <span>Registered</span>
-        </div>
-        <div className="px-6 py-16 text-center">
-          <p className="font-serif text-lg text-mppga-ink">
-            Confirmed registrations will appear here.
-          </p>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-mppga-ink-soft">
-            Member name, pricing tier, payment status, and registration date.
-            Per events.md §3, you&rsquo;ll be able to cancel any row and the
-            waitlist will auto-promote the next person.
-          </p>
-        </div>
-      </Card>
-
-      <Card
-        title="Waitlist"
-        description="Order is preserved by position. Promotion happens automatically when a confirmed registration cancels."
-      >
-        <div className="px-6 py-10 text-center text-sm text-mppga-ink-muted">
-          No one is on the waitlist yet.
-        </div>
-      </Card>
+        registrations={confirmed}
+        eventId={event.id}
+        emptyMessage="No confirmed registrations yet."
+      />
+      {event.waitlistEnabled ? (
+        <RegistrationGroup
+          title="Waitlist"
+          registrations={waitlisted}
+          eventId={event.id}
+          emptyMessage="No one on the waitlist."
+        />
+      ) : null}
+      {cancelled.length > 0 ? (
+        <RegistrationGroup
+          title="Cancelled"
+          registrations={cancelled}
+          eventId={event.id}
+          emptyMessage=""
+          allowCancel={false}
+        />
+      ) : null}
     </div>
   );
+
+  function RegistrationGroup({
+    title,
+    registrations,
+    eventId,
+    emptyMessage,
+    allowCancel = true,
+  }: {
+    title: string;
+    registrations: Awaited<ReturnType<typeof loadAdminEventRegistrations>>;
+    eventId: string;
+    emptyMessage: string;
+    allowCancel?: boolean;
+  }) {
+    return (
+      <Card title={title}>
+        {registrations.length === 0 ? (
+          <p className="px-6 py-8 text-sm text-mppga-ink-soft">
+            {emptyMessage}
+          </p>
+        ) : (
+          <table className="min-w-full text-sm">
+            <thead className="bg-mppga-page text-left text-[11px] uppercase tracking-[0.14em] text-mppga-ink-muted">
+              <tr>
+                <th className="px-6 py-3 font-medium">Registrant</th>
+                <th className="px-6 py-3 font-medium">Tier</th>
+                <th className="px-6 py-3 font-medium">Payment</th>
+                <th className="px-6 py-3 font-medium">Registered</th>
+                {allowCancel ? <th className="px-6 py-3" /> : null}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-mppga-divider">
+              {registrations.map((reg) => (
+                <tr key={reg.id}>
+                  <td className="px-6 py-3">
+                    <p className="font-medium text-mppga-ink">
+                      {reg.registrantName}
+                      {reg.waitlistPosition
+                        ? ` · #${reg.waitlistPosition}`
+                        : ""}
+                    </p>
+                    <p className="text-xs text-mppga-ink-muted">{reg.email}</p>
+                  </td>
+                  <td className="px-6 py-3 text-mppga-ink-soft">
+                    {reg.pricingTier}
+                  </td>
+                  <td className="px-6 py-3 text-mppga-ink-soft">
+                    {reg.paymentStatus}
+                    {reg.pricePaid > 0
+                      ? ` · $${(reg.pricePaid / 100).toFixed(0)}`
+                      : ""}
+                  </td>
+                  <td className="px-6 py-3 text-xs text-mppga-ink-soft">
+                    {dateTimeFmt.format(new Date(reg.registeredAt))}
+                  </td>
+                  {allowCancel ? (
+                    <td className="px-6 py-3 text-right">
+                      <form action={cancelRegistrationAction}>
+                        <input
+                          type="hidden"
+                          name="registration_id"
+                          value={reg.id}
+                        />
+                        <input type="hidden" name="event_id" value={eventId} />
+                        <Button
+                          type="submit"
+                          variant="ghost"
+                          className="!h-auto !px-0 text-xs"
+                        >
+                          Cancel
+                        </Button>
+                      </form>
+                    </td>
+                  ) : null}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
+    );
+  }
 }
 
-function CountCard({
-  label,
-  value,
-  note,
-}: {
-  label: string;
-  value: string;
-  note: string;
-}) {
+function Summary({ label, value }: { label: string; value: string | number }) {
   return (
     <Card className="p-5">
       <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
@@ -127,7 +213,6 @@ function CountCard({
       <p className="mt-3 font-serif text-3xl tracking-tight text-mppga-teal-deep">
         {value}
       </p>
-      <p className="mt-2 text-xs text-mppga-ink-soft">{note}</p>
     </Card>
   );
 }
