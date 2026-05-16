@@ -155,8 +155,13 @@ Lives at `/admin/settings`. Sub-tabs (each is its own route):
 - **6.2 Email templates** — edit subject + body per template key; syncs
   to Resend on save (`email-automation.md` §5).
 - **6.3 Tier configuration** — pricing and benefit flags per row in the
-  `tiers` table. Edits write directly; pricing changes do NOT retroactively
-  affect existing `event_registrations` (snapshot per `events.md` §4).
+  `tiers` table. Benefit-flag and name edits write directly. Dues
+  edits go through the Stripe Price swap flow in
+  `stripe-architecture.md` §6.5 — existing subscribers roll over at
+  next renewal, no proration, with a confirmation prompt that names
+  the affected member count. Event price changes do NOT
+  retroactively affect existing `event_registrations` (snapshot per
+  `events.md` §4).
 - **6.4 Code of ethics** — current text, version history. View-only of
   `compliance_logs` signatures.
 - **6.5 Contact & site info** — public contact email, social handles,
