@@ -18,6 +18,15 @@ export async function updateSession(
 ): Promise<NextResponse> {
   let response = NextResponse.next({ request });
 
+  // Without Supabase env vars the SSR client throws on construction and
+  // every request 500s as MIDDLEWARE_INVOCATION_FAILED. Fall through so
+  // public pages still render; protected routes will error at the page
+  // layer with a real configuration message instead of taking the whole
+  // site down.
+  if (!env.supabase.url || !env.supabase.anonKey) {
+    return response;
+  }
+
   const supabase = createServerClient<Database>(
     env.supabase.url,
     env.supabase.anonKey,
