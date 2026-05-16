@@ -1,6 +1,7 @@
 import { Nav } from "@/components/mppga/landing/Nav";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { Button } from "@/components/mppga/ui/button";
+import { JoinForm } from "@/components/mppga/auth/JoinForm";
 import {
   ArrowRight,
   Building2,
@@ -89,21 +90,16 @@ const tiers: TierShell[] = [
 const steps = [
   {
     n: 1,
-    title: "Apply online",
-    body: "Tell us about your work — where you groom, how long you’ve been at it, and which tier fits.",
+    title: "Sign up",
+    body: "Tell us your name, email, and which tier fits. We’ll send a one-tap sign-in link to your inbox.",
   },
   {
     n: 2,
-    title: "Board review",
-    body: "A volunteer board member reviews every application. We’re looking for active groomers committed to the standard.",
+    title: "Pay your dues",
+    body: "Click the link, land on your dashboard, and complete your dues payment in Stripe. Annual renewal is handled automatically.",
   },
   {
     n: 3,
-    title: "Pay your dues",
-    body: "Once approved, you’ll get an email with a secure payment link. Annual renewal is handled automatically.",
-  },
-  {
-    n: 4,
     title: "Welcome aboard",
     body: "Your portal unlocks the directory, events, and community the moment payment clears.",
   },
@@ -216,7 +212,7 @@ export default function JoinPage() {
                 How it works
               </p>
               <h2 className="mt-3 font-serif text-3xl tracking-tight text-mppga-ink md:text-4xl">
-                Four steps to member.
+                Three steps to member.
               </h2>
             </div>
 
@@ -289,18 +285,18 @@ export default function JoinPage() {
                 A few details and we’ll take it from there.
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
-                We’ll send a sign-in link to the email you provide. Once
-                you’re signed in, the board reviews your application and
-                emails you a payment link on approval.
+                We’ll send a sign-in link to the email you provide. Click
+                it, complete your dues payment, and your member portal
+                unlocks automatically.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-mppga-ink-soft">
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>No credit card required to apply.</span>
+                  <span>No credit card required to sign up — only at checkout.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>Board reviews applications every week.</span>
+                  <span>Magic-link sign-in — no passwords to manage.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
@@ -309,94 +305,9 @@ export default function JoinPage() {
               </ul>
             </div>
 
-            <form
-              className="rounded-2xl border border-mppga-divider bg-mppga-card p-7 shadow-sm"
-              aria-describedby="apply-form-note"
-            >
-              <div className="space-y-5">
-                <ApplyField label="Your name" htmlFor="apply-name">
-                  <input
-                    id="apply-name"
-                    name="name"
-                    type="text"
-                    autoComplete="name"
-                    required
-                    className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
-                  />
-                </ApplyField>
-
-                <ApplyField label="Email" htmlFor="apply-email">
-                  <input
-                    id="apply-email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
-                  />
-                </ApplyField>
-
-                <ApplyField label="Where you groom" htmlFor="apply-location">
-                  <input
-                    id="apply-location"
-                    name="location"
-                    type="text"
-                    placeholder="City or town in Maine"
-                    className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
-                  />
-                </ApplyField>
-
-                <ApplyField label="Tier" htmlFor="apply-tier">
-                  <select
-                    id="apply-tier"
-                    name="tier"
-                    defaultValue="professional"
-                    className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
-                  >
-                    {tiers.map((t) => (
-                      <option key={t.slug} value={t.slug}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-                </ApplyField>
-
-                <div className="flex items-start gap-2.5 pt-2">
-                  <input
-                    id="apply-standards"
-                    name="standards"
-                    type="checkbox"
-                    required
-                    className="mt-0.5 h-4 w-4 rounded border-mppga-divider text-mppga-teal focus:ring-mppga-teal/40"
-                  />
-                  <label
-                    htmlFor="apply-standards"
-                    className="text-xs leading-relaxed text-mppga-ink-soft"
-                  >
-                    I agree to abide by the PPGSA Standards of Care, Safety
-                    and Sanitation and the MPPGA Code of Ethics on approval.
-                  </label>
-                </div>
-
-                <div className="pt-2">
-                  <Button type="submit" size="lg" className="w-full" disabled>
-                    Send my sign-in link
-                  </Button>
-                </div>
-
-                <p id="apply-form-note" className="text-xs text-mppga-ink-muted">
-                  Application submission is being wired up. In the meantime,
-                  please email{" "}
-                  <a
-                    href="mailto:mppga207@gmail.com"
-                    className="text-mppga-teal hover:text-mppga-teal-hover"
-                  >
-                    mppga207@gmail.com
-                  </a>{" "}
-                  with your name, location, and preferred tier.
-                </p>
-              </div>
-            </form>
+            <JoinForm
+              tiers={tiers.map(({ slug, name }) => ({ slug, name }))}
+            />
           </div>
         </section>
 
@@ -418,7 +329,7 @@ export default function JoinPage() {
               Start your application.
             </h2>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-white/80">
-              Takes about five minutes. The board reviews applications weekly.
+              Takes about two minutes. You’ll be in the directory as soon as your dues clear.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Button href="#apply" variant="inverse" size="lg">
@@ -442,21 +353,3 @@ export default function JoinPage() {
   );
 }
 
-function ApplyField({
-  label,
-  htmlFor,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label htmlFor={htmlFor} className="block">
-      <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-mppga-ink-muted">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}

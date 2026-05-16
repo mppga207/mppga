@@ -3,7 +3,7 @@ import { Card } from "@/components/mppga/admin/Card";
 
 const summaryCards: Array<{ label: string; value: string; note: string }> = [
   { label: "Active members", value: "127", note: "+4 this month" },
-  { label: "Pending applications", value: "3", note: "Awaiting board review" },
+  { label: "Awaiting payment", value: "3", note: "Signed up, dues not yet paid" },
   { label: "Upcoming events", value: "4", note: "Next: Jun 14, Portland" },
   { label: "Dues collected · YTD", value: "$5,715", note: "501(c)(6) — non-deductible" },
 ];
@@ -13,7 +13,7 @@ export default function AdminOverviewPage() {
     <div className="space-y-10">
       <AdminPageHeader
         title="Overview"
-        description="A snapshot of the association — membership, applications waiting on board review, upcoming events, and dues collected so far this year."
+        description="A snapshot of the association — membership, signups awaiting payment, upcoming events, and dues collected so far this year."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

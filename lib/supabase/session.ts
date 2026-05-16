@@ -27,13 +27,12 @@ function readClaims(user: User): {
   const role: ProfileRole = rawRole === "admin" ? "admin" : "member";
   const membershipStatus: MembershipStatus = isMembershipStatus(rawStatus)
     ? rawStatus
-    : "Pending_Approval";
+    : "Awaiting_Payment";
   return { role, membershipStatus };
 }
 
 function isMembershipStatus(value: unknown): value is MembershipStatus {
   return (
-    value === "Pending_Approval" ||
     value === "Awaiting_Payment" ||
     value === "Active" ||
     value === "Grace_Period" ||
@@ -114,8 +113,6 @@ export function redirectForStatus(status: MembershipStatus): string | null {
       return "/renew";
     case "Suspended":
       return "/renew?reason=suspended";
-    case "Pending_Approval":
-      return "/dashboard/pending";
     case "Awaiting_Payment":
       return "/dashboard/checkout";
   }

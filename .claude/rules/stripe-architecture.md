@@ -170,7 +170,7 @@ lot of noise — don't 4xx unknown events, just acknowledge.
   redelivery safe.
 - NEVER creates new `memberships` rows. The join flow
   (`auth-middleware.md` §6.1) creates the row in
-  `Pending_Approval`; the webhook only ever updates an existing
+  `Awaiting_Payment`; the webhook only ever updates an existing
   row. If a webhook arrives with no matching
   `stripe_customer_id` / `stripe_subscription_id`, log loudly and
   return 200 — refusing the delivery doesn't help, and the issue
@@ -268,11 +268,13 @@ existing customer's invoice prefix retroactively.
 
 Per `auth-middleware.md` §6.1:
 
-1. Member completes join form → `memberships` row inserted with
-   `tier_id` and `status = 'Pending_Approval'`.
-2. Board approves → status flips to `Awaiting_Payment` and an email
-   goes out with a Stripe Checkout link **for the subscription**
-   (not a one-off Checkout — `mode: 'subscription'`).
+1. Member completes join form → magic link sent → magic link
+   clicked → the `/auth/callback` route inserts the `memberships`
+   row with `tier_id` and `status = 'Awaiting_Payment'`. There is
+   no board-review step.
+2. Member lands on `/dashboard/checkout`. The page hosts a Stripe
+   Checkout link **for the subscription** (not a one-off Checkout
+   — `mode: 'subscription'`).
 3. Member completes Checkout → Stripe creates the
    `Customer` + `Subscription` and fires the first invoice paid
    event.

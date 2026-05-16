@@ -98,9 +98,6 @@ function decideRedirect(user: User | null, pathname: string): string | null {
 
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
     if (!user) return "/sign-in";
-    if (pathname === "/dashboard/pending" && status === "Pending_Approval") {
-      return null;
-    }
     if (pathname === "/dashboard/checkout" && status === "Awaiting_Payment") {
       return null;
     }
@@ -131,8 +128,6 @@ function isPublicPath(pathname: string): boolean {
 
 function memberLandingForStatus(status: MembershipStatus): string {
   switch (status) {
-    case "Pending_Approval":
-      return "/dashboard/pending";
     case "Awaiting_Payment":
       return "/dashboard/checkout";
     case "Lapsed":
@@ -154,8 +149,6 @@ function redirectForDashboardStatus(status: MembershipStatus): string | null {
       return "/renew";
     case "Suspended":
       return "/renew?reason=suspended";
-    case "Pending_Approval":
-      return "/dashboard/pending";
     case "Awaiting_Payment":
       return "/dashboard/checkout";
   }
@@ -168,11 +161,10 @@ function readRole(user: User | null): ProfileRole {
 }
 
 function readMembershipStatus(user: User | null): MembershipStatus {
-  if (!user) return "Pending_Approval";
+  if (!user) return "Awaiting_Payment";
   const meta = user.app_metadata as Record<string, unknown> | undefined;
   const value = meta?.membership_status;
   if (
-    value === "Pending_Approval" ||
     value === "Awaiting_Payment" ||
     value === "Active" ||
     value === "Grace_Period" ||
@@ -182,5 +174,5 @@ function readMembershipStatus(user: User | null): MembershipStatus {
   ) {
     return value;
   }
-  return "Pending_Approval";
+  return "Awaiting_Payment";
 }

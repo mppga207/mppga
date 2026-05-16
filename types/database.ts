@@ -14,7 +14,6 @@
 export type ProfileRole = "member" | "admin";
 
 export type MembershipStatus =
-  | "Pending_Approval"
   | "Awaiting_Payment"
   | "Active"
   | "Grace_Period"
@@ -67,7 +66,7 @@ type JsonValue =
   | { [key: string]: JsonValue }
   | JsonValue[];
 
-interface OrganizationsRow {
+type OrganizationsRow = {
   id: UUID;
   name: string;
   primary_contact_profile_id: UUID | null;
@@ -76,7 +75,7 @@ interface OrganizationsRow {
   updated_at: Timestamp;
 }
 
-interface TiersRow {
+type TiersRow = {
   id: UUID;
   name: string;
   slug: string;
@@ -92,7 +91,7 @@ interface TiersRow {
   updated_at: Timestamp;
 }
 
-interface ProfilesRow {
+type ProfilesRow = {
   id: UUID;
   full_name: string;
   email: string;
@@ -103,7 +102,7 @@ interface ProfilesRow {
   updated_at: Timestamp;
 }
 
-interface MembershipsRow {
+type MembershipsRow = {
   id: UUID;
   profile_id: UUID;
   tier_id: UUID;
@@ -112,13 +111,11 @@ interface MembershipsRow {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   expires_at: Timestamp | null;
-  approved_at: Timestamp | null;
-  approved_by_profile_id: UUID | null;
   created_at: Timestamp;
   updated_at: Timestamp;
 }
 
-interface DirectoryListingsRow {
+type DirectoryListingsRow = {
   id: UUID;
   profile_id: UUID;
   display_name: string;
@@ -141,7 +138,7 @@ interface DirectoryListingsRow {
   updated_at: Timestamp;
 }
 
-interface CertificationsRow {
+type CertificationsRow = {
   id: UUID;
   profile_id: UUID;
   name: string;
@@ -153,7 +150,7 @@ interface CertificationsRow {
   updated_at: Timestamp;
 }
 
-interface EventsRow {
+type EventsRow = {
   id: UUID;
   title: string;
   description: string | null;
@@ -171,7 +168,7 @@ interface EventsRow {
   updated_at: Timestamp;
 }
 
-interface CeCreditsRow {
+type CeCreditsRow = {
   id: UUID;
   profile_id: UUID;
   hours: number;
@@ -184,7 +181,7 @@ interface CeCreditsRow {
   approved_by_profile_id: UUID | null;
 }
 
-interface EventRegistrationsRow {
+type EventRegistrationsRow = {
   id: UUID;
   event_id: UUID;
   profile_id: UUID;
@@ -197,7 +194,7 @@ interface EventRegistrationsRow {
   registered_at: Timestamp;
 }
 
-interface ComplianceLogsRow {
+type ComplianceLogsRow = {
   id: UUID;
   profile_id: UUID;
   document_version: string;
@@ -207,7 +204,7 @@ interface ComplianceLogsRow {
   user_agent: string;
 }
 
-interface EmailSettingsRow {
+type EmailSettingsRow = {
   id: UUID;
   renewal_reminder_days_before: number[];
   event_reminder_hours_before: number[];
@@ -216,7 +213,7 @@ interface EmailSettingsRow {
   updated_at: Timestamp;
 }
 
-interface EmailSendLogRow {
+type EmailSendLogRow = {
   id: UUID;
   profile_id: UUID | null;
   template: string;
@@ -227,7 +224,7 @@ interface EmailSendLogRow {
   sent_at: Timestamp;
 }
 
-interface AdminActionLogRow {
+type AdminActionLogRow = {
   id: UUID;
   actor_profile_id: UUID;
   subject_profile_id: UUID | null;
@@ -236,7 +233,7 @@ interface AdminActionLogRow {
   created_at: Timestamp;
 }
 
-interface DonationsRow {
+type DonationsRow = {
   id: UUID;
   profile_id: UUID | null;
   amount_cents: number;
@@ -246,18 +243,16 @@ interface DonationsRow {
   created_at: Timestamp;
 }
 
-interface SiteSettingsRow {
+type SiteSettingsRow = {
   id: UUID;
   contact_email: string;
   contact_phone: string | null;
   updated_at: Timestamp;
 }
 
-type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
 type TableSpec<Row, RequiredOnInsert extends keyof Row> = {
   Row: Row;
-  Insert: Optional<Row, Exclude<keyof Row, RequiredOnInsert>>;
+  Insert: Partial<Row> & Required<Pick<Row, RequiredOnInsert>>;
   Update: Partial<Row>;
   Relationships: [];
 };

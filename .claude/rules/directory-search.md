@@ -192,7 +192,7 @@ their full row (RLS allows it) and toggle the flags.
 that policy. Two important consequences:
 
 - Anon never sees the table at all if `is_visible = false`.
-  Suspended, Lapsed, and Pending_Approval members are silently
+  Suspended, Lapsed, and Awaiting_Payment members are silently
   absent from search results, not visible-but-empty.
 - Anon never sees the toggle flags themselves — they're not in the
   view. There's no signal that a particular member chose to hide
