@@ -59,7 +59,7 @@ Resolve them before opening that track's first PR.
 | 1 | **Geocoder provider** — Mapbox / Google / Nominatim | Track 5 (directory edit), Track 8 | `directory-search.md` §4.1 | Deferred to Track 5 (client, 2026-05-16) |
 | 2 | **Tier pricing** — annual_dues_cents for Student, Professional, Corporate | Track 3 (subscription Checkout), Track 1 (seed migration) | `CLAUDE.md` §1 | Resolved 2026-05-16: $25 / $75 / $200 (seeded as 2500 / 7500 / 20000 cents) |
 | 3 | **Production domain** | Track 3 (Stripe live keys), Track 4 (Resend domain verification) | `CLAUDE.md` §1 | Open |
-| 4 | **Renewal-receipt template** — new key vs. reuse `welcome` | Track 4 | `stripe-architecture.md` §6.2 | Open |
+| 4 | **Renewal-receipt template** — new key vs. reuse `welcome` | Track 4 | `stripe-architecture.md` §6.2 | Resolved 2026-05-16: dedicated `renewal-receipt` key. Templates live in DB (`email_templates`) so the admin Emails tab can edit copy and add new (non-system) templates without a code change. |
 | 5 | **`/directory`** — Phase 1 acceleration or Phase 2 as planned | Track 8 timing | `CLAUDE.md` §1 | Open |
 | 6 | **Stripe invoice number prefix** — per environment | Track 3 | `stripe-architecture.md` §5.2 | Open |
 | 7 | **Email "from" address** for Resend | Track 4 | `email-automation.md` §6 | Resolved 2026-05-16: `mppga207@gmail.com`. Also the seed value for `site_settings.contact_email`; Track 6 wires admin editing so a single change propagates everywhere. |
@@ -347,6 +347,94 @@ blocking decisions #4, #7.
 - Approving a member triggers the welcome email exactly once.
 - Re-running the renewal-reminder cron produces no second send for
   the same member/template/reference.
+
+### Status (2026-05-16)
+
+Shipped (all code-only — no Resend account provisioned yet):
+
+- `lib/env.ts` exposes `env.resend.apiKey`, `env.resend.fromEmail`,
+  `env.resend.fromName`. `.env.example` carries the new
+  `RESEND_FROM_NAME` slot.
+- `lib/resend/client.ts` — lazy SDK init. `resendFromHeader()`
+  builds the `Name <email>` form once.
+- `lib/email/render.ts` — pure renderer. `substitute()` does
+  `{{var}}` replacement; missing vars render empty.
+  `composeFooter()` always carries the org name + contact email
+  and conditionally appends the 501(c)(6) disclaimer when the
+  template is dues-related. `loadTemplate` and `loadSiteContact`
+  hit Supabase via the user-supplied client.
+- `lib/email/send.ts` — real `sendTransactional`. Same
+  signature as the Track 2 stub (callers don't change). Order:
+  dedup read → template load → render → Resend call → log row.
+  Failures get logged with `status='failed'`; successful sends
+  store `resend_message_id`. `email_send_log` stays append-only.
+- Migration `20260516000008_email_templates.sql` — new
+  `email_templates` table with admin-editable subject + body.
+  Decision #4 resolved: templates live in Postgres, not Resend,
+  so admins can edit copy AND add new (non-system) templates
+  from the Emails tab. Trigger blocks deleting / renaming the
+  11 seeded system rows; subject / body remain editable on those.
+  Seeded templates: `welcome`, `renewal-receipt`,
+  `renewal-reminder`, `dunning`, `event-confirmation`,
+  `waitlist-confirmation`, `waitlist-promoted-payment`,
+  `event-reminder`, `event-announcement`,
+  `registration-cancelled`, `general-update`. Four are
+  `is_dues_related = true` for the footer disclaimer.
+- `app/api/webhooks/stripe/route.ts` — fixed the welcome /
+  renewal split. First `invoice.paid` fires `welcome` keyed on
+  `profile_id` so it's a once-per-membership send.
+  Subsequent renewals fire `renewal-receipt` keyed on the
+  invoice id. Dunning now passes the customer-portal URL +
+  amount-due vars. New `lookupProfile` / `lookupTier` helpers
+  pull names for template variables; `formatAmount` and
+  `formatDate` localize the receipt copy.
+- `supabase/functions/_shared/email-send.ts` — Deno
+  parallel of the Node send helper. Reads `email_templates` and
+  `site_settings`, renders, calls Resend's REST API directly,
+  writes `email_send_log`. Duplicated from the Node side
+  because Edge Functions can't import application code.
+- `supabase/functions/dunning-cron/index.ts` — switched to the
+  shared Deno sender. Anchor reworked: the earliest dunning
+  send for each profile is the anchor for "days since
+  failure", so retry buckets `[3, 7, 14]` fire 3 / 7 / 14 days
+  after the initial webhook send (previous logic dropped the
+  larger buckets). Dedup key stays
+  `<subscription_id>:<day_bucket>`.
+- `supabase/functions/renewal-reminders-cron/index.ts` —
+  daily cron. Reads `email_settings.renewal_reminder_days_before`
+  fresh (per `email-automation.md` §2). For each offset N,
+  queries Active memberships with `expires_at` on
+  `today + N days`. Dedup `(subscription_id:target_date:offset)`.
+- `supabase/functions/event-reminders-cron/index.ts` — hourly
+  cron. Reads `email_settings.event_reminder_hours_before`.
+  ±30 minute window per offset against `events.date`. Wired
+  through `event_registrations` but yields no fires until
+  Track 7 lands the registration rows.
+- `supabase/config.toml` — registers the three new functions
+  with `verify_jwt = false`.
+- Tests: `lib/email/render.test.ts` covers substitution, footer
+  composition, HTML escaping, disclaimer toggle (10 cases).
+  `lib/email/send.test.ts` covers dedup-skip, success-with-log,
+  failure-with-log, missing-template, and null-reference paths
+  (5 cases). Both green via `pnpm test`.
+
+Outstanding (waiting on Resend account / Stripe / Track 7):
+
+- Provision the Resend domain. Until then, sends will surface a
+  Resend-side error and the log row records `status='failed'`.
+- Schedule the three cron functions: daily for
+  `renewal-reminders-cron` and `dunning-cron`, hourly for
+  `event-reminders-cron`. Use Supabase Scheduled Functions
+  (Dashboard → Edge Functions → Schedules) or pg_cron with
+  the service-role key in the Authorization header.
+- Track 6 wires the admin Emails tab to edit `email_templates`
+  rows in place (subject / body) and to insert non-system rows
+  via the existing RLS policy.
+- Track 7 will reach the new send helper for
+  `event-confirmation`, `waitlist-confirmation`,
+  `waitlist-promoted-payment`, and `registration-cancelled`.
+  The templates are already seeded; the call sites land with
+  Track 7.
 
 -----
 

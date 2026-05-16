@@ -250,6 +250,21 @@ type SiteSettingsRow = {
   updated_at: Timestamp;
 }
 
+type EmailTemplatesRow = {
+  id: UUID;
+  key: string;
+  name: string;
+  subject: string;
+  body_html: string;
+  body_text: string;
+  is_dues_related: boolean;
+  is_system: boolean;
+  description: string;
+  available_variables: string[];
+  created_at: Timestamp;
+  updated_at: Timestamp;
+}
+
 type TableSpec<Row, RequiredOnInsert extends keyof Row> = {
   Row: Row;
   Insert: Partial<Row> & Required<Pick<Row, RequiredOnInsert>>;
@@ -290,6 +305,10 @@ export type Database = {
       >;
       donations: TableSpec<DonationsRow, "amount_cents">;
       site_settings: TableSpec<SiteSettingsRow, never>;
+      email_templates: TableSpec<
+        EmailTemplatesRow,
+        "key" | "name" | "subject" | "body_html" | "body_text"
+      >;
     };
     Views: Record<string, never>;
     Functions: {

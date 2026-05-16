@@ -4,20 +4,28 @@
 // `email-automation.md` §3.3. Runs daily — scheduled via
 // `supabase/config.toml` cron entry (TBD when deployed).
 //
-// For every membership in `billing_status = 'past_due'`:
-//   - Compute the most-recent prior `dunning` send for that membership.
-//   - If the time since that send (in whole days) matches the next value
-//     in `email_settings.dunning_retry_days`, fire the dunning email.
-//   - The send call writes `email_send_log` BEFORE the actual send,
-//     keyed on `(profile_id, 'dunning', stripe_subscription_id +
-//     day-bucket)`, so re-firing the same retry across cron retries is
-//     deduped.
+// Anchoring: the webhook fires the day-0 dunning immediately on
+// `invoice.payment_failed` (stripe-architecture.md §4.1). The cron's
+// job is the retry cadence after that. Anchor is the earliest
+// `dunning` send_at for this profile. If no day-0 send exists, the
+// cron does nothing — the webhook is expected to seed it.
 //
-// AuthN: same as `membership-status-sync` — `verify_jwt = false` and
-// gated by Authorization header against the service role key. The
-// scheduled cron job passes the service key when invoking.
+// For each value `day` in `email_settings.dunning_retry_days`
+// (default [3, 7, 14]), at most one send fires per cron run. The
+// dedup `reference_id` is `<subscription_id>:<day>` so each retry
+// day fires at most once per past_due episode regardless of how
+// often the cron runs.
+//
+// AuthN: `verify_jwt = false` and gated by Authorization header
+// against the service role key — same pattern as
+// `membership-status-sync`.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+
+import {
+  resendConfigFromEnv,
+  sendTransactional,
+} from "../_shared/email-send.ts";
 
 interface MembershipRow {
   id: string;
@@ -32,11 +40,11 @@ interface EmailSettingsRow {
 
 interface ProfileRow {
   email: string;
+  full_name: string;
 }
 
 interface SendLogRow {
   sent_at: string;
-  reference_id: string | null;
 }
 
 function json(body: unknown, status = 200): Response {
@@ -68,6 +76,8 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  const resendConfig = resendConfigFromEnv();
+  const siteUrl = resendConfig.siteUrl;
   const now = new Date();
 
   const { data: settings, error: settingsError } = await supabase
@@ -76,9 +86,8 @@ Deno.serve(async (req: Request) => {
     .limit(1)
     .maybeSingle();
   if (settingsError) return json({ error: settingsError.message }, 500);
-  const retryDays = ((settings as EmailSettingsRow | null)?.dunning_retry_days ?? [3, 7, 14]).sort(
-    (a, b) => a - b,
-  );
+  const retryDays = ((settings as EmailSettingsRow | null)?.dunning_retry_days ??
+    [3, 7, 14]).sort((a, b) => b - a);
 
   const { data: members, error: membersError } = await supabase
     .from("memberships")
@@ -86,78 +95,66 @@ Deno.serve(async (req: Request) => {
     .eq("billing_status", "past_due");
   if (membersError) return json({ error: membersError.message }, 500);
 
-  const fired: Array<{ profile_id: string; day_bucket: number }> = [];
+  const fired: Array<{ profile_id: string; day_bucket: number; status: string }> = [];
 
   for (const row of (members ?? []) as MembershipRow[]) {
     if (!row.stripe_subscription_id) continue;
 
-    const { data: lastSend } = await supabase
+    const { data: earliest } = await supabase
       .from("email_send_log")
-      .select("sent_at, reference_id")
+      .select("sent_at")
       .eq("profile_id", row.profile_id)
       .eq("template", "dunning")
-      .order("sent_at", { ascending: false })
+      .order("sent_at", { ascending: true })
       .limit(1)
       .maybeSingle();
 
-    const lastSendDate = (lastSend as SendLogRow | null)?.sent_at
-      ? new Date((lastSend as SendLogRow).sent_at)
-      : null;
+    const earliestRow = earliest as SendLogRow | null;
+    if (!earliestRow?.sent_at) continue;
+    const anchor = new Date(earliestRow.sent_at);
+    const elapsed = daysBetween(anchor, now);
 
-    let nextBucket: number | null = null;
-    if (!lastSendDate) {
-      // First retry — fire on whatever the smallest retry day is once
-      // billing_status has held past_due for that many days. We approximate
-      // "billing_status went past_due" by the row's most recent update;
-      // the webhook handler wrote that timestamp.
-      nextBucket = retryDays[0] ?? null;
-    } else {
-      const elapsed = daysBetween(lastSendDate, now);
-      const next = retryDays.find((d) => d <= elapsed);
-      if (next !== undefined) {
-        nextBucket = next;
+    // Largest eligible bucket first. The shared sender dedups via
+    // `email_send_log`, so already-sent buckets return
+    // skipped_duplicate and we fall through to the next smaller day.
+    let result: Awaited<ReturnType<typeof sendTransactional>> | null = null;
+    let firedBucket: number | null = null;
+    for (const day of retryDays) {
+      if (elapsed < day) continue;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email, full_name")
+        .eq("id", row.profile_id)
+        .maybeSingle();
+      const profileRow = profile as ProfileRow | null;
+      if (!profileRow?.email) break;
+
+      const attempt = await sendTransactional(supabase, resendConfig, {
+        templateKey: "dunning",
+        to: profileRow.email,
+        triggerType: "automated",
+        profileId: row.profile_id,
+        referenceId: `${row.stripe_subscription_id}:${day}`,
+        vars: {
+          full_name: profileRow.full_name || "there",
+          customer_portal_url: `${siteUrl}/dashboard/billing`,
+        },
+      });
+      if (attempt.status !== "skipped_duplicate") {
+        result = attempt;
+        firedBucket = day;
+        break;
       }
     }
 
-    if (nextBucket === null) continue;
-
-    // Dedup reference includes the day bucket so each retry day fires at
-    // most once per past_due episode.
-    const referenceId = `${row.stripe_subscription_id}:${nextBucket}`;
-
-    const { data: existing } = await supabase
-      .from("email_send_log")
-      .select("id")
-      .eq("profile_id", row.profile_id)
-      .eq("template", "dunning")
-      .eq("reference_id", referenceId)
-      .limit(1)
-      .maybeSingle();
-    if (existing) continue;
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("id", row.profile_id)
-      .maybeSingle();
-    if (!(profile as ProfileRow | null)?.email) continue;
-
-    await supabase.from("email_send_log").insert({
-      profile_id: row.profile_id,
-      template: "dunning",
-      trigger_type: "automated",
-      reference_id: referenceId,
-      resend_message_id: null,
-      status: "sent",
-    });
-
-    // Track 4 swaps the console.info for the Resend API call.
-    console.info(
-      `[email:stub] would send dunning to ${(profile as ProfileRow).email}`,
-      { day_bucket: nextBucket, subscription_id: row.stripe_subscription_id },
-    );
-
-    fired.push({ profile_id: row.profile_id, day_bucket: nextBucket });
+    if (result && firedBucket !== null) {
+      fired.push({
+        profile_id: row.profile_id,
+        day_bucket: firedBucket,
+        status: result.status,
+      });
+    }
   }
 
   return json({
