@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { MapPin, Users } from "lucide-react";
-import type { MockEvent } from "@/lib/mppga/admin/mockEvents";
+
 import { StatusBadge } from "./StatusBadge";
 import { Card } from "./Card";
+import type { AdminEventRow } from "@/lib/admin/data";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -19,9 +20,12 @@ function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(0)}`;
 }
 
-export function EventCard({ event }: { event: MockEvent }) {
-  const fillPct = Math.min(100, Math.round((event.rsvps / event.capacity) * 100));
-  const isDraft = event.status === "Draft";
+export function EventCard({ event }: { event: AdminEventRow }) {
+  const fillPct = Math.min(
+    100,
+    Math.round((event.confirmedCount / event.capacity) * 100),
+  );
+  const isDraft = event.status === "draft";
 
   return (
     <Card className="p-6">
@@ -39,7 +43,7 @@ export function EventCard({ event }: { event: MockEvent }) {
           </p>
         </div>
         <StatusBadge
-          label={event.status}
+          label={isDraft ? "Draft" : "Published"}
           tone={isDraft ? "muted" : "teal"}
         />
       </div>
@@ -51,7 +55,7 @@ export function EventCard({ event }: { event: MockEvent }) {
               Member
             </dt>
             <dd className="mt-1 font-serif text-xl text-mppga-ink">
-              {formatPrice(event.memberPrice)}
+              {formatPrice(event.memberPriceCents)}
             </dd>
           </div>
           <div>
@@ -59,7 +63,7 @@ export function EventCard({ event }: { event: MockEvent }) {
               Guest
             </dt>
             <dd className="mt-1 font-serif text-xl text-mppga-ink">
-              {formatPrice(event.guestPrice)}
+              {formatPrice(event.guestPriceCents)}
             </dd>
           </div>
           <div>
@@ -67,7 +71,7 @@ export function EventCard({ event }: { event: MockEvent }) {
               RSVPs
             </dt>
             <dd className="mt-1 font-serif text-xl text-mppga-ink">
-              {event.rsvps}/{event.capacity}
+              {event.confirmedCount}/{event.capacity}
             </dd>
           </div>
         </dl>
@@ -84,7 +88,10 @@ export function EventCard({ event }: { event: MockEvent }) {
       <div className="mt-5 flex items-center justify-between border-t border-mppga-divider pt-4">
         <p className="flex items-center gap-1.5 text-sm text-mppga-ink-soft">
           <Users className="h-4 w-4" strokeWidth={1.8} />
-          {event.rsvps} confirmed
+          {event.confirmedCount} confirmed
+          {event.waitlistedCount > 0
+            ? ` · ${event.waitlistedCount} waitlisted`
+            : ""}
         </p>
         <div className="flex items-center gap-1 text-sm">
           <Link
