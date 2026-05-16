@@ -30,12 +30,18 @@ set search_path = public;
 --   `memberships`, so the same RPC works for member, guest, and lapsed
 --   paths.
 -- ---------------------------------------------------------------------------
+-- Param types: `event_pricing_tier`, `event_payment_status`, and
+-- `event_registration_status` aren't Postgres ENUMs in this schema —
+-- per data-model.md §2 they're TEXT columns with CHECK constraints.
+-- The function takes plain `text` and validates against the allowed
+-- value sets; the CHECK constraints on the target columns are the
+-- final safety net for any value that slips through.
 create or replace function public.reserve_event_spot(
   p_event_id uuid,
   p_profile_id uuid,
-  p_pricing_tier event_pricing_tier,
+  p_pricing_tier text,
   p_price_cents integer,
-  p_payment_status event_payment_status default 'pending'
+  p_payment_status text default 'pending'
 )
 returns event_registrations
 language plpgsql
@@ -45,13 +51,20 @@ as $$
 declare
   v_event events;
   v_confirmed_count integer;
-  v_max_waitlist integer;
   v_new_position integer;
-  v_status event_registration_status;
+  v_status text;
   v_registration event_registrations;
 begin
   if p_price_cents < 0 then
     raise exception 'price_cents must be non-negative'
+      using errcode = 'check_violation';
+  end if;
+  if p_pricing_tier not in ('member', 'guest') then
+    raise exception 'invalid pricing_tier: %', p_pricing_tier
+      using errcode = 'check_violation';
+  end if;
+  if p_payment_status not in ('pending', 'paid', 'refunded', 'free') then
+    raise exception 'invalid payment_status: %', p_payment_status
       using errcode = 'check_violation';
   end if;
 
@@ -129,8 +142,8 @@ begin
 end;
 $$;
 
-revoke all on function public.reserve_event_spot(uuid, uuid, event_pricing_tier, integer, event_payment_status) from public;
-grant execute on function public.reserve_event_spot(uuid, uuid, event_pricing_tier, integer, event_payment_status) to service_role;
+revoke all on function public.reserve_event_spot(uuid, uuid, text, integer, text) from public;
+grant execute on function public.reserve_event_spot(uuid, uuid, text, integer, text) to service_role;
 
 -- ---------------------------------------------------------------------------
 -- promote_next_waitlisted:
