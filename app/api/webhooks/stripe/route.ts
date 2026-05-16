@@ -129,10 +129,7 @@ async function handleCheckoutCompleted(
 ): Promise<void> {
   const flow = session.metadata?.flow ?? null;
   if (flow === "tickets") {
-    console.info(
-      "stripe webhook: ticket checkout completed, Track 7 will handle",
-      session.id,
-    );
+    await handleTicketCheckoutCompleted(session);
     return;
   }
 
@@ -167,6 +164,92 @@ async function handleCheckoutCompleted(
   if (error) {
     throw new Error(`memberships update failed: ${error.message}`);
   }
+}
+
+/**
+ * Ticket-flow `checkout.session.completed`. Flips the registration to
+ * `paid`, records the session id, and fires the confirmation email.
+ * Idempotent: dedup on `event_registrations.stripe_checkout_session_id`
+ * and on `email_send_log` so Stripe redelivery is a no-op.
+ *
+ * Per `stripe-architecture.md` §8.2 and `events.md` §6.
+ */
+async function handleTicketCheckoutCompleted(
+  session: Stripe.Checkout.Session,
+): Promise<void> {
+  const registrationId = session.metadata?.event_registration_id ?? null;
+  if (!registrationId) {
+    console.warn(
+      "stripe webhook: ticket checkout missing event_registration_id",
+      session.id,
+    );
+    return;
+  }
+
+  const supabase = createServiceRoleClient();
+
+  const { data: registration, error: loadError } = await supabase
+    .from("event_registrations")
+    .select(
+      "id, event_id, profile_id, price_paid, pricing_tier, payment_status, stripe_checkout_session_id",
+    )
+    .eq("id", registrationId)
+    .maybeSingle();
+  if (loadError) {
+    throw new Error(`event_registrations lookup failed: ${loadError.message}`);
+  }
+  if (!registration) {
+    console.warn(
+      "stripe webhook: ticket checkout for unknown registration",
+      registrationId,
+    );
+    return;
+  }
+
+  // Idempotent: already paid → no-op. The email-send dedup index
+  // protects against re-firing the confirmation on Stripe redelivery.
+  if (registration.payment_status === "paid") return;
+
+  const { error: updateError } = await supabase
+    .from("event_registrations")
+    .update({
+      payment_status: "paid",
+      stripe_checkout_session_id: session.id,
+    })
+    .eq("id", registration.id);
+  if (updateError) {
+    throw new Error(
+      `event_registrations update failed: ${updateError.message}`,
+    );
+  }
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("title, date, location")
+    .eq("id", registration.event_id)
+    .maybeSingle();
+  if (!event) return;
+
+  const profile = await lookupProfile(registration.profile_id);
+  const recipient =
+    profile?.email ??
+    (session.customer_details?.email ?? session.customer_email ?? null);
+  if (!recipient) return;
+
+  await sendTransactional({
+    template: "event-confirmation",
+    to: recipient,
+    triggerType: "webhook",
+    profileId: registration.profile_id,
+    referenceId: registration.id,
+    vars: {
+      full_name: profile?.full_name ?? recipient,
+      event_title: event.title,
+      event_date: event.date,
+      event_location: event.location,
+      amount_paid: formatAmount(registration.price_paid, "usd"),
+    },
+  });
 }
 
 /**
