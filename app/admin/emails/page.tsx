@@ -1,106 +1,112 @@
-import { Send } from "lucide-react";
+import {
+  loadEmailSettings,
+  loadEmailTemplates,
+  loadRecentEmailSends,
+} from "@/lib/admin/emails-data";
+import { requireAdmin } from "@/lib/supabase/session";
 import { AdminPageHeader } from "@/components/mppga/admin/AdminPageHeader";
 import { Card } from "@/components/mppga/admin/Card";
-import { Button } from "@/components/mppga/ui/button";
+import { EmailTemplatesPanel } from "@/components/mppga/admin/EmailTemplatesPanel";
+import { EmailSettingsForm } from "@/components/mppga/admin/EmailSettingsForm";
+import { EmailSendLogTable } from "@/components/mppga/admin/EmailSendLogTable";
 
-// Template keys mirror email-automation.md §5. Automated templates fire from
-// triggers (welcome, renewal, dunning, etc.); manual templates are admin-sent.
-const templates: ReadonlyArray<{
-  key: string;
-  name: string;
-  type: "Automated" | "Manual";
-}> = [
-  { key: "welcome", name: "Welcome", type: "Automated" },
-  { key: "renewal-reminder", name: "Renewal reminder", type: "Automated" },
-  { key: "dunning", name: "Payment failed", type: "Automated" },
-  { key: "event-confirmation", name: "Event confirmation", type: "Automated" },
-  { key: "waitlist-confirmation", name: "Waitlist confirmation", type: "Automated" },
-  {
-    key: "waitlist-promoted-payment",
-    name: "Off the waitlist — payment required",
-    type: "Automated",
-  },
-  { key: "event-reminder", name: "Event reminder", type: "Automated" },
-  { key: "event-announcement", name: "Event announcement", type: "Manual" },
-  { key: "registration-cancelled", name: "Registration cancelled", type: "Automated" },
-  { key: "general-update", name: "General update", type: "Manual" },
-];
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default function AdminEmailsPage() {
+export const metadata = {
+  title: "Emails · Admin · MPPGA",
+};
+
+function readParam(value: string | string[] | undefined): string | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+export default async function AdminEmailsPage({ searchParams }: PageProps) {
+  await requireAdmin();
+  const sp = await searchParams;
+  const ok = readParam(sp.ok);
+  const error = readParam(sp.error);
+  const openTemplate = readParam(sp.template);
+
+  const [templates, settings, sendLog] = await Promise.all([
+    loadEmailTemplates(),
+    loadEmailSettings(),
+    loadRecentEmailSends(100),
+  ]);
+
   return (
     <div className="space-y-10">
       <AdminPageHeader
         title="Emails"
-        description="The templates and send-timing for every message that goes to a member. Editing the body of any template syncs to Resend."
-        actions={
-          <Button variant="primary" disabled>
-            <Send className="h-4 w-4" strokeWidth={1.8} />
-            Send announcement
-          </Button>
-        }
+        description="The templates and send-timing for every message that goes to a member."
+      />
+
+      <Flash ok={ok} error={error} />
+
+      <EmailTemplatesPanel
+        templates={templates}
+        openKey={openTemplate}
       />
 
       <Card
-        title="Templates"
-        description="One row per template key. Editing is being wired up."
+        title="Send timing"
+        description="Admin-configurable schedules from email-automation.md §2. Cron functions read these values at run time — no redeploy required."
       >
-        <ul className="divide-y divide-mppga-divider">
-          {templates.map((t) => (
-            <li
-              key={t.key}
-              className="flex flex-wrap items-center justify-between gap-4 px-6 py-4"
-            >
-              <div>
-                <p className="text-sm font-medium text-mppga-ink">{t.name}</p>
-                <p className="mt-0.5 font-mono text-xs text-mppga-ink-muted">
-                  {t.key}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span
-                  className={
-                    t.type === "Automated"
-                      ? "rounded-full bg-mppga-teal-tint px-3 py-1 text-xs text-mppga-teal-deep"
-                      : "rounded-full bg-mppga-sand px-3 py-1 text-xs text-mppga-ink-soft"
-                  }
-                >
-                  {t.type}
-                </span>
-                <Button variant="ghost" disabled>
-                  Edit
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        {settings ? (
+          <EmailSettingsForm settings={settings} />
+        ) : (
+          <p className="px-6 py-6 text-sm text-mppga-ink-soft">
+            Settings row missing. Run the seed migration to create it.
+          </p>
+        )}
       </Card>
 
       <Card
-        title="Send timing"
-        description="Admin-configurable schedules from email-automation.md §2. Editing lands soon."
+        title="Send history"
+        description="The most recent transactional sends. Status reflects what Resend returned at send time."
       >
-        <dl className="divide-y divide-mppga-divider">
-          <TimingRow
-            label="Renewal reminders"
-            value="30 / 7 / 1 days before expiry"
-          />
-          <TimingRow label="Event reminders" value="48 / 2 hours before start" />
-          <TimingRow label="Dunning retries" value="3 / 7 / 14 days after failure" />
-          <TimingRow
-            label="Waitlist payment link"
-            value="24 hours before expiry"
-          />
-        </dl>
+        <EmailSendLogTable entries={sendLog} />
       </Card>
     </div>
   );
 }
 
-function TimingRow({ label, value }: { label: string; value: string }) {
+function Flash({
+  ok,
+  error,
+}: {
+  ok: string | null;
+  error: string | null;
+}) {
+  if (error) {
+    return (
+      <div className="rounded-md border border-mppga-sand-deep bg-mppga-sand px-4 py-3 text-sm text-mppga-ink">
+        Something went wrong: {error}.
+      </div>
+    );
+  }
+  const okMessage = okToMessage(ok);
+  if (!okMessage) return null;
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
-      <dt className="text-sm text-mppga-ink">{label}</dt>
-      <dd className="font-mono text-xs text-mppga-ink-muted">{value}</dd>
+    <div className="rounded-md border border-mppga-teal bg-mppga-teal-tint px-4 py-3 text-sm text-mppga-teal-deep">
+      {okMessage}
     </div>
   );
+}
+
+function okToMessage(value: string | null): string | null {
+  switch (value) {
+    case "template_saved":
+      return "Template updated. Next send picks up the new copy.";
+    case "template_created":
+      return "Template created.";
+    case "template_deleted":
+      return "Template deleted.";
+    case "settings_saved":
+      return "Send-timing saved. Crons pick up the new schedule on their next run.";
+    default:
+      return null;
+  }
 }
