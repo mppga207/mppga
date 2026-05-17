@@ -111,7 +111,6 @@ export const loadAdminOverview = cache(
     const recentlyJoinedRes = await supabase
       .from("memberships")
       .select(memberSelect, { count: "exact" })
-      .in("status", ["Active", "Honorary"])
       .gte("created_at", recentCutoff)
       .order("created_at", { ascending: false })
       .limit(SECTION_LIMIT)
