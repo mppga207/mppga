@@ -11,28 +11,28 @@ export function EmailSettingsForm({
     <form action={updateEmailSettingsAction} className="space-y-5 px-6 py-6">
       <ArrayField
         label="Renewal reminders"
-        helper="Days before expires_at to remind the member. Comma- or space-separated."
+        helper="Days before a member’s renewal date to send a reminder. Comma- or space-separated."
         name="renewal_reminder_days_before"
         value={settings.renewalReminderDaysBefore}
         suffix="days"
       />
       <ArrayField
         label="Event reminders"
-        helper="Hours before event start to remind confirmed registrants."
+        helper="Hours before an event starts to remind confirmed attendees."
         name="event_reminder_hours_before"
         value={settings.eventReminderHoursBefore}
         suffix="hours"
       />
       <ArrayField
-        label="Dunning retries"
-        helper="Days after a failed payment to re-fire the dunning email. The day-0 send is immediate; this controls the follow-up cadence."
+        label="Failed payment follow-ups"
+        helper="Days after a failed payment to follow up with the member. The first email goes out immediately; this controls the follow-up cadence."
         name="dunning_retry_days"
         value={settings.dunningRetryDays}
         suffix="days"
       />
       <ScalarField
         label="Waitlist payment link expiry"
-        helper="Hours a paid-event waitlist promotion's checkout link stays valid before the registration is cancelled."
+        helper="How long a waitlist payment link stays valid after a spot opens up. After this, the spot rolls to the next person on the list."
         name="waitlist_payment_link_expiry_hours"
         value={settings.waitlistPaymentLinkExpiryHours}
         suffix="hours"

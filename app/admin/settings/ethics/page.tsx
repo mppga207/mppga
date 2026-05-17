@@ -24,7 +24,7 @@ export default async function AdminSettingsEthicsPage() {
     <div className="space-y-10">
       <AdminPageHeader
         title="Code of ethics"
-        description="Append-only audit of every signature. Each entry records the document version, a SHA-256 of the text the signer actually saw, and the IP they signed from."
+        description="Permanent audit of every signature. Each entry records the document version, a fingerprint of the text the signer actually saw, and the IP they signed from."
       />
 
       <SettingsTabs active="/admin/settings/ethics" />
@@ -32,9 +32,8 @@ export default async function AdminSettingsEthicsPage() {
       <Card title="Signatures">
         {signatures.length === 0 ? (
           <p className="px-6 py-8 text-sm text-mppga-ink-soft">
-            No ethics signatures yet. Members sign when they enroll once
-            the member-portal ethics tab is enabled (deferred to Phase 2
-            per CLAUDE.md §1).
+            No ethics signatures yet. Members will sign when they enroll
+            once the member portal ethics tab is turned on.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -81,12 +80,10 @@ export default async function AdminSettingsEthicsPage() {
 
       <Card
         title="Current ethics document"
-        description="Drafting and version history live with the Content tab (Track 6 follow-up). Signatures recorded above always reference the version the signer actually saw, by SHA-256 hash."
+        description="Drafting and version history will live here. Each signature recorded above is permanently tied to the exact text the signer saw."
       >
         <p className="px-6 py-8 text-sm text-mppga-ink-soft">
-          Document editing isn’t wired yet. For now, the ethics text is
-          managed in code — see <code className="font-mono">CLAUDE.md</code>{" "}
-          §1 for deferral notes.
+          Document editing isn’t available yet.
         </p>
       </Card>
     </div>

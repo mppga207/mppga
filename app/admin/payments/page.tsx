@@ -25,7 +25,7 @@ export default function AdminPaymentsPage() {
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-mppga-ink-soft">
             We&rsquo;ll surface the most recent invoices, failed payments, and
             event ticket transactions inline. Refunds and customer-level
-            actions stay in Stripe per stripe-architecture.md §7.
+            actions stay in the Stripe Dashboard.
           </p>
         </div>
       </Card>

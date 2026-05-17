@@ -36,10 +36,6 @@ export default function AdminOverviewPage() {
         </div>
       </Card>
 
-      <p className="text-xs italic text-mppga-ink-muted">
-        Numbers above are illustrative until the dashboard is wired to live
-        Supabase queries.
-      </p>
     </div>
   );
 }

@@ -96,7 +96,7 @@ export default async function AdminSettingsContactPage({
           </form>
         ) : (
           <p className="px-6 py-8 text-sm text-mppga-ink-soft">
-            site_settings row missing. Run the seed migration.
+            Contact info isn’t set up yet.
           </p>
         )}
       </Card>

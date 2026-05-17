@@ -35,13 +35,10 @@ export function TierConfigCard({ tier }: { tier: AdminTier }) {
     const lines: string[] = [];
     if (isBootstrap) {
       lines.push(
-        `Create the Stripe Product + initial Price for ${tier.name} at $${next.toFixed(0)}/year?`,
+        `Set up ${tier.name} pricing at $${next.toFixed(0)}/year?`,
       );
       lines.push("");
-      lines.push(
-        "• A new Product and Price will be created in Stripe.",
-      );
-      lines.push("• Existing subscribers: 0 (nothing to migrate yet).");
+      lines.push("• No current members to roll over.");
       lines.push("• New signups will use this price immediately.");
     } else {
       const verb =
@@ -133,7 +130,7 @@ export function TierConfigCard({ tier }: { tier: AdminTier }) {
             <BenefitCheckbox
               id={`corporate-${tier.id}`}
               name="corporate_umbrella"
-              label="Corporate umbrella (sub-profiles)"
+              label="Corporate umbrella (covers staff under one account)"
               defaultChecked={tier.corporateUmbrella}
             />
           </fieldset>
@@ -169,8 +166,8 @@ export function TierConfigCard({ tier }: { tier: AdminTier }) {
             <h3 className="font-serif text-lg text-mppga-ink">Dues</h3>
             <p className="mt-1 text-xs text-mppga-ink-soft">
               {isBootstrap
-                ? "Stripe Product not yet created for this tier. Saving here creates it and the first Price."
-                : "Existing subscribers roll over to the new amount at their next renewal — no proration, no charges today."}
+                ? "Pricing isn’t set up in Stripe for this tier yet. Saving here gets it ready for new signups."
+                : "Current members roll over to the new amount at their next renewal — no mid-cycle charges."}
             </p>
           </header>
 
@@ -192,21 +189,14 @@ export function TierConfigCard({ tier }: { tier: AdminTier }) {
             </div>
           </Field>
 
-          {tier.stripePriceId ? (
-            <p className="font-mono text-[11px] text-mppga-ink-muted">
-              price · {tier.stripePriceId}
-            </p>
-          ) : (
+          {tier.stripePriceId ? null : (
             <p className="text-xs text-mppga-ink-muted">
-              Stripe Product:{" "}
-              <span className="font-mono">
-                {tier.stripeProductId ?? "not yet created"}
-              </span>
+              Not yet set up in Stripe.
             </p>
           )}
 
           <Button type="submit" variant="primary" className="w-full">
-            {isBootstrap ? "Create Stripe Price" : "Update dues"}
+            {isBootstrap ? "Set up in Stripe" : "Update dues"}
           </Button>
         </form>
       </div>
