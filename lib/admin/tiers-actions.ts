@@ -42,11 +42,7 @@ export async function updateTierFieldsAction(formData: FormData): Promise<void> 
 
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  const displayOrder = Number(formData.get("display_order") ?? 0);
   if (!name) {
-    redirect(`${tierBackHref(tierId)}?error=invalid_input`);
-  }
-  if (!Number.isInteger(displayOrder)) {
     redirect(`${tierBackHref(tierId)}?error=invalid_input`);
   }
 
@@ -54,7 +50,7 @@ export async function updateTierFieldsAction(formData: FormData): Promise<void> 
   const { data: prior } = await supabase
     .from("tiers")
     .select(
-      "name, description, voting_rights, directory_listing, corporate_umbrella, display_order",
+      "name, description, voting_rights, directory_listing, corporate_umbrella",
     )
     .eq("id", tierId)
     .maybeSingle();
@@ -65,7 +61,6 @@ export async function updateTierFieldsAction(formData: FormData): Promise<void> 
     voting_rights: formData.get("voting_rights") != null,
     directory_listing: formData.get("directory_listing") != null,
     corporate_umbrella: formData.get("corporate_umbrella") != null,
-    display_order: displayOrder,
   };
 
   const { error } = await supabase.from("tiers").update(updates).eq("id", tierId);
@@ -153,4 +148,82 @@ export async function updateTierDuesAction(formData: FormData): Promise<void> {
   redirect(
     `${tierBackHref(tierId)}?ok=dues_saved&migrated=${result.subscriptionsUpdated}${isBootstrap ? "&bootstrap=1" : ""}`,
   );
+}
+
+// =========================================================================
+// Tier reorder — up/down arrows on the tier list
+//
+// Swaps a tier's `display_order` with the adjacent tier's. Direction is
+// 'up' (toward the top) or 'down'. Top-of-list moving up and
+// bottom-of-list moving down are no-ops; the UI disables the buttons in
+// those cases but we guard server-side too.
+// =========================================================================
+
+export async function moveTierAction(formData: FormData): Promise<void> {
+  const session = await requireAdmin();
+  const tierId = String(formData.get("tier_id") ?? "");
+  const direction = String(formData.get("direction") ?? "");
+  if (!tierId || (direction !== "up" && direction !== "down")) {
+    redirect("/admin/settings/tiers?error=invalid_input");
+  }
+
+  const supabase = createServiceRoleClient();
+
+  const { data: current } = await supabase
+    .from("tiers")
+    .select("id, display_order")
+    .eq("id", tierId)
+    .maybeSingle();
+  if (!current) {
+    redirect("/admin/settings/tiers?error=tier_not_found");
+  }
+
+  // Adjacent tier in the requested direction:
+  //   up   = the largest display_order that is still less than current
+  //   down = the smallest display_order that is still greater than current
+  const query = supabase
+    .from("tiers")
+    .select("id, display_order")
+    .limit(1);
+  const { data: neighbours } =
+    direction === "up"
+      ? await query
+          .lt("display_order", current.display_order)
+          .order("display_order", { ascending: false })
+      : await query
+          .gt("display_order", current.display_order)
+          .order("display_order", { ascending: true });
+
+  const neighbour = neighbours?.[0];
+  if (!neighbour) {
+    // Already at the end of the list — no-op.
+    redirect("/admin/settings/tiers");
+  }
+
+  // Swap. Two updates inside a best-effort sequential pair; tier count is
+  // tiny (3) so contention isn't a concern.
+  const { error: e1 } = await supabase
+    .from("tiers")
+    .update({ display_order: neighbour.display_order })
+    .eq("id", current.id);
+  const { error: e2 } = await supabase
+    .from("tiers")
+    .update({ display_order: current.display_order })
+    .eq("id", neighbour.id);
+  if (e1 || e2) {
+    redirect(
+      `/admin/settings/tiers?error=${encodeURIComponent((e1 ?? e2)!.message)}`,
+    );
+  }
+
+  await logAdminAction(session.user.id, "tier_change", {
+    tier_id: tierId,
+    action: "reorder",
+    direction,
+    swapped_with: neighbour.id,
+  });
+
+  revalidatePath("/admin/settings/tiers");
+  revalidatePath("/join");
+  redirect("/admin/settings/tiers");
 }

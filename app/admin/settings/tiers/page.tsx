@@ -54,8 +54,13 @@ export default async function AdminSettingsTiersPage({
         </Card>
       ) : (
         <div className="space-y-6">
-          {tiers.map((tier) => (
-            <TierConfigCard key={tier.id} tier={tier} />
+          {tiers.map((tier, idx) => (
+            <TierConfigCard
+              key={tier.id}
+              tier={tier}
+              canMoveUp={idx > 0}
+              canMoveDown={idx < tiers.length - 1}
+            />
           ))}
         </div>
       )}
