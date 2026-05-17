@@ -77,6 +77,7 @@ interface JoinTier {
   slug: TierSlug;
   name: string;
   description: string;
+  benefits: string[];
   presentation: TierPresentation;
 }
 
@@ -85,13 +86,30 @@ interface TierRow {
   name: string;
   description: string;
   display_order: number;
+  umbrella_account: boolean;
+  umbrella_employee_limit: number | null;
+}
+
+function resolveBenefits(row: TierRow, presentation: TierPresentation): string[] {
+  if (row.slug !== "salon") return presentation.benefits;
+  // On the Salon tier, swap the static "sub-profiles" line for the
+  // admin-configured coverage cap when one is set.
+  if (!row.umbrella_account || !row.umbrella_employee_limit) {
+    return presentation.benefits;
+  }
+  const coverage = `Covers a salon with up to ${row.umbrella_employee_limit} employees`;
+  return presentation.benefits.map((b) =>
+    b === "Sub-profiles for every staff groomer" ? coverage : b,
+  );
 }
 
 async function loadJoinTiers(): Promise<JoinTier[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("tiers")
-    .select("slug, name, description, display_order")
+    .select(
+      "slug, name, description, display_order, umbrella_account, umbrella_employee_limit",
+    )
     .order("display_order", { ascending: true })
     .returns<TierRow[]>();
   if (!data) return [];
@@ -101,11 +119,13 @@ async function loadJoinTiers(): Promise<JoinTier[]> {
     if (row.slug !== "basic" && row.slug !== "professional" && row.slug !== "salon") {
       continue;
     }
+    const presentation = TIER_PRESENTATION[row.slug];
     rows.push({
       slug: row.slug,
       name: row.name,
       description: row.description,
-      presentation: TIER_PRESENTATION[row.slug],
+      benefits: resolveBenefits(row, presentation),
+      presentation,
     });
   }
   return rows;
@@ -203,7 +223,7 @@ export default async function JoinPage() {
                     <div className="my-6 h-px w-full bg-mppga-divider" />
 
                     <ul className="space-y-2.5 text-sm text-mppga-ink-soft">
-                      {tier.presentation.benefits.map((b) => (
+                      {tier.benefits.map((b) => (
                         <li key={b} className="flex items-start gap-2.5">
                           <Check
                             className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal"

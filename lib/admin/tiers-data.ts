@@ -8,6 +8,7 @@ export interface AdminTier {
   annualDuesCents: number;
   directoryListing: boolean;
   umbrellaAccount: boolean;
+  umbrellaEmployeeLimit: number | null;
   displayOrder: number;
   stripeProductId: string | null;
   stripePriceId: string | null;
@@ -25,6 +26,7 @@ interface TierRow {
   annual_dues_cents: number;
   directory_listing: boolean;
   umbrella_account: boolean;
+  umbrella_employee_limit: number | null;
   display_order: number;
   stripe_product_id: string | null;
   stripe_price_id: string | null;
@@ -36,7 +38,7 @@ export async function loadAdminTiers(): Promise<AdminTier[]> {
   const { data: tiers } = await supabase
     .from("tiers")
     .select(
-      "id, name, slug, description, annual_dues_cents, directory_listing, umbrella_account, display_order, stripe_product_id, stripe_price_id, updated_at",
+      "id, name, slug, description, annual_dues_cents, directory_listing, umbrella_account, umbrella_employee_limit, display_order, stripe_product_id, stripe_price_id, updated_at",
     )
     .order("display_order", { ascending: true })
     .returns<TierRow[]>();
@@ -65,6 +67,7 @@ export async function loadAdminTiers(): Promise<AdminTier[]> {
     annualDuesCents: row.annual_dues_cents,
     directoryListing: row.directory_listing,
     umbrellaAccount: row.umbrella_account,
+    umbrellaEmployeeLimit: row.umbrella_employee_limit,
     displayOrder: row.display_order,
     stripeProductId: row.stripe_product_id,
     stripePriceId: row.stripe_price_id,

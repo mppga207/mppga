@@ -166,6 +166,7 @@ What's been applied to the production Supabase project. Update this list wheneve
 - `20260517000006_remove_voting_rename_tiers.sql` — drops the `voting_rights` column from `tiers`, renames `corporate_umbrella` to `umbrella_account`, and updates the seeded rows so "Student / Apprentice" becomes "Basic Membership" (slug `basic`) and "Corporate / Salon" becomes "Salon" (slug `salon`). Drops voting as a planned feature.
 - `20260517000007_search_organizations_rpc.sql` — adds a `search_organizations(p_query, p_limit)` security-definer function that returns up to 8 `(id, name)` matches for the `/join` salon typeahead. Anon + authenticated execute; the row-level policy on `organizations` stays admin-only.
 - `20260517000008_profile_full_name_from_metadata.sql` — patches the `create_profile_on_signup` trigger to copy `full_name` out of `raw_user_meta_data` so the join form's name actually lands on the profile. Backfills any existing rows whose name went missing from the previous version of the trigger.
+- `20260517000009_tiers_employee_limit.sql` — adds `umbrella_employee_limit` (nullable integer) to `tiers` so the admin tier editor and public Join page can render "Covers a salon with up to N employees" instead of the bare "Umbrella account" flag. Constrained positive when set, and gated on `umbrella_account = true`. Seeds Salon to 5.
 
 Manual configuration steps that don't live in a migration but must be done per environment:
 

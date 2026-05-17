@@ -15,6 +15,8 @@ function centsToDollars(cents: number): string {
   return (cents / 100).toFixed(0);
 }
 
+const DEFAULT_EMPLOYEE_LIMIT = 5;
+
 export function TierConfigCard({
   tier,
   canMoveUp,
@@ -25,6 +27,10 @@ export function TierConfigCard({
   canMoveDown: boolean;
 }) {
   const [dollars, setDollars] = useState(centsToDollars(tier.annualDuesCents));
+  const [umbrellaOn, setUmbrellaOn] = useState(tier.umbrellaAccount);
+  const [employeeLimit, setEmployeeLimit] = useState(
+    String(tier.umbrellaEmployeeLimit ?? DEFAULT_EMPLOYEE_LIMIT),
+  );
   const isBootstrap = !tier.stripePriceId;
 
   function handleDuesSubmit(event: FormEvent<HTMLFormElement>): void {
@@ -72,10 +78,10 @@ export function TierConfigCard({
     <Card>
       <div
         id={`tier-${tier.id}`}
-        className="flex flex-wrap items-baseline justify-between gap-4 border-b border-mppga-divider px-6 py-4"
+        className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-mppga-divider px-5 py-4 sm:px-6"
       >
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="flex items-center overflow-hidden rounded-md border border-mppga-divider">
             <form action={moveTierAction}>
               <input type="hidden" name="tier_id" value={tier.id} />
               <input type="hidden" name="direction" value="up" />
@@ -84,7 +90,7 @@ export function TierConfigCard({
                 disabled={!canMoveUp}
                 aria-label={`Move ${tier.name} up`}
                 title="Move up"
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-mppga-divider text-mppga-ink-soft transition-colors hover:border-mppga-teal hover:text-mppga-teal disabled:cursor-not-allowed disabled:opacity-30"
+                className="flex h-8 w-8 items-center justify-center border-r border-mppga-divider text-mppga-ink-soft transition-colors hover:bg-mppga-teal-tint hover:text-mppga-teal-deep disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-mppga-ink-soft"
               >
                 <span aria-hidden>↑</span>
               </button>
@@ -97,32 +103,39 @@ export function TierConfigCard({
                 disabled={!canMoveDown}
                 aria-label={`Move ${tier.name} down`}
                 title="Move down"
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-mppga-divider text-mppga-ink-soft transition-colors hover:border-mppga-teal hover:text-mppga-teal disabled:cursor-not-allowed disabled:opacity-30"
+                className="flex h-8 w-8 items-center justify-center text-mppga-ink-soft transition-colors hover:bg-mppga-teal-tint hover:text-mppga-teal-deep disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-mppga-ink-soft"
               >
                 <span aria-hidden>↓</span>
               </button>
             </form>
           </div>
-          <div>
-            <h2 className="font-serif text-2xl text-mppga-ink">{tier.name}</h2>
-            <p className="font-mono text-xs text-mppga-ink-muted">{tier.slug}</p>
+          <div className="min-w-0">
+            <h2 className="truncate font-serif text-xl text-mppga-ink sm:text-2xl">
+              {tier.name}
+            </h2>
+            <p className="truncate font-mono text-[11px] text-mppga-ink-muted">
+              {tier.slug}
+            </p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="font-serif text-2xl text-mppga-teal-deep">
-            ${(tier.annualDuesCents / 100).toFixed(0)}
-            <span className="ml-1 text-xs text-mppga-ink-muted">/ year</span>
-          </p>
-          <p className="text-xs text-mppga-ink-muted">
-            {tier.activeSubscriberCount}{" "}
-            {tier.activeSubscriberCount === 1 ? "subscriber" : "subscribers"}
-          </p>
+        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
+          <span className="hidden h-8 w-px bg-mppga-divider sm:block" aria-hidden />
+          <div className="text-right">
+            <p className="font-serif text-xl text-mppga-teal-deep sm:text-2xl">
+              ${(tier.annualDuesCents / 100).toFixed(0)}
+              <span className="ml-1 text-xs text-mppga-ink-muted">/ year</span>
+            </p>
+            <p className="text-[11px] text-mppga-ink-muted">
+              {tier.activeSubscriberCount}{" "}
+              {tier.activeSubscriberCount === 1 ? "subscriber" : "subscribers"}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-6 px-5 py-6 sm:px-6 lg:grid-cols-[1fr_320px]">
         {/* Tier metadata */}
-        <form action={updateTierFieldsAction} className="space-y-4">
+        <form action={updateTierFieldsAction} className="space-y-5">
           <input type="hidden" name="tier_id" value={tier.id} />
 
           <Field label="Name" id={`name-${tier.id}`}>
@@ -150,21 +163,22 @@ export function TierConfigCard({
             />
           </Field>
 
-          <fieldset className="space-y-2 rounded-md border border-mppga-divider bg-mppga-page p-4">
-            <legend className="px-2 text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
+          <fieldset className="space-y-3 rounded-md border border-mppga-divider bg-mppga-page p-4">
+            <legend className="px-2 text-[11px] font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
               Benefits
             </legend>
-            <BenefitCheckbox
+            <BenefitRow
               id={`directory-${tier.id}`}
               name="directory_listing"
-              label="Directory listing"
+              label="Public directory listing"
               defaultChecked={tier.directoryListing}
             />
-            <BenefitCheckbox
-              id={`umbrella-${tier.id}`}
-              name="umbrella_account"
-              label="Umbrella account (covers staff under one membership)"
-              defaultChecked={tier.umbrellaAccount}
+            <SalonCoverageRow
+              tierId={tier.id}
+              checked={umbrellaOn}
+              onCheckedChange={setUmbrellaOn}
+              employeeLimit={employeeLimit}
+              onEmployeeLimitChange={setEmployeeLimit}
             />
           </fieldset>
 
@@ -250,7 +264,7 @@ function Field({
   );
 }
 
-function BenefitCheckbox({
+function BenefitRow({
   id,
   name,
   label,
@@ -262,7 +276,10 @@ function BenefitCheckbox({
   defaultChecked: boolean;
 }) {
   return (
-    <label htmlFor={id} className="flex items-center gap-2 text-sm">
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-center gap-3 rounded-md border border-mppga-divider bg-mppga-card px-3 py-2.5 text-sm transition-colors hover:border-mppga-teal/40"
+    >
       <input
         id={id}
         name={name}
@@ -272,5 +289,64 @@ function BenefitCheckbox({
       />
       <span className="text-mppga-ink">{label}</span>
     </label>
+  );
+}
+
+function SalonCoverageRow({
+  tierId,
+  checked,
+  onCheckedChange,
+  employeeLimit,
+  onEmployeeLimitChange,
+}: {
+  tierId: string;
+  checked: boolean;
+  onCheckedChange: (next: boolean) => void;
+  employeeLimit: string;
+  onEmployeeLimitChange: (next: string) => void;
+}) {
+  const toggleId = `salon-coverage-${tierId}`;
+  const limitId = `employee-limit-${tierId}`;
+  return (
+    <div className="rounded-md border border-mppga-divider bg-mppga-card transition-colors hover:border-mppga-teal/40">
+      <label
+        htmlFor={toggleId}
+        className="flex cursor-pointer items-start gap-3 px-3 py-2.5 text-sm"
+      >
+        <input
+          id={toggleId}
+          name="umbrella_account"
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onCheckedChange(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-mppga-divider text-mppga-teal focus:ring-mppga-teal/40"
+        />
+        <span className="flex-1">
+          <span className="block text-mppga-ink">Salon coverage</span>
+          <span className="mt-0.5 block text-xs text-mppga-ink-soft">
+            One membership covers a salon and its staff.
+          </span>
+        </span>
+      </label>
+      {checked ? (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-mppga-divider px-3 py-2.5 text-sm text-mppga-ink-soft">
+          <label htmlFor={limitId} className="shrink-0">
+            Covers a salon with up to
+          </label>
+          <input
+            id={limitId}
+            name="umbrella_employee_limit"
+            type="number"
+            min={1}
+            step={1}
+            required
+            value={employeeLimit}
+            onChange={(e) => onEmployeeLimitChange(e.target.value)}
+            className="h-9 w-16 rounded-md border border-mppga-divider bg-mppga-card px-2 text-center text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+          />
+          <span className="shrink-0">employees.</span>
+        </div>
+      ) : null}
+    </div>
   );
 }
