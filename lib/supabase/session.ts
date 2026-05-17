@@ -1,4 +1,5 @@
-import { cookies } from "next/headers";
+import { cache } from "react";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
@@ -8,6 +9,10 @@ import {
   isPreviewMode,
   type PreviewMode,
 } from "@/lib/supabase/preview";
+import {
+  SESSION_HEADER,
+  deserializeSession,
+} from "@/lib/supabase/session-header";
 import type { MembershipStatus, ProfileRole } from "@/types/database";
 
 /**
@@ -88,18 +93,57 @@ function isMembershipStatus(value: unknown): value is MembershipStatus {
 }
 
 /**
- * Returns the verified session for the current request, or null if the
- * user is anonymous. Uses `auth.getUser()` so the JWT is re-verified
- * against Supabase rather than trusted from the cookie alone.
- *
- * Returns null when Supabase isn't configured so callers can decide
- * between redirecting, rendering empty, or falling back to preview mode.
+ * Reads the session forwarded by middleware in the x-mppga-session
+ * header. Middleware has already verified the JWT via auth.getUser(),
+ * so we trust the payload and skip a second Auth API round-trip.
+ * Returns null when the header is absent (middleware didn't run, or
+ * the user is anonymous) — callers fall through to the auth.getUser
+ * path in that case.
  */
-export async function getSession(): Promise<AppSession | null> {
+async function readSessionFromHeader(): Promise<AppSession | null> {
+  const headerList = await headers();
+  const raw = headerList.get(SESSION_HEADER);
+  if (!raw) return null;
+  const payload = deserializeSession(raw);
+  if (!payload) return null;
+  const user = {
+    id: payload.id,
+    email: payload.email ?? undefined,
+    app_metadata: {
+      role: payload.role,
+      membership_status: payload.membershipStatus,
+    },
+    user_metadata: {},
+    aud: payload.aud,
+    created_at: payload.createdAt,
+  } as unknown as User;
+  return {
+    user,
+    role: payload.role,
+    membershipStatus: payload.membershipStatus,
+  };
+}
+
+/**
+ * Returns the verified session for the current request, or null if the
+ * user is anonymous. Fast path: middleware has already called
+ * `auth.getUser()` and forwarded the result via the x-mppga-session
+ * header, so we trust it. Slow path (header absent — e.g. an
+ * unauthenticated visitor on a public page): falls through to
+ * `auth.getUser()` so the JWT is verified against Supabase.
+ *
+ * Wrapped in `React.cache()` so Nav, page guards, and any nested
+ * server components dedupe within a single render. Returns null when
+ * Supabase isn't configured so callers can decide between
+ * redirecting, rendering empty, or falling back to preview mode.
+ */
+export const getSession = cache(async (): Promise<AppSession | null> => {
   const preview = await readPreviewMode();
   if (preview) {
     return buildPreviewSession(preview === "admin" ? "admin" : "member");
   }
+  const fromHeader = await readSessionFromHeader();
+  if (fromHeader) return fromHeader;
   if (!isSupabaseConfigured()) return null;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
@@ -108,7 +152,7 @@ export async function getSession(): Promise<AppSession | null> {
   }
   const { role, membershipStatus } = readClaims(data.user);
   return { user: data.user, role, membershipStatus };
-}
+});
 
 /**
  * Requires an authenticated session. Anonymous callers are redirected to
