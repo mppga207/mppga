@@ -7,6 +7,7 @@ import { Button } from "@/components/mppga/ui/button";
 import {
   createEmailTemplateAction,
   deleteEmailTemplateAction,
+  sendTestEmailAction,
   updateEmailTemplateAction,
 } from "@/lib/admin/emails-actions";
 import type { AdminEmailTemplate } from "@/lib/admin/emails-data";
@@ -187,7 +188,7 @@ function EditTemplateForm({ template }: { template: AdminEmailTemplate }) {
         />
       </Field>
 
-      <div className="flex items-center justify-between gap-3 border-t border-mppga-divider pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mppga-divider pt-4">
         <p className="text-xs text-mppga-ink-muted">
           Last updated{" "}
           {new Date(template.updatedAt).toLocaleString("en-US", {
@@ -197,11 +198,34 @@ function EditTemplateForm({ template }: { template: AdminEmailTemplate }) {
             minute: "2-digit",
           })}
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <SendTestForm templateKey={template.key} />
           {!template.isSystem ? <DeleteTemplateForm templateKey={template.key} /> : null}
           <Button type="submit">Save template</Button>
         </div>
       </div>
+    </form>
+  );
+}
+
+function SendTestForm({ templateKey }: { templateKey: string }) {
+  return (
+    <form
+      action={sendTestEmailAction}
+      onSubmit={(e) => {
+        if (
+          !confirm(
+            "Send a test of this email to your own address using sample data?",
+          )
+        ) {
+          e.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="key" value={templateKey} />
+      <Button type="submit" variant="ghost">
+        Send a test to me
+      </Button>
     </form>
   );
 }

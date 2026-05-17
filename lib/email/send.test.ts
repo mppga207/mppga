@@ -88,6 +88,7 @@ beforeEach(() => {
       body_html: "<p>Hi {{full_name}}</p>",
       body_text: "Hi {{full_name}}",
       is_dues_related: false,
+      is_enabled: true,
     },
     error: null,
   });
@@ -191,6 +192,39 @@ describe("sendTransactional", () => {
     expect(result).toEqual({ status: "skipped_missing_template" });
     expect(resendSend).not.toHaveBeenCalled();
     expect(insertResult).not.toHaveBeenCalled();
+  });
+
+  it("returns skipped_disabled and logs without calling Resend when the template is off", async () => {
+    dedupResult.mockResolvedValue({ data: null, error: null });
+    templateResult.mockResolvedValueOnce({
+      data: {
+        key: "welcome",
+        subject: "Welcome",
+        body_html: "<p>Hi</p>",
+        body_text: "Hi",
+        is_dues_related: false,
+        is_enabled: false,
+      },
+      error: null,
+    });
+
+    const result = await sendTransactional({
+      template: "welcome",
+      to: "x@example.com",
+      triggerType: "automated",
+      profileId: "p1",
+      referenceId: "r1",
+    });
+
+    expect(result).toEqual({ status: "skipped_disabled" });
+    expect(resendSend).not.toHaveBeenCalled();
+    expect(insertResult).toHaveBeenCalledTimes(1);
+    expect(insertResult).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "skipped_disabled",
+        template: "welcome",
+      }),
+    );
   });
 
   it("sends without dedup check when profile_id or reference_id is null", async () => {

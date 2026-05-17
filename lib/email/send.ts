@@ -41,6 +41,7 @@ export type SendResult =
   | { status: "sent"; messageId: string | null }
   | { status: "skipped_duplicate" }
   | { status: "skipped_missing_template" }
+  | { status: "skipped_disabled" }
   | { status: "failed"; reason: string };
 
 export async function sendTransactional(args: SendArgs): Promise<SendResult> {
@@ -64,6 +65,24 @@ export async function sendTransactional(args: SendArgs): Promise<SendResult> {
   if (!template) {
     console.error(`[email:send] missing template "${args.template}"`);
     return { status: "skipped_missing_template" };
+  }
+
+  if (!template.is_enabled) {
+    // Admin disabled this template in the Emails tab. Record the skip
+    // so the Send-history view shows why nothing went out, but don't
+    // call Resend.
+    const { error: logError } = await client.from("email_send_log").insert({
+      profile_id: args.profileId,
+      template: args.template,
+      trigger_type: args.triggerType,
+      reference_id: args.referenceId,
+      resend_message_id: null,
+      status: "skipped_disabled",
+    });
+    if (logError) {
+      console.error("[email:send] log insert failed", logError.message);
+    }
+    return { status: "skipped_disabled" };
   }
 
   const contact = await loadSiteContact(client);
