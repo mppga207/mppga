@@ -155,7 +155,7 @@ export function TierConfigCard({ tier }: { tier: AdminTier }) {
           </div>
         </form>
 
-        {/* Dues edit — separate form with confirmation */}
+        {/* Dues edit: separate form with confirmation */}
         <form
           action={updateTierDuesAction}
           onSubmit={handleDuesSubmit}
@@ -167,7 +167,7 @@ export function TierConfigCard({ tier }: { tier: AdminTier }) {
             <p className="mt-1 text-xs text-mppga-ink-soft">
               {isBootstrap
                 ? "Pricing isn’t set up in Stripe for this tier yet. Saving here gets it ready for new signups."
-                : "Current members roll over to the new amount at their next renewal — no mid-cycle charges."}
+                : "Current members roll over to the new amount at their next renewal. No mid-cycle charges."}
             </p>
           </header>
 

@@ -27,7 +27,7 @@ const pillars: Pillar[] = [
   {
     icon: ShieldCheck,
     title: "Safety & Standards",
-    body: "We embrace the PPGSA Standards of Care, Safety and Sanitation — created by grooming professionals to ensure humane practice and clean, safe environments for pets in every salon.",
+    body: "We embrace the PPGSA Standards of Care, Safety and Sanitation, created by grooming professionals to ensure humane practice and clean, safe environments for pets in every salon.",
     photoLabel: "Photo · salon at work",
     tone: "sand",
   },

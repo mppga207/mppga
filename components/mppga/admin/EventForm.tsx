@@ -75,7 +75,7 @@ export function EventForm({
             label="Location"
             htmlFor="event-location"
             required
-            helper="Venue and city — for example, “Portland Yacht Club, Portland, ME”."
+            helper="Venue and city. For example, “Portland Yacht Club, Portland, ME”."
           >
             <input
               id="event-location"
@@ -123,7 +123,7 @@ export function EventForm({
 
       <Card
         title="Pricing & capacity"
-        description="Member and guest prices are entered in dollars. Capacity is a hard cap — additional registrations land on the waitlist when it’s enabled."
+        description="Member and guest prices are entered in dollars. Capacity is a hard cap. Additional registrations land on the waitlist when it’s enabled."
       >
         <div className="grid grid-cols-1 gap-6 px-6 py-6">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
@@ -213,7 +213,7 @@ export function EventForm({
             <StatusOption
               value="draft"
               label="Save as draft"
-              description="Keep working — nothing is visible to members or the public yet."
+              description="Keep working. Nothing is visible to members or the public yet."
               defaultChecked={(event?.status ?? "draft") === "draft"}
             />
             <StatusOption

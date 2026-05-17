@@ -44,7 +44,7 @@ const channels = [
   {
     icon: MapPin,
     label: "Mailing address",
-    value: "PO Box —, Portland, ME",
+    value: "PO Box -, Portland, ME",
     href: null,
     note: "Mailed correspondence reaches the board within ~2 weeks.",
   },
@@ -69,8 +69,8 @@ export default async function ContactPage({ searchParams }: PageProps) {
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-mppga-ink-soft md:text-lg">
               MPPGA is run by volunteer groomers. We read everything that
-              comes in, and we&rsquo;ll get back to you as quickly as we can
-              &mdash; usually within a few business days.
+              comes in, and we&rsquo;ll get back to you as quickly as we can,
+              usually within a few business days.
             </p>
           </div>
         </section>
@@ -85,7 +85,7 @@ export default async function ContactPage({ searchParams }: PageProps) {
                 Tell us what you need.
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
-                Membership, event sponsorship, press inquiries &mdash; any of
+                Membership, event sponsorship, press inquiries: any of
                 it lands in the right inbox.
               </p>
 
@@ -94,7 +94,7 @@ export default async function ContactPage({ searchParams }: PageProps) {
                   className="mt-8 rounded-lg border border-mppga-teal/40 bg-mppga-teal-tint px-5 py-4 text-sm text-mppga-teal-darker"
                   role="status"
                 >
-                  Thanks — your message is in. A board member will reply
+                  Thanks, your message is in. A board member will reply
                   from{" "}
                   <a
                     href="mailto:mppga207@gmail.com"

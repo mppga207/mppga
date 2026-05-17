@@ -59,12 +59,12 @@ function renewalCopy(status: MembershipStatus) {
         eyebrow: "Membership on hold",
         headline: "Your membership is suspended.",
         body:
-          "A board member placed your account on hold. Reach out and we’ll work it out together — renewal is paused until then.",
+          "A board member placed your account on hold. Reach out and we’ll work it out together; renewal is paused until then.",
       };
     case "Awaiting_Payment":
       return {
         eyebrow: "Welcome",
-        headline: "One last step — complete your dues.",
+        headline: "One last step: complete your dues.",
         body:
           "Your account is ready. Pay your annual dues to unlock the member portal, the directory listing, and member event pricing.",
       };
@@ -133,7 +133,7 @@ export default async function RenewPage({ searchParams }: RenewPageProps) {
                   value={
                     member.memberSinceISO
                       ? dateFmt.format(new Date(member.memberSinceISO))
-                      : "—"
+                      : "-"
                   }
                 />
                 <SummaryRow
@@ -141,7 +141,7 @@ export default async function RenewPage({ searchParams }: RenewPageProps) {
                   value={
                     member.expiresAt
                       ? dateFmt.format(new Date(member.expiresAt))
-                      : "—"
+                      : "-"
                   }
                 />
                 <SummaryRow label="Status" value={statusLabel(status)} />
@@ -152,7 +152,7 @@ export default async function RenewPage({ searchParams }: RenewPageProps) {
                   Renew now
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
-                  Renewal is handled through Stripe’s secure billing portal —
+                  Renewal is handled through Stripe’s secure billing portal,
                   the same place you’d go to update a card or download a past
                   invoice. You’ll be back on the directory within minutes of a
                   successful payment.
@@ -260,7 +260,7 @@ export default async function RenewPage({ searchParams }: RenewPageProps) {
                 MPPGA is a 501(c)(6) nonprofit. Dues are not deductible as
                 charitable contributions for federal income tax purposes but
                 may be deductible as ordinary business expenses. Your renewal
-                receipt will spell this out — keep a copy for your accountant.
+                receipt will spell this out; keep a copy for your accountant.
               </p>
             </div>
           </div>

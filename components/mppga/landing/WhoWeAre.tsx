@@ -49,7 +49,7 @@ export function WhoWeAre() {
             The Maine Professional Pet Groomers Association (MPPGA) is a
             growing statewide organization created by and for professional pet
             groomers in Maine. We&rsquo;re being established as a nonprofit
-            501(c)(6) professional association &mdash; a membership-based
+            501(c)(6) professional association: a membership-based
             nonprofit devoted to promoting the common business interests of
             professional groomers and enhancing the standards of the grooming
             industry.

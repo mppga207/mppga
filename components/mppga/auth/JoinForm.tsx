@@ -32,7 +32,7 @@ export function JoinForm({
         <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
           We sent a verification email to{" "}
           <span className="font-medium text-mppga-ink">{state.email}</span>.
-          Confirm your address to finish creating your account — you’ll land
+          Confirm your address to finish creating your account. You’ll land
           on your dashboard with a one-time dues payment to complete.
         </p>
         <p className="mt-4 text-xs text-mppga-ink-muted">

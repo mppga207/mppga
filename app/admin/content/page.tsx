@@ -11,7 +11,7 @@ export default async function AdminContentPage() {
     <div className="space-y-10">
       <AdminPageHeader
         title="Content"
-        description="Edit every section of the public landing page — hero through footer. Saved changes go live on the site immediately."
+        description="Edit every section of the public landing page, from the hero through the footer. Saved changes go live on the site immediately."
       />
 
       <ContentEditor

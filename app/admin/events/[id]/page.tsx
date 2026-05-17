@@ -50,7 +50,7 @@ export default async function AdminEventDetailPage({
 
       <AdminPageHeader
         title={event.title}
-        description={`${event.location} · ${event.status === "published" ? "Live on the public events page" : "Draft — admin only"}`}
+        description={`${event.location} · ${event.status === "published" ? "Live on the public events page" : "Draft, admin only"}`}
         actions={
           <div className="flex items-center gap-2">
             <Button href={`/admin/events/${event.id}/rsvps`} variant="secondary">

@@ -30,7 +30,7 @@ type TierShell = {
 };
 
 // Tier slugs map to the `tiers` table per data-model.md §3.3.
-// Pricing is intentionally omitted from this shell — annual dues will be
+// Pricing is intentionally omitted from this shell. Annual dues will be
 // read from `tiers.annual_dues_cents` at render time once the join flow
 // is wired (CLAUDE.md constraint #5: never hardcode tier prices).
 const tiers: TierShell[] = [
@@ -248,7 +248,7 @@ export default function JoinPage() {
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
                 Every MPPGA member agrees to the PPGSA Standards of Care,
-                Safety and Sanitation &mdash; a working framework for humane
+                Safety and Sanitation: a working framework for humane
                 grooming, clean salons, and safe handling. The standards were
                 written by groomers, for groomers, and they&rsquo;re part of
                 what membership means.
@@ -292,11 +292,11 @@ export default function JoinPage() {
               <ul className="mt-6 space-y-2.5 text-sm text-mppga-ink-soft">
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>No credit card required to sign up — only at checkout.</span>
+                  <span>No credit card required to sign up, only at checkout.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>Sign in with email and password — pick something memorable.</span>
+                  <span>Sign in with email and password. Pick something memorable.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />

@@ -60,7 +60,7 @@ export default async function AdminEmailsPage({ searchParams }: PageProps) {
 
       <Card
         title="Send timing"
-        description="When automated emails go out. Changes take effect on the next scheduled run — no waiting around."
+        description="When automated emails go out. Changes take effect on the next scheduled run. No waiting around."
       >
         {settings ? (
           <EmailSettingsForm settings={settings} />
@@ -143,7 +143,7 @@ function okToMessage(
         sentCount === 1 ? "1 person" : `${sentCount.toLocaleString()} people`;
       const failPart =
         failedCount > 0
-          ? ` ${failedCount.toLocaleString()} failed — check the Send history below for details.`
+          ? ` ${failedCount.toLocaleString()} failed; check the Send history below for details.`
           : "";
       return `Announcement sent to ${sentLine}.${failPart}`;
     }
@@ -161,7 +161,7 @@ function errorToMessage(error: string): string {
     case "template_disabled":
       return "This email is turned off. Switch it on under Automated sends to send a test.";
     case "missing_template":
-      return "Couldn’t find that template anymore — it may have been deleted.";
+      return "Couldn’t find that template anymore. It may have been deleted.";
     case "no_admin_email":
       return "Your admin account doesn’t have an email address on file.";
     case "broadcast_missing_fields":

@@ -87,7 +87,7 @@ export function BroadcastComposer({ audience }: Props) {
                 All members on file ({audience.allMembers.toLocaleString()})
               </span>
               <span className="block text-xs text-mppga-ink-soft">
-                Includes lapsed and suspended members — use sparingly.
+                Includes lapsed and suspended members. Use sparingly.
               </span>
             </span>
           </label>
@@ -101,7 +101,7 @@ export function BroadcastComposer({ audience }: Props) {
             required
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="Spring meet-up — save the date"
+            placeholder="Spring meet-up, save the date"
             className="h-10 w-full rounded-md border border-mppga-divider bg-mppga-card px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
           />
         </Field>

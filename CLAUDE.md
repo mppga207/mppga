@@ -186,3 +186,4 @@ Before concluding any task:
 1. **NEVER use the Pages Router:** App Router only across the entire project.
 1. **NEVER use NEXT_PUBLIC_ on sensitive keys:** Service role keys and API secrets are server-side only.
 1. **NEVER conflate Stripe Billing and Stripe Checkout flows:** Subscriptions → `memberships`. One-off tickets → `transactions` + `event_registrations`. These are separate pipelines.
+1. **NEVER use em dashes (—) in copy or code:** Not in user-facing text, JSX (`&mdash;`), comments, or markdown. Use commas, periods, parentheses, or colons instead. Applies to member-facing, admin-facing, and public website surfaces. Single hyphen ("-") is fine for placeholder values like missing-data dashes.

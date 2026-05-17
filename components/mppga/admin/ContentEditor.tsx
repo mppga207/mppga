@@ -160,7 +160,7 @@ export function ContentEditor({
       <div className="space-y-6 pb-32">
         <Card
           title="Hero"
-          description="Top of the landing — headline, sub-copy, and primary CTAs."
+          description="Top of the landing: headline, sub-copy, and primary CTAs."
         >
           <div className="space-y-6 px-6 py-6">
             <Field
@@ -547,7 +547,7 @@ export function ContentEditor({
                 : isDirty
                   ? "Unsaved changes"
                   : siteIsDefault
-                    ? "Showing defaults — no saved edits"
+                    ? "Showing defaults, no saved edits"
                     : "Live"}
             </p>
             {savedAt ? (

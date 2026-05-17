@@ -17,7 +17,7 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Maine Professional Pet Groomers Association",
   description:
-    "The professional home for pet groomers across Maine — membership, education, and a statewide directory.",
+    "The professional home for pet groomers across Maine: membership, education, and a statewide directory.",
 };
 
 export default function RootLayout({

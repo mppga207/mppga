@@ -81,7 +81,7 @@ export default async function EventConfirmationPage({
   const supabase = await createClient();
 
   // RLS ensures the requester can only see their own registration row.
-  // Per auth-middleware.md §3.2 — 404, not 403, when no row matches.
+  // Per auth-middleware.md §3.2: 404, not 403, when no row matches.
   const { data: registration } = await supabase
     .from("event_registrations")
     .select(
@@ -182,7 +182,7 @@ function Confirmation({
                 : isFree
                   ? "Your seat is confirmed. A confirmation email is on its way with everything you need to know."
                   : isPending
-                    ? "We received your registration. Payment is still being processed — you'll get a receipt once it clears."
+                    ? "We received your registration. Payment is still being processed. You'll get a receipt once it clears."
                     : "Your payment went through and your seat is confirmed. A receipt and confirmation email are on the way."}
             </p>
           </div>

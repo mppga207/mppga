@@ -34,7 +34,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     <div className="space-y-10">
       <PortalPageHeader
         title="Billing"
-        description="Your membership, payment method, and past invoices — all handled through Stripe's secure billing portal."
+        description="Your membership, payment method, and past invoices, all handled through Stripe's secure billing portal."
         actions={
           hasStripe ? (
             <form action={openCustomerPortal}>
@@ -70,7 +70,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               </p>
             ) : member.status === "Honorary" ? (
               <p className="mt-2 text-sm text-mppga-ink-soft">
-                Honorary membership — no recurring dues.
+                Honorary membership, no recurring dues.
               </p>
             ) : null}
           </div>
