@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 
 import { env } from "@/lib/env";
 import { PREVIEW_COOKIE, isPreviewMode, type PreviewMode } from "@/lib/supabase/preview";
+import { SESSION_HEADER, serializeSession } from "@/lib/supabase/session-header";
 import type { Database, MembershipStatus, ProfileRole } from "@/types/database";
 
 /**
@@ -17,7 +18,16 @@ import type { Database, MembershipStatus, ProfileRole } from "@/types/database";
 export async function updateSession(
   request: NextRequest,
 ): Promise<NextResponse> {
-  let response = NextResponse.next({ request });
+  // Strip any inbound x-mppga-session so a client can't smuggle a forged
+  // value past middleware. We re-set it below from the verified JWT.
+  // The session helpers trust this header because middleware is the only
+  // writer.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete(SESSION_HEADER);
+
+  let response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   // Skip-auth preview cookie set by `/api/preview/[mode]`. Honoured here
   // so the temporary sign-in preview buttons drop the visitor into the
@@ -52,7 +62,13 @@ export async function updateSession(
           for (const { name, value } of cookiesToSet) {
             request.cookies.set(name, value);
           }
-          response = NextResponse.next({ request });
+          // Rebuild the forwarded headers from the now-mutated request
+          // cookies, but keep any x-mppga-session we've already set.
+          const refreshed = new Headers(request.headers);
+          refreshed.delete(SESSION_HEADER);
+          const existing = requestHeaders.get(SESSION_HEADER);
+          if (existing !== null) refreshed.set(SESSION_HEADER, existing);
+          response = NextResponse.next({ request: { headers: refreshed } });
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options);
           }
@@ -66,6 +82,21 @@ export async function updateSession(
   const { data } = await supabase.auth.getUser();
   const user = data.user;
   const pathname = request.nextUrl.pathname;
+
+  // Forward the verified user to server components via an internal
+  // header so getSession() doesn't re-call auth.getUser(). Cuts the
+  // per-render Auth API round-trips from 3 (middleware + Nav + page
+  // guard) to 1.
+  if (user) {
+    requestHeaders.set(SESSION_HEADER, serializeSession(user));
+    const withSession = NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+    for (const cookie of response.cookies.getAll()) {
+      withSession.cookies.set(cookie);
+    }
+    response = withSession;
+  }
 
   const redirectTarget = decideRedirect(user, pathname);
   if (redirectTarget && redirectTarget !== pathname) {
