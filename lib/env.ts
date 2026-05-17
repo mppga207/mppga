@@ -51,11 +51,14 @@ export const env = {
     get apiKey(): string {
       return requireServerEnv("RESEND_API_KEY");
     },
-    // From-address defaults to the client-confirmed sender. Resend
-    // requires a domain-verified address in production; for local / CI
-    // runs without a verified domain, sends will surface a Resend-side
-    // error.
-    fromEmail: process.env.RESEND_FROM_EMAIL ?? "mppga207@gmail.com",
+    // From-address defaults to a stopgap on the Afterload domain while
+    // MPPGA's production domain is being sorted. Resend requires a
+    // domain-verified address; `afterload.io` is the only verified
+    // domain available pre-launch. Replies route to the board's Gmail
+    // via the Reply-To header, which `lib/email/send.ts` pulls from
+    // `site_settings.contact_email` so an admin edit propagates without
+    // a code change.
+    fromEmail: process.env.RESEND_FROM_EMAIL ?? "afterchaos@afterload.io",
     fromName:
       process.env.RESEND_FROM_NAME ?? "Maine Professional Pet Groomers Association",
   },

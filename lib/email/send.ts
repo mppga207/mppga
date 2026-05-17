@@ -95,6 +95,7 @@ export async function sendTransactional(args: SendArgs): Promise<SendResult> {
   try {
     const { data, error } = await getResend().emails.send({
       from: resendFromHeader(),
+      replyTo: contact.email,
       to: args.to,
       subject: rendered.subject,
       html: rendered.html,
