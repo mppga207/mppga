@@ -77,6 +77,43 @@ export async function updateSiteContactAction(
 }
 
 // =========================================================================
+// Signup-skip-payment testing toggle
+// =========================================================================
+
+export async function toggleSignupSkipPaymentAction(
+  formData: FormData,
+): Promise<void> {
+  const session = await requireAdmin();
+  const next = formData.get("next") === "on";
+
+  const supabase = createServiceRoleClient();
+  const { data: prior } = await supabase
+    .from("site_settings")
+    .select("signup_skip_payment")
+    .limit(1)
+    .maybeSingle();
+
+  const { error } = await supabase
+    .from("site_settings")
+    .update({ signup_skip_payment: next })
+    .eq("id", "00000000-0000-0000-0000-000000000002");
+  if (error) {
+    redirect(
+      `/admin/settings?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  await logAdminAction(session.user.id, "setting_change", null, {
+    setting: "signup_skip_payment",
+    prior: prior?.signup_skip_payment ?? false,
+    next,
+  });
+
+  revalidatePath("/admin/settings");
+  redirect(`/admin/settings?ok=${next ? "skip_on" : "skip_off"}`);
+}
+
+// =========================================================================
 // Board roster
 // =========================================================================
 

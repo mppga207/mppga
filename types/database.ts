@@ -252,6 +252,7 @@ type SiteSettingsRow = {
   contact_email: string;
   contact_phone: string | null;
   logo_path: string | null;
+  signup_skip_payment: boolean;
   updated_at: Timestamp;
 }
 

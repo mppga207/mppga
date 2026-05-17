@@ -21,6 +21,16 @@ export async function loadSiteContact(): Promise<SiteContact | null> {
   };
 }
 
+export async function loadSignupSkipPayment(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("site_settings")
+    .select("signup_skip_payment")
+    .limit(1)
+    .maybeSingle();
+  return data?.signup_skip_payment === true;
+}
+
 export interface BoardMember {
   profileId: string;
   fullName: string;
