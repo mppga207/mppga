@@ -41,7 +41,7 @@ export function ClosingCTA() {
           variants={fadeUp}
           className="mt-8 font-serif text-4xl tracking-tight md:text-6xl"
         >
-          Become a member &mdash; $45/yr.
+          Become a member.
         </motion.h2>
 
         <motion.p

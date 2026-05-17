@@ -51,7 +51,7 @@ export function Hero() {
               size="lg"
               className="shadow-lg shadow-mppga-teal/20"
             >
-              Join Now &mdash; $45/yr
+              Join Now
             </Button>
             <Button
               href="/events"
