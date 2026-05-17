@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/session";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { sendTransactional } from "@/lib/email/send";
+import { composeBroadcast } from "@/lib/email/compose-broadcast";
 
 /**
  * Append-only audit writer for admin actions in the Emails tab. Mirrors
@@ -277,17 +278,36 @@ function isBroadcastAudience(value: string): value is BroadcastAudience {
 export async function sendBroadcastAction(formData: FormData): Promise<void> {
   const session = await requireAdmin();
   const subject = String(formData.get("subject") ?? "").trim();
-  const bodyHtml = String(formData.get("body_html") ?? "").trim();
-  const bodyText = String(formData.get("body_text") ?? "").trim();
+  const headline = String(formData.get("headline") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const ctaText = String(formData.get("cta_text") ?? "").trim();
+  const ctaUrl = String(formData.get("cta_url") ?? "").trim();
   const audienceRaw = String(formData.get("audience") ?? "");
 
-  if (!subject || !bodyHtml || !bodyText) {
+  if (!subject || !headline || !body) {
     redirect("/admin/emails?error=broadcast_missing_fields");
+  }
+  // Either both CTA fields are filled or both are blank.
+  if ((ctaText && !ctaUrl) || (!ctaText && ctaUrl)) {
+    redirect("/admin/emails?error=broadcast_partial_cta");
+  }
+  if (ctaUrl && !/^https?:\/\//i.test(ctaUrl)) {
+    redirect("/admin/emails?error=broadcast_invalid_url");
   }
   if (!isBroadcastAudience(audienceRaw)) {
     redirect("/admin/emails?error=broadcast_invalid_audience");
   }
   const audience: BroadcastAudience = audienceRaw;
+
+  const composed = composeBroadcast({
+    subject,
+    headline,
+    body,
+    ctaText,
+    ctaUrl,
+  });
+  const bodyHtml = composed.bodyHtml;
+  const bodyText = composed.bodyText;
 
   const supabase = createServiceRoleClient();
 
@@ -384,6 +404,8 @@ export async function sendBroadcastAction(formData: FormData): Promise<void> {
     failed: failedCount,
     broadcast_id: broadcastId,
     subject,
+    headline,
+    has_cta: Boolean(ctaText && ctaUrl),
   });
 
   revalidatePath("/admin/emails");

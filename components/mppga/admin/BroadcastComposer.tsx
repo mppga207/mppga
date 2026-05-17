@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Card } from "@/components/mppga/admin/Card";
 import { Button } from "@/components/mppga/ui/button";
@@ -13,27 +13,90 @@ interface Props {
 
 type Audience = "active" | "all";
 
+interface Variable {
+  token: string;
+  label: string;
+  description: string;
+}
+
+const VARIABLES: ReadonlyArray<Variable> = [
+  {
+    token: "{{first_name}}",
+    label: "First name",
+    description: "e.g. Hi {{first_name}},",
+  },
+  {
+    token: "{{full_name}}",
+    label: "Full name",
+    description: "e.g. Dear {{full_name}},",
+  },
+];
+
 /**
- * Composer for one-off admin announcements. Writes through the
- * standard send helper so the resulting messages show up in the
- * Send-history table and get the shared footer treatment. The
- * `general-update` template row is reused as a carrier; its saved
- * subject and body are restored after the send completes.
+ * Structured composer for one-off admin announcements. The admin fills
+ * in plain fields (headline, body paragraphs, optional CTA) — the
+ * server builds the brand-styled HTML in `lib/email/compose-broadcast`
+ * so no one has to type HTML by hand.
+ *
+ * The `general-update` template row still acts as the carrier: the
+ * action overwrites its subject + body for the duration of the send
+ * and restores after, so the standard renderer + footer treatment
+ * still apply.
  */
 export function BroadcastComposer({ audience }: Props) {
   const [selected, setSelected] = useState<Audience>("active");
   const [subject, setSubject] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [body, setBody] = useState("");
+  const [ctaText, setCtaText] = useState("");
+  const [ctaUrl, setCtaUrl] = useState("");
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
   const recipientCount =
     selected === "active" ? audience.active : audience.allMembers;
+
+  const ctaPartial = (ctaText && !ctaUrl) || (!ctaText && ctaUrl);
+  const ctaUrlValid = !ctaUrl || /^https?:\/\//i.test(ctaUrl);
+  const canSubmit =
+    subject.trim() &&
+    headline.trim() &&
+    body.trim() &&
+    !ctaPartial &&
+    ctaUrlValid;
+
+  function insertVariable(token: string) {
+    const ref = bodyRef.current;
+    if (!ref) {
+      setBody((prev) => `${prev}${token}`);
+      return;
+    }
+    const start = ref.selectionStart;
+    const end = ref.selectionEnd;
+    const next = `${body.slice(0, start)}${token}${body.slice(end)}`;
+    setBody(next);
+    // Restore focus + place the caret after the inserted token. Runs
+    // after React commits the new value via the controlled textarea.
+    queueMicrotask(() => {
+      ref.focus();
+      const caret = start + token.length;
+      ref.setSelectionRange(caret, caret);
+    });
+  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     const label =
       selected === "active" ? "active members" : "all members on file";
+    const ctaLine =
+      ctaText && ctaUrl
+        ? `\nButton: ${ctaText} → ${ctaUrl}`
+        : "";
     const ok = confirm(
       `Send this announcement now?\n\n` +
         `Subject: ${subject || "(no subject)"}\n` +
-        `Recipients: ${recipientCount.toLocaleString()} ${label}\n\n` +
-        `This can’t be undone.`,
+        `Headline: ${headline || "(no headline)"}` +
+        ctaLine +
+        `\nRecipients: ${recipientCount.toLocaleString()} ${label}\n\n` +
+        `This can't be undone.`,
     );
     if (!ok) {
       event.preventDefault();
@@ -43,12 +106,12 @@ export function BroadcastComposer({ audience }: Props) {
   return (
     <Card
       title="Send an announcement"
-      description="Compose a one-off email to your members. Subject and body go through the standard footer (org name, contact, and any required disclaimers)."
+      description="Fill in the fields below — we'll wrap your message in the standard MPPGA layout (header, body, footer) automatically. No HTML required."
     >
       <form
         action={sendBroadcastAction}
         onSubmit={handleSubmit}
-        className="space-y-5 px-6 py-6"
+        className="space-y-6 px-6 py-6"
       >
         <fieldset className="space-y-3">
           <legend className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
@@ -93,7 +156,11 @@ export function BroadcastComposer({ audience }: Props) {
           </label>
         </fieldset>
 
-        <Field label="Subject" id="broadcast-subject">
+        <Field
+          label="Subject"
+          id="broadcast-subject"
+          helper="What members see in their inbox before they open the email."
+        >
           <input
             id="broadcast-subject"
             name="subject"
@@ -107,43 +174,95 @@ export function BroadcastComposer({ audience }: Props) {
         </Field>
 
         <Field
-          label="HTML body"
-          id="broadcast-body-html"
-          helper="The standard footer (org name, contact info) is added automatically."
+          label="Headline"
+          id="broadcast-headline"
+          helper="The big title at the top of the email."
         >
-          <textarea
-            id="broadcast-body-html"
-            name="body_html"
-            rows={10}
+          <input
+            id="broadcast-headline"
+            name="headline"
+            type="text"
             required
-            placeholder="<p>Hi {{first_name}},</p><p>Just a quick note...</p>"
-            className="w-full rounded-md border border-mppga-divider bg-mppga-card px-3 py-2 font-mono text-xs leading-relaxed text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+            value={headline}
+            onChange={(e) => setHeadline(e.target.value)}
+            placeholder="Save the date for our spring meet-up"
+            className="h-10 w-full rounded-md border border-mppga-divider bg-mppga-card px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
           />
         </Field>
 
         <Field
-          label="Plain-text body"
-          id="broadcast-body-text"
-          helper="A plain-text version is sent alongside the HTML for email clients that can’t display the styled version."
+          label="Message"
+          id="broadcast-body"
+          helper="Type your announcement the way you'd write any email. Separate paragraphs with a blank line. Any link you paste becomes clickable automatically."
         >
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-mppga-ink-muted">
+              Insert personalized field:
+            </span>
+            {VARIABLES.map((v) => (
+              <button
+                key={v.token}
+                type="button"
+                onClick={() => insertVariable(v.token)}
+                title={v.description}
+                className="inline-flex h-7 items-center rounded-full border border-mppga-teal/40 bg-mppga-teal-tint px-3 text-xs font-medium text-mppga-teal-deep transition-colors hover:bg-mppga-teal hover:text-white"
+              >
+                + {v.label}
+              </button>
+            ))}
+          </div>
           <textarea
-            id="broadcast-body-text"
-            name="body_text"
-            rows={6}
+            ref={bodyRef}
+            id="broadcast-body"
+            name="body"
+            rows={10}
             required
-            placeholder={"Hi {{first_name}},\n\nJust a quick note..."}
-            className="w-full rounded-md border border-mppga-divider bg-mppga-card px-3 py-2 font-mono text-xs leading-relaxed text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder={
+              "Hi {{first_name}},\n\nWe're hosting a spring meet-up at the Portland shop on Saturday, June 14. Drop in for coffee, demos, and a chance to catch up with other groomers from across the state.\n\nMore details to come."
+            }
+            className="w-full rounded-md border border-mppga-divider bg-mppga-card px-3 py-2 text-sm leading-relaxed text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
           />
         </Field>
 
-        <p className="text-xs text-mppga-ink-muted">
-          Variables you can use: <span className="font-mono">{`{{first_name}}`}</span>
-          {" · "}
-          <span className="font-mono">{`{{full_name}}`}</span>. Each member sees
-          their own values.
-        </p>
+        <Field
+          label="Call-to-action button (optional)"
+          id="broadcast-cta-text"
+          helper="A single teal button below the message. Leave both fields blank to skip."
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1.5fr]">
+            <input
+              id="broadcast-cta-text"
+              name="cta_text"
+              type="text"
+              value={ctaText}
+              onChange={(e) => setCtaText(e.target.value)}
+              placeholder="Button text (e.g. RSVP now)"
+              className="h-10 w-full rounded-md border border-mppga-divider bg-mppga-card px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+            />
+            <input
+              id="broadcast-cta-url"
+              name="cta_url"
+              type="url"
+              value={ctaUrl}
+              onChange={(e) => setCtaUrl(e.target.value)}
+              placeholder="https://… (link the button opens)"
+              className="h-10 w-full rounded-md border border-mppga-divider bg-mppga-card px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+            />
+          </div>
+          {ctaPartial ? (
+            <p className="mt-2 text-xs text-mppga-teal-deep">
+              Fill in both fields, or leave both blank.
+            </p>
+          ) : !ctaUrlValid ? (
+            <p className="mt-2 text-xs text-mppga-teal-deep">
+              The link needs to start with http:// or https://.
+            </p>
+          ) : null}
+        </Field>
 
-        <div className="flex items-center justify-between border-t border-mppga-divider pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mppga-divider pt-5">
           <p className="text-xs text-mppga-ink-soft">
             Sending to{" "}
             <span className="font-medium text-mppga-ink">
@@ -151,7 +270,9 @@ export function BroadcastComposer({ audience }: Props) {
             </span>{" "}
             {recipientCount === 1 ? "person" : "people"}.
           </p>
-          <Button type="submit">Send announcement</Button>
+          <Button type="submit" disabled={!canSubmit}>
+            Send announcement
+          </Button>
         </div>
       </form>
     </Card>
@@ -180,8 +301,8 @@ function Field({
             {helper}
           </span>
         ) : null}
-        <span className="mt-2 block">{children}</span>
       </label>
+      <div className="mt-2">{children}</div>
     </div>
   );
 }
