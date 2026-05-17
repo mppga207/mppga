@@ -14,19 +14,6 @@ const initial: AuthFormState = { status: "idle" };
 export function SignInForm() {
   const [state, formAction] = useActionState(signInWithEmailPassword, initial);
 
-  if (state.status === "sent") {
-    return (
-      <div className="mt-10 rounded-lg border border-mppga-divider bg-mppga-card p-8 text-center">
-        <p className="font-serif text-xl text-mppga-ink">Almost there</p>
-        <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
-          Check your inbox at{" "}
-          <span className="font-medium text-mppga-ink">{state.email}</span> to
-          finish signing in.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <form
       action={formAction}
