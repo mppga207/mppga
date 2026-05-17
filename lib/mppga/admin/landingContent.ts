@@ -72,9 +72,9 @@ export const defaultLandingContent: LandingContent = {
   stats: {
     eyebrow: "By the numbers",
     items: [
-      { value: "127", suffix: "+", label: "Maine groomers" },
-      { value: "16", suffix: "", label: "Counties served" },
-      { value: "12", suffix: "", label: "Events per year" },
+      { value: "0", suffix: "", label: "Members" },
+      { value: "0", suffix: "", label: "Towns served" },
+      { value: "0", suffix: "", label: "Events this year" },
       { value: "501(c)(6)", suffix: "", label: "Nonprofit status" },
     ],
   },
