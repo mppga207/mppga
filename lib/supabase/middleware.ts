@@ -147,7 +147,6 @@ function decideRedirect(user: User | null, pathname: string): string | null {
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/") return true;
-  if (pathname === "/about") return true;
   if (pathname === "/contact") return true;
   if (pathname === "/join") return true;
   if (pathname === "/sign-in") return true;
