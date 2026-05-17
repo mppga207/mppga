@@ -123,3 +123,91 @@ export async function toggleDirectoryFlag(
   revalidatePath("/dashboard");
   return { status: "ok" };
 }
+
+export interface UpdateDirectoryListingInput {
+  displayName: string;
+  bio: string;
+  businessPhone: string;
+  personalMobile: string;
+  publicEmail: string;
+  specialties: string[];
+}
+
+export interface UpdateDirectoryListingResult {
+  status: "ok" | "invalid" | "error";
+  message?: string;
+}
+
+/**
+ * Edit the free-text + contact fields on a member's directory listing.
+ * Address / city / state are excluded — they round-trip through the
+ * geocoder (directory-search.md §4.2) which isn't wired yet
+ * (Track 5 blocking decision #1). Visibility toggles stay on
+ * `toggleDirectoryFlag` above.
+ */
+export async function updateDirectoryListing(
+  input: UpdateDirectoryListingInput,
+): Promise<UpdateDirectoryListingResult> {
+  const session = await requireSession("/dashboard/directory");
+
+  const displayName = input.displayName.trim();
+  if (displayName.length < 1 || displayName.length > 80) {
+    return {
+      status: "invalid",
+      message: "Display name must be between 1 and 80 characters.",
+    };
+  }
+
+  const bio = input.bio.trim();
+  if (bio.length > 500) {
+    return {
+      status: "invalid",
+      message: "Bio is too long — keep it under 500 characters.",
+    };
+  }
+
+  const businessPhone = input.businessPhone.trim();
+  const personalMobile = input.personalMobile.trim();
+  const publicEmail = input.publicEmail.trim();
+  if (businessPhone.length > 40 || personalMobile.length > 40) {
+    return { status: "invalid", message: "Phone number is too long." };
+  }
+  if (publicEmail.length > 254) {
+    return { status: "invalid", message: "Email address is too long." };
+  }
+  if (publicEmail && !publicEmail.includes("@")) {
+    return { status: "invalid", message: "Enter a valid email address." };
+  }
+
+  const specialties = Array.from(
+    new Set(
+      input.specialties
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0 && s.length <= 60),
+    ),
+  );
+  if (specialties.length > 20) {
+    return { status: "invalid", message: "Pick up to 20 specialties." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("directory_listings")
+    .update({
+      display_name: displayName,
+      bio: bio.length > 0 ? bio : null,
+      business_phone: businessPhone.length > 0 ? businessPhone : null,
+      personal_mobile: personalMobile.length > 0 ? personalMobile : null,
+      public_email: publicEmail.length > 0 ? publicEmail : null,
+      specialties,
+    })
+    .eq("profile_id", session.user.id);
+
+  if (error) {
+    return { status: "error", message: error.message };
+  }
+
+  revalidatePath("/dashboard/directory");
+  revalidatePath("/dashboard");
+  return { status: "ok" };
+}
