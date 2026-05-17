@@ -163,6 +163,10 @@ What's been applied to the production Supabase project. Update this list wheneve
 
 **Applied through `20260517000003_contact_submissions.sql`** (as of 2026-05-17). Every migration file in `supabase/migrations/` up to and including this one is live.
 
+**Pending:**
+
+- `20260517000004_auth_hook_app_metadata.sql` — fixes the JWT custom-claims hook to write under `app_metadata` so the middleware can actually read `role` and `membership_status` off the JWT. Without this applied, admin sign-ins land on `/dashboard` even with `profiles.role = 'admin'` and the hook bound.
+
 Manual configuration steps that don't live in a migration but must be done per environment:
 
 - Bind `public.handle_auth_jwt_claims` in Supabase Dashboard → Auth → Hooks → Custom Access Token. Without this, the `role` and `membership_status` JWT claims default and the admin portal is unreachable.
