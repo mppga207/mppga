@@ -130,6 +130,10 @@ function decideRedirect(user: User | null, pathname: string): string | null {
 
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
     if (!user) return "/sign-in";
+    // Admins don't have a membership row, so the status-based redirects
+    // below would always send them to /dashboard/checkout. Route them
+    // to their own surface instead.
+    if (isAdmin) return "/admin";
     if (pathname === "/dashboard/checkout" && status === "Awaiting_Payment") {
       return null;
     }
