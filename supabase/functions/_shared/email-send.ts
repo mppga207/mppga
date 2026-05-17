@@ -65,7 +65,9 @@ interface ResendConfig {
 
 export function resendConfigFromEnv(): ResendConfig {
   const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
-  const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "mppga207@gmail.com";
+  // Default mirrors `lib/env.ts` — stopgap on the verified Afterload
+  // domain until MPPGA's production domain lands.
+  const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "afterchaos@afterload.io";
   const fromName =
     Deno.env.get("RESEND_FROM_NAME") ??
     "Maine Professional Pet Groomers Association";
@@ -116,6 +118,7 @@ export async function sendTransactional(
       },
       body: JSON.stringify({
         from: config.fromHeader,
+        reply_to: contact.email,
         to: args.to,
         subject: rendered.subject,
         html: rendered.html,
