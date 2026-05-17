@@ -1,7 +1,13 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import {
+  PREVIEW_COOKIE,
+  isPreviewMode,
+  type PreviewMode,
+} from "@/lib/supabase/preview";
 import type { MembershipStatus, ProfileRole } from "@/types/database";
 
 /**
@@ -28,19 +34,30 @@ export function isPreviewSession(session: AppSession): boolean {
   return session.user.id === PREVIEW_USER_ID;
 }
 
-function buildPreviewSession(): AppSession {
+function buildPreviewSession(role: ProfileRole = "member"): AppSession {
   // Minimal User shape — we only ever read id / email off it. The rest
   // is filled in to satisfy the type without pretending to be a real
   // Supabase user.
   const user = {
     id: PREVIEW_USER_ID,
     email: "preview@mppga.example",
-    app_metadata: { role: "member", membership_status: "Active" },
+    app_metadata: { role, membership_status: "Active" },
     user_metadata: {},
     aud: "authenticated",
     created_at: new Date(0).toISOString(),
   } as unknown as User;
-  return { user, role: "member", membershipStatus: "Active" };
+  return { user, role, membershipStatus: "Active" };
+}
+
+/**
+ * Reads the `mppga-preview` cookie set by `/api/preview/[mode]`. When
+ * present the request is in skip-auth demo mode — see
+ * `lib/supabase/preview.ts` for the lifecycle.
+ */
+async function readPreviewMode(): Promise<PreviewMode | null> {
+  const store = await cookies();
+  const value = store.get(PREVIEW_COOKIE)?.value;
+  return isPreviewMode(value) ? value : null;
 }
 
 function readClaims(user: User): {
@@ -79,6 +96,10 @@ function isMembershipStatus(value: unknown): value is MembershipStatus {
  * between redirecting, rendering empty, or falling back to preview mode.
  */
 export async function getSession(): Promise<AppSession | null> {
+  const preview = await readPreviewMode();
+  if (preview) {
+    return buildPreviewSession(preview === "admin" ? "admin" : "member");
+  }
   if (!isSupabaseConfigured()) return null;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
@@ -99,6 +120,10 @@ export async function getSession(): Promise<AppSession | null> {
  * once env vars are set, the real auth path takes over.
  */
 export async function requireSession(nextPath?: string): Promise<AppSession> {
+  const preview = await readPreviewMode();
+  if (preview) {
+    return buildPreviewSession(preview === "admin" ? "admin" : "member");
+  }
   if (!isSupabaseConfigured()) {
     return buildPreviewSession();
   }
