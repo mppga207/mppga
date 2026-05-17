@@ -165,7 +165,11 @@ function errorToMessage(error: string): string {
     case "no_admin_email":
       return "Your admin account doesn’t have an email address on file.";
     case "broadcast_missing_fields":
-      return "Subject and both body fields are required for an announcement.";
+      return "Subject, headline, and message are all required for an announcement.";
+    case "broadcast_partial_cta":
+      return "Fill in both the button text and link, or leave both blank.";
+    case "broadcast_invalid_url":
+      return "The button link needs to start with http:// or https://.";
     case "broadcast_invalid_audience":
       return "Pick an audience before sending the announcement.";
     case "broadcast_template_missing":
