@@ -13,13 +13,13 @@ import type { OverviewActionables } from "@/lib/admin/overview-data";
  * matching row), which is the honest demo behaviour.
  */
 const TIER_PROFESSIONAL = "00000000-0000-0000-0000-000000010001";
-const TIER_STUDENT = "00000000-0000-0000-0000-000000010002";
-const TIER_CORPORATE = "00000000-0000-0000-0000-000000010003";
+const TIER_BASIC = "00000000-0000-0000-0000-000000010002";
+const TIER_SALON = "00000000-0000-0000-0000-000000010003";
 
 export const PREVIEW_TIER_OPTIONS: readonly TierOption[] = [
-  { id: TIER_STUDENT, name: "Student / Apprentice" },
+  { id: TIER_BASIC, name: "Basic Membership" },
   { id: TIER_PROFESSIONAL, name: "Professional" },
-  { id: TIER_CORPORATE, name: "Corporate / Salon" },
+  { id: TIER_SALON, name: "Salon" },
 ];
 
 export const PREVIEW_MEMBER_ROWS: readonly MemberRow[] = [
@@ -54,8 +54,8 @@ export const PREVIEW_MEMBER_ROWS: readonly MemberRow[] = [
     role: "member",
     organizationName: "Waggin’ Tails of Augusta",
     membershipStatus: "Grace_Period",
-    tierName: "Corporate / Salon",
-    tierId: TIER_CORPORATE,
+    tierName: "Salon",
+    tierId: TIER_SALON,
     expiresAt: "2026-05-09T00:00:00.000Z",
     stripeCustomerId: null,
   },
@@ -66,8 +66,8 @@ export const PREVIEW_MEMBER_ROWS: readonly MemberRow[] = [
     role: "member",
     organizationName: null,
     membershipStatus: "Active",
-    tierName: "Student / Apprentice",
-    tierId: TIER_STUDENT,
+    tierName: "Basic Membership",
+    tierId: TIER_BASIC,
     expiresAt: "2026-11-21T00:00:00.000Z",
     stripeCustomerId: null,
   },
@@ -134,7 +134,7 @@ export const PREVIEW_OVERVIEW: OverviewActionables = {
         email: "dana.whitford@example.com",
         topic: "membership",
         message:
-          "Hi — I just moved my mobile-grooming setup to Maine and I'm trying to figure out which tier fits a one-person van operation. Are sole-prop groomers Professional or Corporate? Happy to hop on a quick call.",
+          "Hi, I just moved my mobile-grooming setup to Maine and I'm trying to figure out which tier fits a one-person van operation. Are sole-prop groomers Professional or Salon? Happy to hop on a quick call.",
         createdAt: daysAgo(0, 3),
       },
       {
@@ -163,7 +163,7 @@ export const PREVIEW_OVERVIEW: OverviewActionables = {
         profileId: "00000000-0000-0000-0000-000000020009",
         fullName: "Avery Lemieux",
         email: "avery@lemieuxgrooming.com",
-        tierName: "Student / Apprentice",
+        tierName: "Basic Membership",
         joinedAt: daysAgo(3),
         expiresAt: null,
       },
@@ -205,7 +205,7 @@ export const PREVIEW_OVERVIEW: OverviewActionables = {
         profileId: "00000000-0000-0000-0000-000000020013",
         fullName: "Wyatt Pinkham",
         email: "wyatt@wagsofmaine.com",
-        tierName: "Corporate / Salon",
+        tierName: "Salon",
         joinedAt: daysAgo(9),
         expiresAt: null,
       },

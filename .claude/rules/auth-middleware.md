@@ -134,7 +134,7 @@ shape access:
 | `Active` | full access |
 | `Honorary` | full access |
 | `Grace_Period` | full access; pages render the renewal banner from `CLAUDE.md` §4 |
-| `Lapsed` | redirect to `/renew` (CLAUDE.md constraint #7 — never 403) |
+| `Lapsed` | redirect to `/renew` (CLAUDE.md constraint #6 — never 403) |
 | `Suspended` | redirect to `/renew` with a `?reason=suspended` query; the page surfaces an admin-contact message |
 | `Awaiting_Payment` | redirect to `/dashboard/checkout` (single page that hosts the Stripe Checkout link) |
 

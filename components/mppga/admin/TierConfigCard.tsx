@@ -155,22 +155,16 @@ export function TierConfigCard({
               Benefits
             </legend>
             <BenefitCheckbox
-              id={`voting-${tier.id}`}
-              name="voting_rights"
-              label="Voting rights"
-              defaultChecked={tier.votingRights}
-            />
-            <BenefitCheckbox
               id={`directory-${tier.id}`}
               name="directory_listing"
               label="Directory listing"
               defaultChecked={tier.directoryListing}
             />
             <BenefitCheckbox
-              id={`corporate-${tier.id}`}
-              name="corporate_umbrella"
-              label="Corporate umbrella (covers staff under one account)"
-              defaultChecked={tier.corporateUmbrella}
+              id={`umbrella-${tier.id}`}
+              name="umbrella_account"
+              label="Umbrella account (covers staff under one membership)"
+              defaultChecked={tier.umbrellaAccount}
             />
           </fieldset>
 

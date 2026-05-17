@@ -40,7 +40,7 @@ share one webhook endpoint but write to different tables:
 | **Stripe Billing** | `Subscription` + recurring `Invoice` | `memberships` | Member joins or renews dues |
 | **Stripe Checkout** | One-off `Checkout Session` + `PaymentIntent` | `event_registrations` | Member or guest buys an event ticket |
 
-CLAUDE.md constraint #15: never blur the two pipelines. A `Checkout`
+CLAUDE.md constraint #14: never blur the two pipelines. A `Checkout`
 session never touches `memberships`. A `Subscription` event never
 touches `event_registrations`. The webhook handler routes by event
 type; if a future event type doesn't clearly belong to one flow,
@@ -82,7 +82,7 @@ try {
   `request.json()` first; signature verification needs the bytes
   exactly as Stripe sent them.
 - `STRIPE_WEBHOOK_SECRET` is server-only. Never exposed via
-  `NEXT_PUBLIC_*` (CLAUDE.md constraint #14).
+  `NEXT_PUBLIC_*` (CLAUDE.md constraint #13).
 - An invalid signature returns 400 with no body. Never log the
   raw payload — it can contain customer email addresses.
 - A missing signature is a 400. Never trust a body without one.
@@ -250,7 +250,7 @@ Event ticket receipts are also one-off transactions, but tickets
 are NOT dues — the disclaimer is not legally required there. Keep
 it off ticket confirmations to avoid muddying the message.
 
-CLAUDE.md constraint #10: NEVER issue a dues receipt without the
+CLAUDE.md constraint #9: NEVER issue a dues receipt without the
 disclaimer. The constraint applies to both Stripe's receipt and
 ours.
 
@@ -309,7 +309,7 @@ Distinct from § 6.5 — this is when an admin moves a single member
 between tiers. § 6.5 is when the price of a tier itself changes for
 everyone on it.
 
-Admin moves a member from Professional to Corporate (or vice versa)
+Admin moves a member from Professional to Salon (or vice versa)
 via the Members admin tab. The flow:
 
 1. Server action calls `stripe.subscriptions.update(sub_id, {
@@ -326,7 +326,7 @@ via the Members admin tab. The flow:
    tier IDs.
 
 Tier slugs and IDs are read from the `tiers` table (CLAUDE.md
-constraint #5). Never hardcode a Stripe price ID in application
+constraint #4). Never hardcode a Stripe price ID in application
 code — look it up by tier.
 
 ### 6.4 Cancellation
@@ -573,17 +573,17 @@ elsewhere (the pattern is set in `lib/env.ts`).
 ## 11. Constraints — MUST ADHERE
 
 1. NEVER process a webhook without verifying `stripe-signature`
-   (CLAUDE.md constraint #8).
+   (CLAUDE.md constraint #7).
 2. NEVER write `memberships.status` from the webhook handler
    (CLAUDE.md constraint #2). Update `billing_status` and
    `expires_at`; call `membership-status-sync` to decide status.
 3. NEVER conflate Billing and Checkout flows (CLAUDE.md
-   constraint #15). Subscriptions → `memberships`. Tickets →
+   constraint #14). Subscriptions → `memberships`. Tickets →
    `event_registrations`.
 4. NEVER issue a dues receipt without the 501(c)(6) disclaimer
-   (CLAUDE.md constraint #10).
+   (CLAUDE.md constraint #9).
 5. NEVER hardcode a Stripe price ID. Look it up via
-   `tiers.stripe_price_id` (CLAUDE.md constraint #5).
+   `tiers.stripe_price_id` (CLAUDE.md constraint #4).
 6. NEVER fire an email send without writing `email_send_log` first
    (`email-automation.md` §4). Webhook redelivery is exactly the
    scenario the dedup index protects against.
@@ -594,7 +594,7 @@ elsewhere (the pattern is set in `lib/env.ts`).
 9. NEVER return non-2xx for an unknown event type. Acknowledge
    (200) and log. Stripe will hammer the endpoint otherwise.
 10. NEVER expose `STRIPE_SECRET_KEY` or `STRIPE_WEBHOOK_SECRET` via
-    `NEXT_PUBLIC_*` (CLAUDE.md constraint #14).
+    `NEXT_PUBLIC_*` (CLAUDE.md constraint #13).
 11. NEVER calculate ticket price on the client. Always resolve
     server-side per `events.md` §4 before creating the Checkout
     session.

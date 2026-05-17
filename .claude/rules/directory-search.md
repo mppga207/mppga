@@ -128,7 +128,7 @@ single "Next" button per page is enough.
 
 ## 3. Privacy & masking
 
-Per CLAUDE.md constraint #9, personal mobile and address default to
+Per CLAUDE.md constraint #8, personal mobile and address default to
 `show_* = false`. The directory must never leak a field whose
 `show_*` flag is `false`, even to other authenticated members.
 
@@ -336,7 +336,7 @@ Never store a searcher's coordinate. The center is request-scoped.
 
 When a member flips `show_personal_mobile` or `show_address` to
 `true`, the form surfaces a confirmation: "This will be visible to
-anyone who finds your listing. Continue?". CLAUDE.md constraint #9
+anyone who finds your listing. Continue?". CLAUDE.md constraint #8
 defaults these to off — the prompt makes the act of turning them on
 deliberate.
 
@@ -413,9 +413,9 @@ board.
 4. NEVER swap longitude and latitude in `ST_MakePoint(lng, lat)`.
    It silently produces nonsense coordinates.
 5. NEVER substitute lat/lng pairs for the PostGIS `geography`
-   column (CLAUDE.md constraint #8 in `data-model.md` §11).
+   column (`data-model.md` §11 constraint #7).
 6. NEVER default `show_personal_mobile` or `show_address` to
-   `true` (CLAUDE.md constraint #9). The member chooses, every
+   `true` (CLAUDE.md constraint #8). The member chooses, every
    time.
 7. NEVER skip geocoding on address save. The listing must always
    have a valid `location` or the radius search silently drops it.

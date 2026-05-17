@@ -10,7 +10,7 @@ This file defines:
 2. Row-level security policies per table
 3. Enums, indexes, triggers, and constraints
 4. Migration ordering
-5. Deferred subsystems (voting, donations)
+5. Deferred subsystems (donations)
 
 Companion specs:
 
@@ -79,9 +79,8 @@ contract.
 
 ### 3.1 `organizations`
 
-Salon, clinic, or shop. The billing unit for the Corporate / Salon
-tier. Sole proprietors don't need a row here — they exist as a
-`profile` alone.
+Salon, clinic, or shop. The billing unit for the Salon tier. Sole
+proprietors don't need a row here — they exist as a `profile` alone.
 
 | Field | Type | Notes |
 |---|---|---|
@@ -115,19 +114,18 @@ membership for a profile is the only row.
 ### 3.3 `tiers`
 
 Tier configuration. Source of truth for pricing and benefit flags
-(CLAUDE.md constraint #5).
+(CLAUDE.md constraint #4).
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | `uuid` | PK |
-| `name` | `text` | Unique. E.g. `Student / Apprentice`, `Professional`, `Corporate / Salon`. |
-| `slug` | `text` | Unique, machine-safe (`student`, `professional`, `corporate`). For URL params and config lookup. |
+| `name` | `text` | Unique. E.g. `Basic Membership`, `Professional`, `Salon`. |
+| `slug` | `text` | Unique, machine-safe (`basic`, `professional`, `salon`). For URL params and config lookup. |
 | `stripe_product_id` | `text` | Stripe Product object. Created once per tier; persists across price changes. Nullable for `Honorary`. Unique when present. |
 | `stripe_price_id` | `text` | Active Stripe Price object for recurring dues. Swapped on every dues edit per `stripe-architecture.md` §6.5. Nullable for `Honorary`. Unique when present. |
 | `annual_dues_cents` | `integer` | Default 0. Honorary is 0. |
-| `voting_rights` | `boolean` | `false` for Student / Apprentice per CLAUDE.md §5. |
-| `directory_listing` | `boolean` | `false` for Student / Apprentice. |
-| `corporate_umbrella` | `boolean` | `true` for Corporate / Salon. Allows sub-profiles via `organization_id`. |
+| `directory_listing` | `boolean` | `false` for Basic Membership. |
+| `umbrella_account` | `boolean` | `true` for Salon. Allows sub-profiles via `organization_id`. |
 | `display_order` | `integer` | UI sort order. |
 | `description` | `text` | Member-facing tier description. |
 | `created_at` | `timestamptz` | Auto |
@@ -178,7 +176,7 @@ Public-facing geolocated directory entries. One per profile.
 | `public_email` | `text` | Nullable. |
 | `specialties` | `text[]` | Default `'{}'`. Indexed with GIN. |
 | `show_business_phone` | `boolean` | Default `true`. |
-| `show_personal_mobile` | `boolean` | Default `false` per CLAUDE.md constraint #9. |
+| `show_personal_mobile` | `boolean` | Default `false` per CLAUDE.md constraint #8. |
 | `show_address` | `boolean` | Default `false`. |
 | `show_public_email` | `boolean` | Default `true`. |
 | `is_visible` | `boolean` | Master switch. Default `true`. Auto-set to `false` when membership leaves `Active` / `Honorary`. |
@@ -186,7 +184,7 @@ Public-facing geolocated directory entries. One per profile.
 | `updated_at` | `timestamptz` | Auto |
 
 Personal-mobile and address defaults are `false` (CLAUDE.md
-constraint #9). Surface the flip in the dashboard, never default to
+constraint #8). Surface the flip in the dashboard, never default to
 exposing them.
 
 ### 3.6 `certifications`
@@ -225,7 +223,7 @@ CE hours logged by members, with admin approval workflow.
 ### 3.8 `compliance_logs`
 
 Code-of-ethics signatures. APPEND-ONLY. UPDATE and DELETE forbidden
-at the RLS and trigger level (CLAUDE.md constraint #4).
+at the RLS and trigger level (CLAUDE.md constraint #3).
 
 | Field | Type | Notes |
 |---|---|---|
@@ -368,65 +366,13 @@ invariant.
 
 ## 4. Deferred subsystems
 
-### 4.1 Voting — shelved as a potential Phase 2+ add-on
-
-The election tables remain documented because the schema must
-support voter anonymity if voting ever ships. Do NOT migrate, query,
-or build UI for these tables until voting is explicitly back in
-scope. When that happens, a `@.claude/rules/voting.md` file must be
-written before any work begins.
-
-#### `elections`
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | `uuid` | PK |
-| `title` | `text` |  |
-| `description` | `text` | Nullable |
-| `opens_at` | `timestamptz` |  |
-| `closes_at` | `timestamptz` |  |
-| `quorum_threshold` | `integer` | Minimum participants for the result to count. |
-| `candidates` | `jsonb` | Ballot structure. |
-| `status` | `text` | `draft`, `open`, `closed`, `published`. |
-| `created_at` | `timestamptz` | Auto |
-
-#### `election_participants`
-
-Records WHO voted. Quorum / dedup only.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | `uuid` | PK |
-| `election_id` | `uuid` | FK → `elections.id` `ON DELETE RESTRICT`. |
-| `profile_id` | `uuid` | FK → `profiles.id` `ON DELETE RESTRICT`. |
-| `voted_at` | `timestamptz` | Coarse — bucketed to the hour to prevent timing correlation with `election_ballots`. |
-
-Unique `(election_id, profile_id)` — one participation per member.
-
-#### `election_ballots`
-
-Records THE VOTE. NO `profile_id` FK. NO column that can correlate to
-a participant row (CLAUDE.md constraint #3).
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | `uuid` | PK |
-| `election_id` | `uuid` | FK → `elections.id` `ON DELETE RESTRICT`. |
-| `ballot_data` | `jsonb` | The vote. |
-| `submitted_at` | `timestamptz` | Coarse — bucketed to the hour. |
-
-The legal requirement is that `election_participants` and
-`election_ballots` cannot be joined to identify how a specific
-member voted. Adding a `user_id`, a precise timestamp, or any
-correlating column to `election_ballots` is forbidden.
-
-### 4.2 LMS-integrated CE delivery — out of scope this phase
+### 4.1 LMS-integrated CE delivery — out of scope this phase
 
 `@CLAUDE.md` § 7 Open Architecture. `ce_credits` currently covers
 manual logging. LMS sync, if it ships, will add an `lms_record_id`
 column and a sync table; do not pre-build either.
 
-### 4.3 Member-facing CE and ethics UI — deferred to a future version
+### 4.2 Member-facing CE and ethics UI — deferred to a future version
 
 Per `@CLAUDE.md` § 1, the member dashboard tabs for CE tracking and
 the Code of ethics are hidden. The page files at
@@ -553,14 +499,7 @@ that masks columns when `show_* = false`. See
 - SELECT / INSERT / UPDATE / DELETE: forbidden for all roles until
   Phase 2 ships. The table exists; no policy allows access.
 
-### 5.15 Voting tables — deferred
-
-RLS enabled, no permissive policies. Effectively read/write
-forbidden for every role until voting ships and `voting.md` is
-authored. Bypassing the table from a Postgres function is a
-constraint violation.
-
-### 5.16 `site_settings`
+### 5.15 `site_settings`
 
 - SELECT: public (anon + authenticated + admin). The contact email
   and phone are public-facing by definition.
@@ -607,7 +546,6 @@ In addition to PK / FK / unique indexes implied above:
 | `prevent_compliance_mutation` | `compliance_logs` | BEFORE UPDATE OR DELETE — `RAISE EXCEPTION`. Append-only enforcement. |
 | `prevent_admin_log_mutation` | `admin_action_log` | BEFORE UPDATE OR DELETE — `RAISE EXCEPTION`. |
 | `prevent_send_log_mutation` | `email_send_log` | BEFORE UPDATE OR DELETE — `RAISE EXCEPTION`. |
-| `prevent_ballot_correlation` | `election_ballots` | BEFORE INSERT — verifies `submitted_at` is bucketed (truncated to hour). Deferred until voting ships. |
 
 -----
 
@@ -647,8 +585,6 @@ this order to satisfy FK constraints:
 14. `email_send_log` (FK → `profiles`)
 15. `admin_action_log` (FK → `profiles`)
 16. `donations` (FK → `profiles`) — created, no RLS allow
-17. Deferred voting tables — NOT created in initial migration.
-    Added only when voting is unshelved.
 
 RLS policies and triggers are created in a follow-up migration so
 they can be edited independently of table DDL.
@@ -660,12 +596,12 @@ they can be edited independently of table DDL.
 The initial migration seeds:
 
 - The singleton row in `email_settings` with the defaults from § 3.11.
-- Three rows in `tiers` (Student / Apprentice, Professional,
-  Corporate / Salon) with `annual_dues_cents = 0`,
-  `stripe_product_id = NULL`, and `stripe_price_id = NULL`. The
-  client confirms pricing before these are updated; the first
-  dues edit in the admin portal creates the Stripe Product and
-  Price together (see `stripe-architecture.md` §6.5 edge cases).
+- Three rows in `tiers` (Basic Membership, Professional, Salon)
+  with `annual_dues_cents = 0`, `stripe_product_id = NULL`, and
+  `stripe_price_id = NULL`. The client confirms pricing before
+  these are updated; the first dues edit in the admin portal
+  creates the Stripe Product and Price together (see
+  `stripe-architecture.md` §6.5 edge cases).
 
 Nothing else is seeded. No example members, no example events. The
 admin UI seeds reality.
@@ -681,19 +617,14 @@ changes are the highest-leverage way to violate them.
 2. NEVER allow client-side INSERT/UPDATE to `memberships`. Service
    role only, via the `membership-status-sync` Edge Function or
    webhook handler.
-3. NEVER add a `profile_id` or `user_id` FK to `election_ballots`.
-   Never add a precise timestamp. Voter anonymity is legally
-   required.
-4. NEVER UPDATE or DELETE rows in `compliance_logs`,
+3. NEVER UPDATE or DELETE rows in `compliance_logs`,
    `admin_action_log`, or `email_send_log`. Triggers enforce; do
    not work around them.
-5. NEVER store dues prices, tier IDs, or benefit flags in
+4. NEVER store dues prices, tier IDs, or benefit flags in
    application code. Always read from `tiers`.
-6. NEVER store mobile / address values on `directory_listings` with
+5. NEVER store mobile / address values on `directory_listings` with
    `show_*` defaulted to `true`. Defaults are `false` per CLAUDE.md
-   constraint #9.
-7. NEVER use a Postgres `ENUM` type — text + CHECK only.
-8. NEVER substitute lat/lng pairs for the PostGIS `geography` column.
-9. NEVER seed example records into a migration. Real data only.
-10. NEVER skip the deferred voting tables' RLS lockdown. "Deferred"
-    means "exists but is closed to every role", not "ignore".
+   constraint #8.
+6. NEVER use a Postgres `ENUM` type — text + CHECK only.
+7. NEVER substitute lat/lng pairs for the PostGIS `geography` column.
+8. NEVER seed example records into a migration. Real data only.
