@@ -1,4 +1,5 @@
 import { Card } from "@/components/mppga/admin/Card";
+import { EmailChangeForm } from "@/components/mppga/portal/EmailChangeForm";
 import { PortalPageHeader } from "@/components/mppga/portal/PortalPageHeader";
 import { ProfileEditForm } from "@/components/mppga/portal/ProfileEditForm";
 import { requireSession } from "@/lib/supabase/session";
@@ -18,7 +19,7 @@ export default async function ProfilePage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Your profile"
-        description="The personal details we keep on file. Email changes go through the board; everything else is yours to edit."
+        description="The personal details we keep on file."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -53,19 +54,18 @@ export default async function ProfilePage() {
       </div>
 
       <Card
-        title="Password & sign-in"
-        description="Sign in with your email and password."
+        title="Email"
+        description="Sign in with your email and password. Changing it sends a confirmation link to your new address."
+      >
+        <EmailChangeForm currentEmail={member.email} />
+      </Card>
+
+      <Card
+        title="Password"
+        description="Reset from the sign-in page."
       >
         <div className="px-6 py-6 text-sm text-mppga-ink-soft">
-          You can change your password from the sign-in page. If you need to
-          update the email on file, contact us at{" "}
-          <a
-            href="mailto:mppga207@gmail.com"
-            className="text-mppga-teal hover:text-mppga-teal-hover"
-          >
-            mppga207@gmail.com
-          </a>
-          .
+          You can change your password from the sign-in page.
         </div>
       </Card>
     </div>

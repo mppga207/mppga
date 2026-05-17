@@ -165,6 +165,7 @@ What's been applied to the production Supabase project. Update this list wheneve
 - `20260517000005_signup_skip_payment.sql` — adds a `signup_skip_payment` boolean column to `site_settings`. Backs the testing toggle in Admin → Settings that promotes new signups straight to `Active` while Stripe isn't wired up.
 - `20260517000006_remove_voting_rename_tiers.sql` — drops the `voting_rights` column from `tiers`, renames `corporate_umbrella` to `umbrella_account`, and updates the seeded rows so "Student / Apprentice" becomes "Basic Membership" (slug `basic`) and "Corporate / Salon" becomes "Salon" (slug `salon`). Drops voting as a planned feature.
 - `20260517000007_search_organizations_rpc.sql` — adds a `search_organizations(p_query, p_limit)` security-definer function that returns up to 8 `(id, name)` matches for the `/join` salon typeahead. Anon + authenticated execute; the row-level policy on `organizations` stays admin-only.
+- `20260517000008_profile_full_name_from_metadata.sql` — patches the `create_profile_on_signup` trigger to copy `full_name` out of `raw_user_meta_data` so the join form's name actually lands on the profile. Backfills any existing rows whose name went missing from the previous version of the trigger.
 
 Manual configuration steps that don't live in a migration but must be done per environment:
 
