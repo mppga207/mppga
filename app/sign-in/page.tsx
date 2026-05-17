@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Nav } from "@/components/mppga/landing/Nav";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { SignInForm } from "@/components/mppga/auth/SignInForm";
-import { Button } from "@/components/mppga/ui/button";
 
 export const metadata = {
   title: "Sign in · MPPGA",
@@ -47,12 +46,22 @@ export default function SignInPage() {
             Skip auth and jump straight into a dashboard. Remove before launch.
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <Button href="/dashboard" variant="secondary" className="flex-1">
+            {/* Plain anchors hit the route handler with a full navigation;
+                next/link soft-navigates and would 404 on the client. */}
+            {/* eslint-disable @next/next/no-html-link-for-pages */}
+            <a
+              href="/api/preview/member"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-mppga-teal px-4 text-sm font-medium text-mppga-teal transition-colors hover:bg-mppga-teal-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mppga-teal focus-visible:ring-offset-2 focus-visible:ring-offset-mppga-page"
+            >
               Member dashboard
-            </Button>
-            <Button href="/admin" variant="secondary" className="flex-1">
+            </a>
+            <a
+              href="/api/preview/admin"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-mppga-teal px-4 text-sm font-medium text-mppga-teal transition-colors hover:bg-mppga-teal-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mppga-teal focus-visible:ring-offset-2 focus-visible:ring-offset-mppga-page"
+            >
               Admin dashboard
-            </Button>
+            </a>
+            {/* eslint-enable @next/next/no-html-link-for-pages */}
           </div>
         </div>
       </main>

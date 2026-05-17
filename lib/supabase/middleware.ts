@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { User } from "@supabase/supabase-js";
 
 import { env } from "@/lib/env";
+import { PREVIEW_COOKIE, isPreviewMode, type PreviewMode } from "@/lib/supabase/preview";
 import type { Database, MembershipStatus, ProfileRole } from "@/types/database";
 
 /**
@@ -17,6 +18,18 @@ export async function updateSession(
   request: NextRequest,
 ): Promise<NextResponse> {
   let response = NextResponse.next({ request });
+
+  // Skip-auth preview cookie set by `/api/preview/[mode]`. Honoured here
+  // so the temporary sign-in preview buttons drop the visitor into the
+  // dashboard without a real Supabase session. The session helpers see
+  // the same cookie and return a synthetic AppSession.
+  const previewCookie = request.cookies.get(PREVIEW_COOKIE)?.value;
+  const previewMode: PreviewMode | null = isPreviewMode(previewCookie)
+    ? previewCookie
+    : null;
+  if (previewMode) {
+    return handlePreviewRouting(request, response, previewMode);
+  }
 
   // Without Supabase env vars the SSR client throws on construction and
   // every request 500s as MIDDLEWARE_INVOCATION_FAILED. Fall through so
@@ -70,6 +83,25 @@ export async function updateSession(
     return redirectResponse;
   }
 
+  return response;
+}
+
+function handlePreviewRouting(
+  request: NextRequest,
+  response: NextResponse,
+  mode: PreviewMode,
+): NextResponse {
+  const pathname = request.nextUrl.pathname;
+  // Admin routes require the admin variant; member-mode visitors get
+  // bounced to /dashboard the same way a real non-admin would.
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    if (mode !== "admin") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+  // Stay out of the way of /auth/* and /api/* — they handle their own
+  // gating. Public pages render normally so reviewers can navigate
+  // between the marketing site and the dashboard.
   return response;
 }
 

@@ -1,7 +1,7 @@
 import { cache } from "react";
 
 import { env } from "@/lib/env";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 const BUCKET = "branding";
 
@@ -19,6 +19,12 @@ export interface SiteLogo {
  * footer don't issue duplicate selects on the same render.
  */
 export const loadSiteLogo = cache(async (): Promise<SiteLogo> => {
+  // Preview / local-dev path: Supabase isn't configured, so fall back
+  // to the placeholder M chip rather than crashing the page that renders
+  // <BrandLogo />.
+  if (!isSupabaseConfigured()) {
+    return { logoPath: null, logoUrl: null };
+  }
   const supabase = await createClient();
   const { data } = await supabase
     .from("site_settings")
