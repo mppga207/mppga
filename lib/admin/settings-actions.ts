@@ -110,6 +110,20 @@ export async function promoteToAdminAction(
     );
   }
 
+  // Mirror the role onto auth.users.raw_app_meta_data so
+  // supabase.auth.getUser().app_metadata.role surfaces it for the
+  // middleware. The JWT claims hook covers the JWT payload but the
+  // middleware reads getUser(), which returns metadata from the DB.
+  const { error: metaError } = await supabase.auth.admin.updateUserById(
+    profileId,
+    { app_metadata: { role: "admin" } },
+  );
+  if (metaError) {
+    redirect(
+      `/admin/settings/board?error=${encodeURIComponent(metaError.message)}`,
+    );
+  }
+
   // Force re-issue of JWT custom claims on next request from other
   // devices (auth-middleware.md §2.2). The target's current session
   // keeps its existing claims until refresh; their next sign-in or
@@ -177,6 +191,19 @@ export async function demoteAdminAction(formData: FormData): Promise<void> {
   if (updateError) {
     redirect(
       `/admin/settings/board?error=${encodeURIComponent(updateError.message)}`,
+    );
+  }
+
+  // Mirror the demotion onto auth.users.raw_app_meta_data so
+  // getUser().app_metadata.role flips back to 'member' for the
+  // middleware. Same reasoning as the promote path above.
+  const { error: metaError } = await supabase.auth.admin.updateUserById(
+    profileId,
+    { app_metadata: { role: "member" } },
+  );
+  if (metaError) {
+    redirect(
+      `/admin/settings/board?error=${encodeURIComponent(metaError.message)}`,
     );
   }
 
