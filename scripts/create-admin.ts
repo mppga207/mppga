@@ -90,11 +90,20 @@ async function ensureUser(): Promise<{ userId: string; created: boolean }> {
 }
 
 async function promoteToAdmin(userId: string): Promise<void> {
-  const { error } = await admin
+  const { error: profileError } = await admin
     .from("profiles")
     .update({ role: "admin" })
     .eq("id", userId);
-  if (error) throw error;
+  if (profileError) throw profileError;
+
+  // Also write into auth.users.raw_app_meta_data so it surfaces on
+  // supabase.auth.getUser().app_metadata. The JWT claims hook produces
+  // the right output but getUser() reads metadata from the DB, not the
+  // JWT, so the middleware doesn't see hook-only claims.
+  const { error: metaError } = await admin.auth.admin.updateUserById(userId, {
+    app_metadata: { role: "admin" },
+  });
+  if (metaError) throw metaError;
 }
 
 async function revokeOtherSessions(userId: string): Promise<void> {
