@@ -13,10 +13,24 @@ const STATUS_TONE: Record<AdminEmailLogEntry["status"], string> = {
   bounced: "text-mppga-ink",
 };
 
+const STATUS_LABEL: Record<AdminEmailLogEntry["status"], string> = {
+  sent: "Sent",
+  failed: "Failed",
+  bounced: "Bounced",
+};
+
+const TRIGGER_LABEL: Record<AdminEmailLogEntry["triggerType"], string> = {
+  automated: "Scheduled",
+  manual: "Sent by admin",
+  webhook: "Triggered by payment",
+};
+
 export function EmailSendLogTable({
   entries,
+  templateLabels = {},
 }: {
   entries: AdminEmailLogEntry[];
+  templateLabels?: Record<string, string>;
 }) {
   if (entries.length === 0) {
     return (
@@ -32,11 +46,10 @@ export function EmailSendLogTable({
         <thead className="bg-mppga-page text-left text-[11px] uppercase tracking-[0.14em] text-mppga-ink-muted">
           <tr>
             <th className="px-6 py-3 font-medium">Sent</th>
-            <th className="px-6 py-3 font-medium">Template</th>
+            <th className="px-6 py-3 font-medium">Email</th>
             <th className="px-6 py-3 font-medium">Recipient</th>
             <th className="px-6 py-3 font-medium">Trigger</th>
             <th className="px-6 py-3 font-medium">Status</th>
-            <th className="px-6 py-3 font-medium">Reference</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-mppga-divider">
@@ -45,8 +58,8 @@ export function EmailSendLogTable({
               <td className="px-6 py-3 text-xs text-mppga-ink-soft">
                 {dateTimeFmt.format(new Date(entry.sentAt))}
               </td>
-              <td className="px-6 py-3 font-mono text-xs text-mppga-ink">
-                {entry.template}
+              <td className="px-6 py-3 text-mppga-ink">
+                {templateLabels[entry.template] ?? entry.template}
               </td>
               <td className="px-6 py-3">
                 {entry.profileName || entry.profileEmail ? (
@@ -65,17 +78,14 @@ export function EmailSendLogTable({
                 )}
               </td>
               <td className="px-6 py-3 text-xs text-mppga-ink-soft">
-                {entry.triggerType}
+                {TRIGGER_LABEL[entry.triggerType] ?? entry.triggerType}
               </td>
               <td className="px-6 py-3">
                 <span
                   className={`text-xs font-medium ${STATUS_TONE[entry.status]}`}
                 >
-                  {entry.status}
+                  {STATUS_LABEL[entry.status] ?? entry.status}
                 </span>
-              </td>
-              <td className="px-6 py-3 font-mono text-[11px] text-mppga-ink-muted">
-                {entry.referenceId ?? "—"}
               </td>
             </tr>
           ))}

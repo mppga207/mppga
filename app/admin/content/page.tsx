@@ -11,7 +11,7 @@ export default async function AdminContentPage() {
     <div className="space-y-10">
       <AdminPageHeader
         title="Content"
-        description="Edit every section of the public landing page — hero through footer. Saving writes to the site_content singleton and revalidates every public route."
+        description="Edit every section of the public landing page — hero through footer. Saved changes go live on the site immediately."
       />
 
       <ContentEditor

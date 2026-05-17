@@ -34,7 +34,7 @@ export default async function AdminSettingsTiersPage({
     <div className="space-y-10">
       <AdminPageHeader
         title="Tier configuration"
-        description="Pricing and benefit flags per tier. Dues edits create a new Stripe Price and migrate existing subscribers — they pay the new amount at their next renewal, no proration."
+        description="Pricing and benefits per tier. When you change dues, current members keep paying the old amount until their next renewal, then roll over to the new price."
       />
 
       <SettingsTabs active="/admin/settings/tiers" />
@@ -49,7 +49,7 @@ export default async function AdminSettingsTiersPage({
       {tiers.length === 0 ? (
         <Card>
           <p className="px-6 py-10 text-center text-sm text-mppga-ink-soft">
-            No tiers seeded. Run the initial migration.
+            No tiers set up yet.
           </p>
         </Card>
       ) : (
@@ -80,7 +80,7 @@ function Flash({
       invalid_input: "Some required fields were missing or invalid.",
       tier_not_found: "Tier no longer exists.",
       no_existing_price:
-        "Bootstrap couldn’t reach Stripe. Check the STRIPE_SECRET_KEY env var.",
+        "Couldn’t reach Stripe to set up this tier’s pricing.",
     };
     return (
       <div className="rounded-md border border-mppga-sand-deep bg-mppga-sand px-4 py-3 text-sm text-mppga-ink">
@@ -93,10 +93,10 @@ function Flash({
   const message =
     ok === "dues_saved"
       ? bootstrap
-        ? "Stripe Product and initial Price created. New signups will use this price."
+        ? "Pricing set up in Stripe. New signups will use this price."
         : migratedNum > 0
           ? `Dues updated. ${migratedNum} existing ${migratedNum === 1 ? "subscriber" : "subscribers"} will pay the new amount at their next renewal.`
-          : "Dues updated. No existing subscribers to migrate."
+          : "Dues updated. No current subscribers needed to roll over."
       : ok === "no_change"
         ? "No change — the amount already matched."
         : ok === "metadata_saved"

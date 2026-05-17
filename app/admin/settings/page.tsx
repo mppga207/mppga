@@ -78,9 +78,8 @@ export default async function AdminSettingsPage({ searchParams }: PageProps) {
               ))}
             </div>
             <p className="mt-3 text-xs text-mppga-ink-muted">
-              Colors are defined in <code className="font-mono">app/globals.css</code>{" "}
-              under the <code className="font-mono">mppga-</code> namespace. Editing
-              them is a code change for now — surfacing a UI editor is deferred.
+              These colors apply across the site and email templates. Adjusting
+              them from this screen is on the roadmap.
             </p>
           </section>
         </div>

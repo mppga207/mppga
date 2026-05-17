@@ -52,22 +52,27 @@ export default async function AdminEmailsPage({ searchParams }: PageProps) {
 
       <Card
         title="Send timing"
-        description="Admin-configurable schedules from email-automation.md §2. Cron functions read these values at run time — no redeploy required."
+        description="When automated emails go out. Changes take effect on the next scheduled run — no waiting around."
       >
         {settings ? (
           <EmailSettingsForm settings={settings} />
         ) : (
           <p className="px-6 py-6 text-sm text-mppga-ink-soft">
-            Settings row missing. Run the seed migration to create it.
+            Send timing isn’t set up yet.
           </p>
         )}
       </Card>
 
       <Card
         title="Send history"
-        description="The most recent transactional sends. Status reflects what Resend returned at send time."
+        description="The most recent emails sent. Status reflects whether delivery was accepted."
       >
-        <EmailSendLogTable entries={sendLog} />
+        <EmailSendLogTable
+          entries={sendLog}
+          templateLabels={Object.fromEntries(
+            templates.map((t) => [t.key, t.name]),
+          )}
+        />
       </Card>
     </div>
   );
@@ -105,7 +110,7 @@ function okToMessage(value: string | null): string | null {
     case "template_deleted":
       return "Template deleted.";
     case "settings_saved":
-      return "Send-timing saved. Crons pick up the new schedule on their next run.";
+      return "Send-timing saved. The new schedule takes effect on the next scheduled run.";
     default:
       return null;
   }

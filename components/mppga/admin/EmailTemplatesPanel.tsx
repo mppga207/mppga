@@ -29,7 +29,7 @@ export function EmailTemplatesPanel({ templates, openKey }: Props) {
   return (
     <Card
       title="Templates"
-      description="Edit subject + body for any template. System templates can't be deleted or renamed; their copy is editable. Custom (non-system) templates can be created here for manual sends."
+      description="Edit the subject and body of any email. Built-in templates can be reworded but not removed; you can add your own for one-off announcements."
     >
       <div className="grid grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[280px_1fr]">
         <div className="space-y-3">
@@ -49,16 +49,19 @@ export function EmailTemplatesPanel({ templates, openKey }: Props) {
                 }`}
               >
                 <p className="font-medium text-mppga-ink">{t.name}</p>
-                <p className="mt-0.5 flex items-center gap-2 font-mono text-[11px] text-mppga-ink-muted">
-                  {t.key}
+                <p className="mt-0.5 flex items-center gap-2 text-[11px] text-mppga-ink-muted">
                   {t.isSystem ? (
                     <span className="rounded-sm bg-mppga-teal-tint px-1 text-[10px] text-mppga-teal-deep">
-                      system
+                      Built-in
                     </span>
-                  ) : null}
+                  ) : (
+                    <span className="rounded-sm bg-mppga-sand px-1 text-[10px] text-mppga-ink-soft">
+                      Custom
+                    </span>
+                  )}
                   {t.isDuesRelated ? (
                     <span className="rounded-sm bg-mppga-sand px-1 text-[10px] text-mppga-ink-soft">
-                      dues
+                      Dues
                     </span>
                   ) : null}
                 </p>
@@ -85,7 +88,7 @@ export function EmailTemplatesPanel({ templates, openKey }: Props) {
             <EditTemplateForm key={selected.key} template={selected} />
           ) : (
             <p className="text-sm text-mppga-ink-soft">
-              No templates exist. Run the email_templates migration to seed.
+              No templates yet. Use “New template” to create one.
             </p>
           )}
         </div>
@@ -100,13 +103,13 @@ function EditTemplateForm({ template }: { template: AdminEmailTemplate }) {
       <input type="hidden" name="key" value={template.key} />
 
       <header>
-        <p className="font-mono text-xs text-mppga-ink-muted">{template.key}</p>
-        <h3 className="mt-1 font-serif text-xl text-mppga-ink">
+        <h3 className="font-serif text-xl text-mppga-ink">
           {template.name}
         </h3>
         {template.availableVariables.length > 0 ? (
           <p className="mt-2 text-xs text-mppga-ink-soft">
-            Available variables:{" "}
+            You can drop these into the subject or body and they’ll fill in
+            per recipient:{" "}
             <span className="font-mono">
               {template.availableVariables
                 .map((v) => `{{${v}}}`)
@@ -146,7 +149,7 @@ function EditTemplateForm({ template }: { template: AdminEmailTemplate }) {
       <Field
         label="HTML body"
         id={`body-html-${template.key}`}
-        helper="The standard footer is appended automatically — don't include the org name, contact, or disclaimer here."
+        helper="The standard footer (org name, contact, and any required disclaimers) is added automatically — don’t include it here."
       >
         <textarea
           id={`body-html-${template.key}`}
@@ -161,7 +164,7 @@ function EditTemplateForm({ template }: { template: AdminEmailTemplate }) {
       <Field
         label="Plain-text body"
         id={`body-text-${template.key}`}
-        helper="Resend sends both versions; clients fall back to text when HTML can't render."
+        helper="A plain-text version is sent alongside the HTML for email clients that can’t display the styled version."
       >
         <textarea
           id={`body-text-${template.key}`}
@@ -227,15 +230,16 @@ function CreateTemplateForm() {
       <header>
         <h3 className="font-serif text-xl text-mppga-ink">New template</h3>
         <p className="mt-1 text-xs text-mppga-ink-soft">
-          For manual sends only — automated sends are wired to specific
-          system keys and can&apos;t be retargeted from here.
+          For one-off announcements you trigger by hand. The built-in
+          automated emails (welcome, renewal reminders, etc.) are managed
+          separately.
         </p>
       </header>
 
       <Field
-        label="Key"
+        label="Identifier"
         id="new-template-key"
-        helper="Lowercase, hyphens only. Used as the template identifier in code (won't be editable later)."
+        helper="Lowercase letters and hyphens, used as the short name (can’t be changed later)."
       >
         <input
           id="new-template-key"

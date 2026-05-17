@@ -49,7 +49,7 @@ export default async function AdminSettingsBoardPage({
     <div className="space-y-10">
       <AdminPageHeader
         title="Board roster"
-        description="Members with admin access. Promoting grants full read/write across the admin portal; demoting removes it on the target's next token refresh."
+        description="Members with admin access. Promoting gives them the full admin portal; demoting takes it away the next time they sign in."
       />
 
       <SettingsTabs active="/admin/settings/board" />
@@ -122,7 +122,7 @@ export default async function AdminSettingsBoardPage({
 
       <Card
         title="Promote a member"
-        description="Search by name or email. Promotion is logged in the admin audit trail."
+        description="Search by name or email. Promotions are recorded in the activity log."
       >
         <PromoteAdminPicker
           searchValue={search}
