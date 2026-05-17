@@ -6,7 +6,7 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
-const tierSlugs = ["student", "professional", "corporate"] as const;
+const tierSlugs = ["basic", "professional", "salon"] as const;
 type TierSlug = (typeof tierSlugs)[number];
 
 const passwordSchema = z

@@ -4,7 +4,7 @@
 
 **Client:** Maine Professional Pet Groomers Association (MPPGA) — a 501(c)(6) nonprofit professional trade association for pet groomers statewide in Maine. Public-facing site lives at `https://www.afterload.io/clients/mppga` (prototype). Production domain TBD. Contact: TBD.
 
-**Purpose:** A custom-built membership platform replacing off-the-shelf AMS products (Wild Apricot, MemberClicks, etc.). Handles full member lifecycle: self-serve signup with auto-acceptance on successful payment, tiered dues billing, member portal, public geolocated directory, CE tracking, code of ethics compliance logging, volunteer admin tools, event ticketing, and board elections. Volunteer-run board with limited technical capacity — every feature must reduce manual email, spreadsheet, and approval tasks.
+**Purpose:** A custom-built membership platform replacing off-the-shelf AMS products (Wild Apricot, MemberClicks, etc.). Handles full member lifecycle: self-serve signup with auto-acceptance on successful payment, tiered dues billing, member portal, public geolocated directory, CE tracking, code of ethics compliance logging, volunteer admin tools, and event ticketing. Volunteer-run board with limited technical capacity — every feature must reduce manual email, spreadsheet, and approval tasks.
 
 **Public Website — In Scope (Phase 1):** Home, Join Membership, Events, Contact.
 
@@ -47,7 +47,7 @@
 Foundational schema. Never deviate from table names or field naming conventions without explicit instruction.
 
 ```
-organizations       — Business entity (salon/clinic). Primary billing unit for Corporate tier.
+organizations       — Business entity (salon/clinic). Primary billing unit for the Salon tier.
 profiles            — Extends auth.users. Links individual to org. Holds role + membership ref.
 memberships         — Source of truth for access. Decoupled from Stripe billing_status.
                       Fields: stripe_sub_id, tier_id, status (Enum), billing_status, expires_at.
@@ -55,8 +55,6 @@ directory_listings  — Public-facing. PostGIS geography field for radius search
 certifications      — Credentials per user. document_path → Supabase Storage bucket.
 ce_credits          — CE hours per user. status: Pending | Approved. Linked to event or upload.
 compliance_logs     — IMMUTABLE. Code of ethics signatures. signed_at + ip_address. Append-only.
-election_participants — Records WHO voted. Quorum verification only. No vote data.
-election_ballots    — Records THE VOTE. NO user_id FK. Cryptographic anonymity required.
 tiers               — Tier config: pricing, benefit flags. Source of truth — never hardcode.
 events              — Event records: date, location, member_price, guest_price, capacity.
 event_registrations — Links profiles to events. Tracks payment_status + waitlist_position.
@@ -97,9 +95,9 @@ Grace period = 30 days from `expires_at`. Status transitions handled exclusively
 Tier config lives in the `tiers` table. NEVER hardcode tier IDs, pricing, or benefit flags in components.
 
 ```
-Student / Apprentice — Discounted. No voting rights. No directory listing. CE access only.
-Professional         — Standard. Full voting rights. Directory listing. Full portal.
-Corporate / Salon    — Premium. Umbrella account. Sub-profiles for staff. Priority directory.
+Basic Membership — Entry tier. Member event pricing. Directory listing optional.
+Professional     — Standard. Directory listing. Full portal.
+Salon            — Premium. Umbrella account. Sub-profiles for staff. Priority directory.
 ```
 
 -----
@@ -126,7 +124,6 @@ See `@.claude/rules/stripe-architecture.md` for webhook logic, proration, and du
 - **Auth:** Supabase Auth only. Do not propose NextAuth, Clerk, or any alternative.
 - **Payments:** Stripe only. Do not add PayPal or any secondary processor.
 - **RLS:** Every table must have RLS enabled. Never disable RLS to simplify a query — rewrite the query.
-- **Voting schema:** Dual-table anonymity (`election_participants` + `election_ballots`) is legally required. Do not consolidate.
 - **Compliance logs:** `compliance_logs` is append-only. No UPDATE or DELETE, ever.
 
 ### Open (Propose Before Building)
@@ -150,7 +147,6 @@ Do not infer. Read the relevant file before engaging with each subsystem.
 - Directory + PostGIS queries: `@.claude/rules/directory-search.md`
 - Admin portal — routes, components, tokens, tab specs: `@.claude/rules/admin-portal.md`
 - Email automation sequences: `@.claude/rules/email-automation.md`
-- Voting system logic: `@.claude/rules/voting.md`
 - Event ticketing flow: `@.claude/rules/events.md`
 - Brand: colors, fonts, logo usage: `@.claude/rules/brand.md`
 - Phase 1 buildout — sequenced punch list, blocking decisions, track dependencies: `@.claude/rules/phase-1-buildout.md`
@@ -167,6 +163,7 @@ What's been applied to the production Supabase project. Update this list wheneve
 
 - `20260517000004_auth_hook_app_metadata.sql` — fixes the JWT custom-claims hook to write under `app_metadata` so the middleware can actually read `role` and `membership_status` off the JWT. Without this applied, admin sign-ins land on `/dashboard` even with `profiles.role = 'admin'` and the hook bound.
 - `20260517000005_signup_skip_payment.sql` — adds a `signup_skip_payment` boolean column to `site_settings`. Backs the testing toggle in Admin → Settings that promotes new signups straight to `Active` while Stripe isn't wired up.
+- `20260517000006_remove_voting_rename_tiers.sql` — drops the `voting_rights` column from `tiers`, renames `corporate_umbrella` to `umbrella_account`, and updates the seeded rows so "Student / Apprentice" becomes "Basic Membership" (slug `basic`) and "Corporate / Salon" becomes "Salon" (slug `salon`). Drops voting as a planned feature.
 
 Manual configuration steps that don't live in a migration but must be done per environment:
 
@@ -195,7 +192,6 @@ Before concluding any task:
 
 1. **NEVER disable RLS on any table:** Security is non-negotiable. Rewrite the query instead.
 1. **NEVER update membership_status from client-side code:** All status transitions go through server-side Edge Functions or Route Handlers only.
-1. **NEVER add a user_id FK to election_ballots:** Voter anonymity is legally required. This table must remain unlinkable to individual users.
 1. **NEVER write to compliance_logs with UPDATE or DELETE:** Append-only audit trail.
 1. **NEVER hardcode tier IDs, pricing, or benefit flags:** All tier logic reads from the `tiers` table.
 1. **NEVER use npm or yarn:** pnpm only.

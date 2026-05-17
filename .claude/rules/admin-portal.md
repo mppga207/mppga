@@ -209,13 +209,13 @@ session and redirects to `/`.
 - NEVER write to `memberships.status` directly — always via the
   `membership-status-sync` Edge Function (CLAUDE.md constraint #2).
 - NEVER hardcode tier names, IDs, or pricing — read from `tiers`
-  (CLAUDE.md constraint #5).
+  (CLAUDE.md constraint #4).
 - NEVER expose one member's data to another non-admin via any drawer
   or query — rely on RLS, never bypass it.
 - NEVER UPDATE or DELETE rows in `admin_action_log` or
   `compliance_logs`.
 - NEVER expose `auth.users.email` of one member to another non-admin.
 - NEVER return a generic 403 to a non-admin — redirect to the member
-  portal or to `/renew` when applicable (CLAUDE.md constraint #7).
+  portal or to `/renew` when applicable (CLAUDE.md constraint #6).
 - NEVER conflate `compliance_logs` (ethics signatures) with
   `admin_action_log` (admin actions) in the UI.

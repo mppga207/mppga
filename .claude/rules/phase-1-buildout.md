@@ -57,7 +57,7 @@ Resolve them before opening that track's first PR.
 | # | Question | Affects | Source | Status |
 |---|---|---|---|---|
 | 1 | **Geocoder provider** — Mapbox / Google / Nominatim | Track 5 (directory edit), Track 8 | `directory-search.md` §4.1 | Deferred to Track 5 (client, 2026-05-16) |
-| 2 | **Tier pricing** — annual_dues_cents for Student, Professional, Corporate | Track 3 (subscription Checkout), Track 1 (seed migration) | `CLAUDE.md` §1 | Resolved 2026-05-16: $25 / $75 / $200 (seeded as 2500 / 7500 / 20000 cents) |
+| 2 | **Tier pricing** — annual_dues_cents for Basic Membership, Professional, Salon | Track 3 (subscription Checkout), Track 1 (seed migration) | `CLAUDE.md` §1 | Resolved 2026-05-16: $25 / $75 / $200 (seeded as 2500 / 7500 / 20000 cents) |
 | 3 | **Production domain** | Track 3 (Stripe live keys), Track 4 (Resend domain verification) | `CLAUDE.md` §1 | Open |
 | 4 | **Renewal-receipt template** — new key vs. reuse `welcome` | Track 4 | `stripe-architecture.md` §6.2 | Resolved 2026-05-16: dedicated `renewal-receipt` key. Templates live in DB (`email_templates`) so the admin Emails tab can edit copy and add new (non-system) templates without a code change. |
 | 5 | **`/directory`** — Phase 1 acceleration or Phase 2 as planned | Track 8 timing | `CLAUDE.md` §1 | Open |
@@ -608,9 +608,9 @@ decision #1.
 - **Not a sprint plan.** The tasks within a track are sequenced;
   the calendar mapping is up to whoever's scheduling the work.
 - **Not exhaustive of Phase 2.** Donations, LMS-integrated CE,
-  legislative tracking, and voting all live in
-  `CLAUDE.md` §7 Open Architecture. Each needs a proposal before
-  building, not a slot in this file.
+  and legislative tracking all live in `CLAUDE.md` §7 Open
+  Architecture. Each needs a proposal before building, not a slot
+  in this file.
 
 When a track ships, strike it from §2 with a date and PR link rather
 than deleting — the audit trail is useful.

@@ -49,18 +49,15 @@ export async function updateTierFieldsAction(formData: FormData): Promise<void> 
   const supabase = createServiceRoleClient();
   const { data: prior } = await supabase
     .from("tiers")
-    .select(
-      "name, description, voting_rights, directory_listing, corporate_umbrella",
-    )
+    .select("name, description, directory_listing, umbrella_account")
     .eq("id", tierId)
     .maybeSingle();
 
   const updates = {
     name,
     description,
-    voting_rights: formData.get("voting_rights") != null,
     directory_listing: formData.get("directory_listing") != null,
-    corporate_umbrella: formData.get("corporate_umbrella") != null,
+    umbrella_account: formData.get("umbrella_account") != null,
   };
 
   const { error } = await supabase.from("tiers").update(updates).eq("id", tierId);

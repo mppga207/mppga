@@ -12,7 +12,7 @@ import {
 const initial: AuthFormState = { status: "idle" };
 
 interface TierOption {
-  slug: "student" | "professional" | "corporate";
+  slug: "basic" | "professional" | "salon";
   name: string;
 }
 

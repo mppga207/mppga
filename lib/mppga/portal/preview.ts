@@ -101,7 +101,7 @@ export interface PreviewCheckoutTier {
 export function previewCheckoutTier(): PreviewCheckoutTier {
   return {
     name: "Professional",
-    description: "Full voting rights, directory listing, member event pricing.",
+    description: "Directory listing, member event pricing, full member portal.",
     annual_dues_cents: 7500,
     stripe_price_id: null,
   };

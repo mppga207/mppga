@@ -2,6 +2,7 @@ import { Nav } from "@/components/mppga/landing/Nav";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { Button } from "@/components/mppga/ui/button";
 import { JoinForm } from "@/components/mppga/auth/JoinForm";
+import { createClient } from "@/lib/supabase/server";
 import {
   ArrowRight,
   Building2,
@@ -18,74 +19,97 @@ export const metadata = {
     "Become a member of the Maine Professional Pet Groomers Association. Three tiers built for working groomers.",
 };
 
-type TierShell = {
-  slug: "student" | "professional" | "corporate";
-  name: string;
+type TierSlug = "basic" | "professional" | "salon";
+
+interface TierPresentation {
   shortLabel: string;
   icon: LucideIcon;
   tagline: string;
-  description: string;
   benefits: string[];
   featured: boolean;
-};
+}
 
-// Tier slugs map to the `tiers` table per data-model.md §3.3.
-// Pricing is intentionally omitted from this shell. Annual dues will be
-// read from `tiers.annual_dues_cents` at render time once the join flow
-// is wired (CLAUDE.md constraint #5: never hardcode tier prices).
-const tiers: TierShell[] = [
-  {
-    slug: "student",
-    name: "Student / Apprentice",
-    shortLabel: "student",
+// Slug-keyed presentation: icon, tagline, "apply as ___" label, and the
+// benefit bullet list. Name + description + dues read live from the
+// `tiers` table so admin edits in Settings → Tier configuration appear
+// on the public Join page immediately (revalidatePath("/join") fires
+// from lib/admin/tiers-actions.ts).
+const TIER_PRESENTATION: Record<TierSlug, TierPresentation> = {
+  basic: {
+    shortLabel: "a basic member",
     icon: GraduationCap,
     tagline: "Learning the craft.",
-    description:
-      "For groomers in school, apprenticing, or in their first year on the bench.",
     benefits: [
       "Access to continuing education resources",
-      "Discounted event pricing",
+      "Member event pricing",
       "Member community access",
-      "No public directory listing",
-      "No voting rights",
+      "Directory listing optional",
     ],
     featured: false,
   },
-  {
-    slug: "professional",
-    name: "Professional",
+  professional: {
     shortLabel: "professional",
     icon: UserRound,
     tagline: "The working groomer.",
-    description:
-      "For independent groomers, mobile stylists, and shop employees in active practice.",
     benefits: [
       "Public directory listing across Maine",
-      "Discounted event pricing",
-      "Voting rights in board elections",
+      "Member event pricing",
       "Continuing education tracking",
       "Member community access",
     ],
     featured: true,
   },
-  {
-    slug: "corporate",
-    name: "Corporate / Salon",
+  salon: {
     shortLabel: "a salon",
     icon: Building2,
     tagline: "For shop owners and salons.",
-    description:
-      "Umbrella membership for a salon, clinic, or multi-groomer shop. Covers the owner plus staff under one account.",
     benefits: [
       "Priority placement in the public directory",
       "Sub-profiles for every staff groomer",
-      "Discounted event pricing for the whole team",
-      "Voting rights for the primary contact",
+      "Member event pricing for the whole team",
       "Salon-level recognition at MPPGA events",
     ],
     featured: false,
   },
-];
+};
+
+interface JoinTier {
+  slug: TierSlug;
+  name: string;
+  description: string;
+  presentation: TierPresentation;
+}
+
+interface TierRow {
+  slug: string;
+  name: string;
+  description: string;
+  display_order: number;
+}
+
+async function loadJoinTiers(): Promise<JoinTier[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("tiers")
+    .select("slug, name, description, display_order")
+    .order("display_order", { ascending: true })
+    .returns<TierRow[]>();
+  if (!data) return [];
+
+  const rows: JoinTier[] = [];
+  for (const row of data) {
+    if (row.slug !== "basic" && row.slug !== "professional" && row.slug !== "salon") {
+      continue;
+    }
+    rows.push({
+      slug: row.slug,
+      name: row.name,
+      description: row.description,
+      presentation: TIER_PRESENTATION[row.slug],
+    });
+  }
+  return rows;
+}
 
 const steps = [
   {
@@ -105,7 +129,8 @@ const steps = [
   },
 ];
 
-export default function JoinPage() {
+export default async function JoinPage() {
+  const tiers = await loadJoinTiers();
   return (
     <div className="min-h-screen bg-mppga-page text-mppga-ink">
       <Nav />
@@ -145,17 +170,18 @@ export default function JoinPage() {
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {tiers.map((tier) => {
-                const Icon = tier.icon;
+                const Icon = tier.presentation.icon;
+                const featured = tier.presentation.featured;
                 return (
                   <article
                     key={tier.slug}
                     className={
-                      tier.featured
+                      featured
                         ? "relative flex flex-col rounded-2xl border-2 border-mppga-teal bg-mppga-card p-7 shadow-lg shadow-mppga-teal/10"
                         : "relative flex flex-col rounded-2xl border border-mppga-divider bg-mppga-card p-7 shadow-sm"
                     }
                   >
-                    {tier.featured ? (
+                    {featured ? (
                       <span className="absolute -top-3 left-7 rounded-full bg-mppga-teal px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-white">
                         Most popular
                       </span>
@@ -168,7 +194,7 @@ export default function JoinPage() {
                       {tier.name}
                     </h3>
                     <p className="mt-1 text-sm font-medium text-mppga-teal">
-                      {tier.tagline}
+                      {tier.presentation.tagline}
                     </p>
                     <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
                       {tier.description}
@@ -177,7 +203,7 @@ export default function JoinPage() {
                     <div className="my-6 h-px w-full bg-mppga-divider" />
 
                     <ul className="space-y-2.5 text-sm text-mppga-ink-soft">
-                      {tier.benefits.map((b) => (
+                      {tier.presentation.benefits.map((b) => (
                         <li key={b} className="flex items-start gap-2.5">
                           <Check
                             className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal"
@@ -191,10 +217,10 @@ export default function JoinPage() {
                     <div className="mt-7">
                       <Button
                         href="#apply"
-                        variant={tier.featured ? "primary" : "secondary"}
+                        variant={featured ? "primary" : "secondary"}
                         className="w-full"
                       >
-                        Apply as {tier.shortLabel}
+                        Apply as {tier.presentation.shortLabel}
                         <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
                       </Button>
                     </div>
@@ -305,9 +331,7 @@ export default function JoinPage() {
               </ul>
             </div>
 
-            <JoinForm
-              tiers={tiers.map(({ slug, name }) => ({ slug, name }))}
-            />
+            <JoinForm tiers={tiers.map(({ slug, name }) => ({ slug, name }))} />
           </div>
         </section>
 

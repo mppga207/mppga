@@ -86,9 +86,8 @@ type TiersRow = {
   stripe_product_id: string | null;
   stripe_price_id: string | null;
   annual_dues_cents: number;
-  voting_rights: boolean;
   directory_listing: boolean;
-  corporate_umbrella: boolean;
+  umbrella_account: boolean;
   display_order: number;
   description: string;
   created_at: Timestamp;
