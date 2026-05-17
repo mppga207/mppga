@@ -1,4 +1,5 @@
 import type { MemberRow, TierOption } from "@/lib/admin/data";
+import type { OverviewActionables } from "@/lib/admin/overview-data";
 
 /**
  * Demo-only fixtures so the preview-cookie admin walkthrough has
@@ -119,3 +120,108 @@ export const PREVIEW_MEMBER_ROWS: readonly MemberRow[] = [
     stripeCustomerId: null,
   },
 ];
+
+const daysAgo = (days: number, hours = 0): string =>
+  new Date(Date.now() - (days * 24 + hours) * 60 * 60 * 1000).toISOString();
+
+export const PREVIEW_OVERVIEW: OverviewActionables = {
+  contactSubmissions: {
+    total: 2,
+    items: [
+      {
+        id: "00000000-0000-0000-0000-000000030001",
+        name: "Dana Whitford",
+        email: "dana.whitford@example.com",
+        topic: "membership",
+        message:
+          "Hi — I just moved my mobile-grooming setup to Maine and I'm trying to figure out which tier fits a one-person van operation. Are sole-prop groomers Professional or Corporate? Happy to hop on a quick call.",
+        createdAt: daysAgo(0, 3),
+      },
+      {
+        id: "00000000-0000-0000-0000-000000030002",
+        name: "Sam Beaulieu",
+        email: "sam@bowdoinpets.org",
+        topic: "sponsorship",
+        message:
+          "Our shop would love to sponsor the fall workshop in Bangor. Who handles sponsorship tiers? Send a packet whenever convenient.",
+        createdAt: daysAgo(2, 6),
+      },
+    ],
+  },
+  awaitingPayment: {
+    total: 3,
+    items: [
+      {
+        profileId: "00000000-0000-0000-0000-000000020007",
+        fullName: "Renee Theriault",
+        email: "renee@bangorgroomers.com",
+        tierName: "Professional",
+        joinedAt: daysAgo(1, 2),
+        expiresAt: null,
+      },
+      {
+        profileId: "00000000-0000-0000-0000-000000020009",
+        fullName: "Avery Lemieux",
+        email: "avery@lemieuxgrooming.com",
+        tierName: "Student / Apprentice",
+        joinedAt: daysAgo(3),
+        expiresAt: null,
+      },
+      {
+        profileId: "00000000-0000-0000-0000-000000020010",
+        fullName: "Kit Soucy",
+        email: "kit.soucy@example.com",
+        tierName: "Professional",
+        joinedAt: daysAgo(6),
+        expiresAt: null,
+      },
+    ],
+  },
+  pastDue: {
+    total: 1,
+    items: [
+      {
+        profileId: "00000000-0000-0000-0000-000000020011",
+        fullName: "Imogen Frechette",
+        email: "imogen@coastalpaws.com",
+        tierName: "Professional",
+        joinedAt: daysAgo(380),
+        expiresAt: daysAgo(15),
+      },
+    ],
+  },
+  recentlyJoined: {
+    total: 2,
+    items: [
+      {
+        profileId: "00000000-0000-0000-0000-000000020012",
+        fullName: "Noor Abdi",
+        email: "noor@scarboroughgrooming.com",
+        tierName: "Professional",
+        joinedAt: daysAgo(2, 5),
+        expiresAt: null,
+      },
+      {
+        profileId: "00000000-0000-0000-0000-000000020013",
+        fullName: "Wyatt Pinkham",
+        email: "wyatt@wagsofmaine.com",
+        tierName: "Corporate / Salon",
+        joinedAt: daysAgo(9),
+        expiresAt: null,
+      },
+    ],
+  },
+  draftEvents: {
+    total: 1,
+    items: [
+      {
+        id: "00000000-0000-0000-0000-000000040001",
+        title: "Hand-stripping intensive",
+        date: new Date(
+          Date.now() + 21 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+        location: "Augusta, ME",
+      },
+    ],
+  },
+};
