@@ -29,7 +29,7 @@ export default async function DirectoryListingPage() {
           </p>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-mppga-ink-soft">
             Listings include your business name, city, and the specialties
-            you offer — and they&rsquo;re what pet owners see when they search
+            you offer, and they&rsquo;re what pet owners see when they search
             the directory. Email us your business address and we&rsquo;ll get
             your listing live.
           </p>
@@ -56,7 +56,7 @@ export default async function DirectoryListingPage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Your directory listing"
-        description="How your business appears to pet owners searching for a Maine groomer. Toggle what's public — address and contact info are off by default."
+        description="How your business appears to pet owners searching for a Maine groomer. Toggle what's public. Address and contact info are off by default."
       />
 
       <Card className="p-6">
@@ -172,7 +172,7 @@ export default async function DirectoryListingPage() {
           />
         </dl>
         <div className="px-6 py-4 text-xs text-mppga-ink-muted">
-          Editing these fields needs an address re-geocode — coming with the
+          Editing these fields needs an address re-geocode, coming with the
           directory map. For now, email{" "}
           <a
             href="mailto:mppga207@gmail.com"

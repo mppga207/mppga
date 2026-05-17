@@ -135,7 +135,7 @@ function EditTemplateForm({ template }: { template: AdminEmailTemplate }) {
       <Field
         label="Subject"
         id={`subject-${template.key}`}
-        helper="Variables can be used here too — e.g. Welcome to MPPGA, {{full_name}}."
+        helper="Variables can be used here too, e.g. Welcome to MPPGA, {{full_name}}."
       >
         <input
           id={`subject-${template.key}`}
@@ -150,7 +150,7 @@ function EditTemplateForm({ template }: { template: AdminEmailTemplate }) {
       <Field
         label="HTML body"
         id={`body-html-${template.key}`}
-        helper="The standard footer (org name, contact, and any required disclaimers) is added automatically — don’t include it here."
+        helper="The standard footer (org name, contact, and any required disclaimers) is added automatically. Don’t include it here."
       >
         <textarea
           id={`body-html-${template.key}`}

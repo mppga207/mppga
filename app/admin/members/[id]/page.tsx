@@ -90,10 +90,10 @@ export default async function AdminMemberDetailPage({
             <dl className="grid grid-cols-2 gap-4 px-6 py-5 text-sm">
               <DetailItem label="Full name" value={member.fullName} />
               <DetailItem label="Email" value={member.email} />
-              <DetailItem label="Phone" value={member.phone ?? "—"} />
+              <DetailItem label="Phone" value={member.phone ?? "-"} />
               <DetailItem
                 label="Organization"
-                value={member.organizationName ?? "—"}
+                value={member.organizationName ?? "-"}
               />
               <DetailItem label="Role" value={member.role} />
               <DetailItem
@@ -101,7 +101,7 @@ export default async function AdminMemberDetailPage({
                 value={
                   member.createdAt
                     ? dateFmt.format(new Date(member.createdAt))
-                    : "—"
+                    : "-"
                 }
               />
             </dl>
@@ -109,22 +109,22 @@ export default async function AdminMemberDetailPage({
 
           <Card title="Billing">
             <dl className="grid grid-cols-2 gap-4 px-6 py-5 text-sm">
-              <DetailItem label="Tier" value={member.tierName ?? "—"} />
+              <DetailItem label="Tier" value={member.tierName ?? "-"} />
               <DetailItem
                 label="Expires"
                 value={
                   member.expiresAt
                     ? dateFmt.format(new Date(member.expiresAt))
-                    : "—"
+                    : "-"
                 }
               />
               <DetailItem
                 label="Billing status"
-                value={member.billingStatus ?? "—"}
+                value={member.billingStatus ?? "-"}
               />
               <DetailItem
                 label="Stripe subscription"
-                value={member.stripeSubscriptionId ?? "—"}
+                value={member.stripeSubscriptionId ?? "-"}
               />
               <div className="col-span-2">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
@@ -132,7 +132,7 @@ export default async function AdminMemberDetailPage({
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   <span className="font-mono text-xs text-mppga-ink">
-                    {member.stripeCustomerId ?? "—"}
+                    {member.stripeCustomerId ?? "-"}
                   </span>
                   {member.stripeCustomerId ? (
                     <CopyButton value={member.stripeCustomerId}>

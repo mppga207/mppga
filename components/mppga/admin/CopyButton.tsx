@@ -17,7 +17,7 @@ export function CopyButton({
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Clipboard write can fail on insecure contexts. Surface nothing —
+      // Clipboard write can fail on insecure contexts. Surface nothing;
       // the audit log still has the value, and admins can also see it
       // inline on the page.
     }

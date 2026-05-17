@@ -37,8 +37,8 @@ export function Hero() {
             variants={fadeUp}
             className="mt-6 max-w-xl text-lg leading-relaxed text-mppga-ink-soft"
           >
-            A statewide nonprofit 501(c)(6) created by and for Maine groomers
-            &mdash; built on education, professionalism, safety, and community.
+            A statewide nonprofit 501(c)(6) created by and for Maine groomers,
+            built on education, professionalism, safety, and community.
           </motion.p>
 
           <motion.div

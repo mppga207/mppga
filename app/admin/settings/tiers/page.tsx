@@ -98,7 +98,7 @@ function Flash({
           ? `Dues updated. ${migratedNum} existing ${migratedNum === 1 ? "subscriber" : "subscribers"} will pay the new amount at their next renewal.`
           : "Dues updated. No current subscribers needed to roll over."
       : ok === "no_change"
-        ? "No change — the amount already matched."
+        ? "No change. The amount already matched."
         : ok === "metadata_saved"
           ? "Tier saved."
           : null;

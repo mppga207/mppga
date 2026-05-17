@@ -18,7 +18,7 @@ export default async function ProfilePage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Your profile"
-        description="The personal details we keep on file. Email changes go through the board — everything else is yours to edit."
+        description="The personal details we keep on file. Email changes go through the board; everything else is yours to edit."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -38,14 +38,14 @@ export default async function ProfilePage() {
             />
             <ReadOnlyRow
               label="Organization"
-              value={member.organizationName ?? "—"}
+              value={member.organizationName ?? "-"}
             />
             <ReadOnlyRow
               label="Member since"
               value={
                 member.memberSinceISO
                   ? dateFmt.format(new Date(member.memberSinceISO))
-                  : "—"
+                  : "-"
               }
             />
           </dl>

@@ -52,7 +52,7 @@ export default async function EventsPage() {
           </div>
 
           {upcoming.length === 0 ? (
-            <EmptyState message="No upcoming events right now. Check back soon — new ones are added throughout the year." />
+            <EmptyState message="No upcoming events right now. Check back soon; new ones are added throughout the year." />
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {upcoming.map((event) => (

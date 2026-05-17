@@ -12,7 +12,7 @@ import type { BillingStatus } from "@/types/database";
  * Single shared Stripe webhook endpoint per `stripe-architecture.md`.
  *
  * - Signature verification first (raw bytes, never `.json()` before
- *   verifying — CLAUDE.md constraint #8).
+ *   verifying, per CLAUDE.md constraint #8).
  * - Service-role Supabase client only after the signature passes
  *   (`stripe-architecture.md` §2.4). The signature is the gate.
  * - Idempotent: rows update on natural keys
@@ -22,7 +22,7 @@ import type { BillingStatus } from "@/types/database";
  *   `memberships.status` updates (CLAUDE.md constraint #2).
  * - Email sends go through `sendTransactional`, which dedups via
  *   `email_send_log` before firing (email-automation.md §4).
- * - Unknown event types are acknowledged with 200 — never 4xx
+ * - Unknown event types are acknowledged with 200, never 4xx
  *   (CLAUDE.md webhook spec; Stripe will hammer the endpoint otherwise).
  */
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       env.stripe.webhookSecret,
     );
   } catch {
-    // Never log the raw payload — it can contain customer email addresses.
+    // Never log the raw payload, it can contain customer email addresses.
     return NextResponse.json({ error: "invalid_signature" }, { status: 400 });
   }
 
@@ -118,10 +118,10 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
 
 /**
  * `checkout.session.completed` fires for both flows. Route by metadata:
- *   - `flow = 'billing'`: subscription-mode session — seed customer +
+ *   - `flow = 'billing'`: subscription-mode session. Seed customer +
  *     subscription IDs on the membership so `invoice.paid` (which
  *     usually follows immediately) has the IDs to look up.
- *   - `flow = 'tickets'`: one-off payment for an event ticket — Track 7
+ *   - `flow = 'tickets'`: one-off payment for an event ticket. Track 7
  *     will land the registration update. Acknowledged for now.
  */
 async function handleCheckoutCompleted(
@@ -133,7 +133,7 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  // Default to the billing flow — every subscription session created
+  // Default to the billing flow. Every subscription session created
   // by `lib/stripe/subscription-checkout.ts` tags itself flow=billing.
   if (session.mode !== "subscription") return;
 
@@ -254,7 +254,7 @@ async function handleTicketCheckoutCompleted(
 
 /**
  * `invoice.paid` is the promotion event. Subscription renewal also fires
- * this — `expires_at` gets bumped to the new period end, billing_status
+ * this. `expires_at` gets bumped to the new period end, billing_status
  * resets to `current`, and the sync function flips status to Active if
  * the member was in Awaiting_Payment / Grace_Period / Lapsed.
  */
@@ -355,7 +355,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
 /**
  * `invoice.payment_failed` flips `billing_status` to `past_due` and fires
  * the dunning email. The time-based Grace_Period / Lapsed transitions
- * still come from the sync function, not from here — this just records
+ * still come from the sync function, not from here. This just records
  * the billing state and starts the email cadence.
  */
 async function handleInvoiceFailed(invoice: Stripe.Invoice): Promise<void> {
@@ -398,7 +398,7 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice): Promise<void> {
  * `customer.subscription.updated` mirrors Stripe's `status` into
  * `billing_status` and, if the priced item changed tier, swaps
  * `memberships.tier_id` via a lookup against `tiers.stripe_price_id`.
- * Membership `status` (Active / Lapsed / etc.) is unchanged — Stripe's
+ * Membership `status` (Active / Lapsed / etc.) is unchanged. Stripe's
  * subscription status is not the same as MPPGA's member status.
  */
 async function handleSubscriptionUpdated(
@@ -441,7 +441,7 @@ async function handleSubscriptionUpdated(
  * lets the sync function decide whether the member is now Active (still
  * within their paid period), Grace_Period (just past), or Lapsed
  * (past + 30 days). Per `stripe-architecture.md` §6.4 we never delete
- * the membership row — cancellation is a status, not a destruction.
+ * the membership row. Cancellation is a status, not a destruction.
  */
 async function handleSubscriptionDeleted(
   subscription: Stripe.Subscription,

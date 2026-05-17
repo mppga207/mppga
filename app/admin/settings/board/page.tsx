@@ -93,7 +93,7 @@ export default async function AdminSettingsBoardPage({
                     <td className="px-6 py-3 text-right">
                       {isSelf ? (
                         <span className="text-xs text-mppga-ink-muted">
-                          —
+                          -
                         </span>
                       ) : (
                         <form action={demoteAdminAction}>

@@ -52,7 +52,7 @@ export default async function MyEventsPage() {
     <div className="space-y-10">
       <PortalPageHeader
         title="Your events"
-        description="Workshops, clinics, and mixers you're registered for — plus everything you've already attended."
+        description="Workshops, clinics, and mixers you're registered for, plus everything you've already attended."
         actions={
           <Button href="/events" variant="primary">
             Browse events

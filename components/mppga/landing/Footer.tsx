@@ -20,7 +20,7 @@ export function Footer() {
             <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
               Maine Professional Pet Groomers Association
               <br />
-              PO Box &mdash;, Portland, ME
+              PO Box -, Portland, ME
             </p>
           </div>
 

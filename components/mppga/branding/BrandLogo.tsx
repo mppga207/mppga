@@ -2,7 +2,7 @@ import { loadSiteLogo } from "@/lib/admin/branding-data";
 
 /**
  * Renders the org logo when one has been uploaded; falls back to the
- * placeholder "M" chip otherwise. Server component — reads the
+ * placeholder "M" chip otherwise. Server component, reads the
  * Supabase Storage URL through a per-request cache (`loadSiteLogo`),
  * so duplicate renders on the same page issue at most one select.
  *

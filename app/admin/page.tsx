@@ -81,7 +81,7 @@ export default async function AdminOverviewPage() {
         description={
           totalActionable === 0
             ? "Nothing needs board attention right now. Check back when new contact messages, signups, or billing events arrive."
-            : "Items that need board attention — new messages from the contact form, signups awaiting payment, past-due billing, and events not yet published."
+            : "Items that need board attention: new messages from the contact form, signups awaiting payment, past-due billing, and events not yet published."
         }
       />
 

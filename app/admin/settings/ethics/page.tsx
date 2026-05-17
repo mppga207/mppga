@@ -68,7 +68,7 @@ export default async function AdminSettingsEthicsPage() {
                       {sig.documentHash.slice(0, 12)}…
                     </td>
                     <td className="px-6 py-3 font-mono text-[11px] text-mppga-ink-soft">
-                      {sig.ipAddress ?? "—"}
+                      {sig.ipAddress ?? "-"}
                     </td>
                   </tr>
                 ))}

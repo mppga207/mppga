@@ -15,7 +15,7 @@ interface Props {
  * renewal reminders, etc.). Each row shows the cadence and an
  * enable/disable toggle backed by `email_templates.is_enabled`. When
  * a row is off, the matching code path is short-circuited in
- * `lib/email/send.ts` — nothing reaches Resend.
+ * `lib/email/send.ts`, so nothing reaches Resend.
  */
 export function AutomatedSendsPanel({ templates }: Props) {
   const byKey = new Map(templates.map((t) => [t.key, t]));

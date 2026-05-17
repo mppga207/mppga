@@ -180,15 +180,15 @@ export default async function AdminMembersPage({ searchParams }: PageProps) {
                         )}
                       </td>
                       <td className="px-6 py-4 text-mppga-ink-soft">
-                        {row.tierName ?? "—"}
+                        {row.tierName ?? "-"}
                       </td>
                       <td className="px-6 py-4 text-mppga-ink-soft">
                         {row.expiresAt
                           ? dateFormatter.format(new Date(row.expiresAt))
-                          : "—"}
+                          : "-"}
                       </td>
                       <td className="px-6 py-4 text-mppga-ink-soft">
-                        {row.organizationName ?? "—"}
+                        {row.organizationName ?? "-"}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Link
@@ -234,7 +234,7 @@ export default async function AdminMembersPage({ searchParams }: PageProps) {
                       <div>
                         <dt className="text-mppga-ink-muted">Tier</dt>
                         <dd className="mt-0.5 text-mppga-ink-soft">
-                          {row.tierName ?? "—"}
+                          {row.tierName ?? "-"}
                         </dd>
                       </div>
                       <div>
@@ -242,7 +242,7 @@ export default async function AdminMembersPage({ searchParams }: PageProps) {
                         <dd className="mt-0.5 text-mppga-ink-soft">
                           {row.expiresAt
                             ? dateFormatter.format(new Date(row.expiresAt))
-                            : "—"}
+                            : "-"}
                         </dd>
                       </div>
                       {row.organizationName ? (

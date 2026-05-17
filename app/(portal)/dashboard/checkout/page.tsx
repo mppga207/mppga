@@ -55,14 +55,14 @@ export default async function CheckoutPage({
       </h1>
 
       <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
-        Welcome to MPPGA. Your account is ready — pay your annual dues
+        Welcome to MPPGA. Your account is ready. Pay your annual dues
         and your member portal, public directory listing, and event
         member pricing all unlock immediately.
       </p>
 
       {wasCancelled ? (
         <p className="mt-6 rounded-md border border-mppga-divider bg-mppga-sand px-4 py-3 text-sm text-mppga-ink-soft">
-          No charge was made. You can resume your payment any time —
+          No charge was made. You can resume your payment any time;
           your account stays open.
         </p>
       ) : null}
@@ -74,13 +74,13 @@ export default async function CheckoutPage({
           Selected tier
         </p>
         <p className="mt-2 font-serif text-2xl text-mppga-ink">
-          {tier?.name ?? "—"}
+          {tier?.name ?? "-"}
         </p>
         {tier ? (
           <p className="mt-1 text-sm text-mppga-ink-soft">{tier.description}</p>
         ) : null}
         <p className="mt-4 font-serif text-3xl tracking-tight text-mppga-teal-deep">
-          {tier ? dollars(tier.annual_dues_cents) : "—"}
+          {tier ? dollars(tier.annual_dues_cents) : "-"}
           <span className="ml-1 align-baseline text-sm font-sans text-mppga-ink-muted">
             / year
           </span>
@@ -99,7 +99,7 @@ export default async function CheckoutPage({
 
         {!stripeReady ? (
           <p className="mt-3 text-xs text-mppga-ink-muted">
-            Stripe payments aren’t live yet — the board is configuring
+            Stripe payments aren’t live yet. The board is configuring
             Stripe. We’ll email you the moment payment opens up. In the
             meantime your account stays here, ready to go.
           </p>
@@ -147,7 +147,7 @@ async function loadCheckoutTier(profileId: string) {
 function CheckoutErrorBanner({ code }: { code: string }) {
   const message =
     code === "missing_price"
-      ? "Your tier doesn’t have a payment plan configured yet. The board is finishing setup — try again shortly or email us."
+      ? "Your tier doesn’t have a payment plan configured yet. The board is finishing setup. Try again shortly or email us."
       : code === "missing_membership"
         ? "We couldn’t find your membership record. Try signing in again."
         : "Something went wrong starting checkout. Try again, or email the board if it keeps happening.";

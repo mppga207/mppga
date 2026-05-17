@@ -16,7 +16,7 @@ type Stat = {
 };
 
 function buildStats(values: StatsValues | null): Stat[] {
-  const placeholder = (n: number) => (values === null ? "—" : String(n));
+  const placeholder = (n: number) => (values === null ? "-" : String(n));
   return [
     { value: placeholder(values?.memberCount ?? 0), label: "Members" },
     { value: placeholder(values?.townCount ?? 0), label: "Towns served" },
