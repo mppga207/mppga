@@ -3,10 +3,27 @@ import { Footer } from "@/components/mppga/landing/Footer";
 import { Button } from "@/components/mppga/ui/button";
 import { Mail, MapPin, Phone } from "lucide-react";
 
+import { submitContactAction } from "@/lib/contact/actions";
+import { isSupabaseConfigured } from "@/lib/supabase/server";
+
 export const metadata = {
   title: "Contact · MPPGA",
   description:
     "Reach the Maine Professional Pet Groomers Association board with questions about membership, events, or partnership.",
+};
+
+type FormStatus = "sent" | "invalid" | "error" | "email" | null;
+
+function readStatus(value: string | string[] | undefined): FormStatus {
+  const v = Array.isArray(value) ? value[0] : value;
+  if (v === "sent" || v === "invalid" || v === "error" || v === "email") {
+    return v;
+  }
+  return null;
+}
+
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const channels = [
@@ -33,7 +50,10 @@ const channels = [
   },
 ];
 
-export default function ContactPage() {
+export default async function ContactPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const status = readStatus(sp.status);
+  const wired = isSupabaseConfigured();
   return (
     <div className="min-h-screen bg-mppga-page text-mppga-ink">
       <Nav />
@@ -69,7 +89,52 @@ export default function ContactPage() {
                 it lands in the right inbox.
               </p>
 
-              <form className="mt-8 space-y-5" aria-describedby="contact-form-note">
+              {status === "sent" ? (
+                <div
+                  className="mt-8 rounded-lg border border-mppga-teal/40 bg-mppga-teal-tint px-5 py-4 text-sm text-mppga-teal-darker"
+                  role="status"
+                >
+                  Thanks — your message is in. A board member will reply
+                  from{" "}
+                  <a
+                    href="mailto:mppga207@gmail.com"
+                    className="underline underline-offset-2"
+                  >
+                    mppga207@gmail.com
+                  </a>{" "}
+                  within a few business days.
+                </div>
+              ) : null}
+              {status === "invalid" ? (
+                <div
+                  className="mt-8 rounded-lg border border-mppga-divider bg-mppga-sand px-5 py-4 text-sm text-mppga-ink"
+                  role="alert"
+                >
+                  We couldn&rsquo;t read every field. Double-check your name,
+                  email, and message, then try again.
+                </div>
+              ) : null}
+              {status === "error" ? (
+                <div
+                  className="mt-8 rounded-lg border border-mppga-divider bg-mppga-sand px-5 py-4 text-sm text-mppga-ink"
+                  role="alert"
+                >
+                  Something went wrong on our end. Please email{" "}
+                  <a
+                    href="mailto:mppga207@gmail.com"
+                    className="text-mppga-teal hover:text-mppga-teal-hover"
+                  >
+                    mppga207@gmail.com
+                  </a>{" "}
+                  directly while we look into it.
+                </div>
+              ) : null}
+
+              <form
+                className="mt-8 space-y-5"
+                aria-describedby="contact-form-note"
+                action={wired ? submitContactAction : undefined}
+              >
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="Your name" htmlFor="contact-name">
                     <input
@@ -126,21 +191,23 @@ export default function ContactPage() {
                     We never share your email. You&rsquo;ll get a reply at the
                     address above.
                   </p>
-                  <Button type="submit" disabled>
+                  <Button type="submit" disabled={!wired}>
                     Send message
                   </Button>
                 </div>
-                <p className="text-xs text-mppga-ink-muted">
-                  Form submission is being wired up. In the meantime, please
-                  email{" "}
-                  <a
-                    href="mailto:mppga207@gmail.com"
-                    className="text-mppga-teal hover:text-mppga-teal-hover"
-                  >
-                    mppga207@gmail.com
-                  </a>{" "}
-                  directly.
-                </p>
+                {wired ? null : (
+                  <p className="text-xs text-mppga-ink-muted">
+                    Form submission is being wired up. In the meantime,
+                    please email{" "}
+                    <a
+                      href="mailto:mppga207@gmail.com"
+                      className="text-mppga-teal hover:text-mppga-teal-hover"
+                    >
+                      mppga207@gmail.com
+                    </a>{" "}
+                    directly.
+                  </p>
+                )}
               </form>
             </div>
 

@@ -261,6 +261,26 @@ type SiteContentRow = {
   updated_at: Timestamp;
 }
 
+export type ContactTopic =
+  | "membership"
+  | "events"
+  | "sponsorship"
+  | "press"
+  | "other";
+
+type ContactSubmissionsRow = {
+  id: UUID;
+  name: string;
+  email: string;
+  topic: ContactTopic;
+  message: string;
+  user_agent: string | null;
+  ip_address: string | null;
+  read_at: Timestamp | null;
+  archived_at: Timestamp | null;
+  created_at: Timestamp;
+}
+
 type EmailTemplatesRow = {
   id: UUID;
   key: string;
@@ -322,6 +342,10 @@ export type Database = {
         "key" | "name" | "subject" | "body_html" | "body_text"
       >;
       site_content: TableSpec<SiteContentRow, never>;
+      contact_submissions: TableSpec<
+        ContactSubmissionsRow,
+        "name" | "email" | "topic" | "message"
+      >;
     };
     Views: Record<string, never>;
     Functions: {
