@@ -65,7 +65,7 @@ export const defaultLandingContent: LandingContent = {
     headline: "Maine's professional voice for groomers.",
     subCopy:
       "A statewide nonprofit 501(c)(6) created by and for Maine groomers — built on education, professionalism, safety, and community.",
-    primaryButtonLabel: "Join Now — $45/yr",
+    primaryButtonLabel: "Join Now",
     secondaryButtonLabel: "See upcoming events",
     photoCaption: "Photo placeholder · groomer at work",
   },
@@ -122,7 +122,7 @@ export const defaultLandingContent: LandingContent = {
     ctaLabel: "See all events",
   },
   closingCta: {
-    headline: "Become a member — $45/yr.",
+    headline: "Become a member.",
     body: "Join 100+ Maine groomers who back the standard, share the work, and point clients toward each other.",
     buttonLabel: "Join Now",
   },
