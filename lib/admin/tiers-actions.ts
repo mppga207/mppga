@@ -49,15 +49,29 @@ export async function updateTierFieldsAction(formData: FormData): Promise<void> 
   const supabase = createServiceRoleClient();
   const { data: prior } = await supabase
     .from("tiers")
-    .select("name, description, directory_listing, umbrella_account")
+    .select(
+      "name, description, directory_listing, umbrella_account, umbrella_employee_limit",
+    )
     .eq("id", tierId)
     .maybeSingle();
+
+  const umbrellaOn = formData.get("umbrella_account") != null;
+  let umbrellaEmployeeLimit: number | null = null;
+  if (umbrellaOn) {
+    const raw = formData.get("umbrella_employee_limit");
+    const parsed = Number(raw ?? NaN);
+    if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 1) {
+      redirect(`${tierBackHref(tierId)}?error=invalid_employee_limit`);
+    }
+    umbrellaEmployeeLimit = parsed;
+  }
 
   const updates = {
     name,
     description,
     directory_listing: formData.get("directory_listing") != null,
-    umbrella_account: formData.get("umbrella_account") != null,
+    umbrella_account: umbrellaOn,
+    umbrella_employee_limit: umbrellaEmployeeLimit,
   };
 
   const { error } = await supabase.from("tiers").update(updates).eq("id", tierId);

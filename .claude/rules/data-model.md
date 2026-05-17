@@ -126,6 +126,7 @@ Tier configuration. Source of truth for pricing and benefit flags
 | `annual_dues_cents` | `integer` | Default 0. Honorary is 0. |
 | `directory_listing` | `boolean` | `false` for Basic Membership. |
 | `umbrella_account` | `boolean` | `true` for Salon. Allows sub-profiles via `organization_id`. |
+| `umbrella_employee_limit` | `integer` | Nullable. Positive when set. CHECK forbids a value unless `umbrella_account = true`. Drives the "Covers a salon with up to N employees" copy on the admin tier editor and the public Join page. |
 | `display_order` | `integer` | UI sort order. |
 | `description` | `text` | Member-facing tier description. |
 | `created_at` | `timestamptz` | Auto |

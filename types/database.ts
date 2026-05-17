@@ -88,6 +88,7 @@ type TiersRow = {
   annual_dues_cents: number;
   directory_listing: boolean;
   umbrella_account: boolean;
+  umbrella_employee_limit: number | null;
   display_order: number;
   description: string;
   created_at: Timestamp;
