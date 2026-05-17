@@ -268,10 +268,10 @@ existing customer's invoice prefix retroactively.
 
 Per `auth-middleware.md` §6.1:
 
-1. Member completes join form → magic link sent → magic link
-   clicked → the `/auth/callback` route inserts the `memberships`
-   row with `tier_id` and `status = 'Awaiting_Payment'`. There is
-   no board-review step.
+1. Member completes join form (email + password) → verification
+   email sent → verification link clicked → the `/auth/callback`
+   route inserts the `memberships` row with `tier_id` and
+   `status = 'Awaiting_Payment'`. There is no board-review step.
 2. Member lands on `/dashboard/checkout`. The page hosts a Stripe
    Checkout link **for the subscription** (not a one-off Checkout
    — `mode: 'subscription'`).

@@ -3,7 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 /**
  * Insert a `memberships` row in `Awaiting_Payment` for a brand-new
  * signup. Called from the auth-callback route on the first hit after
- * magic-link exchange.
+ * the email-verification exchange.
  *
  * Idempotent: a UNIQUE on `memberships.profile_id` means a second call
  * for the same profile is a no-op via ON CONFLICT. Service role is

@@ -196,8 +196,8 @@ Distinct from `compliance_logs` (ethics signatures) and `email_send_log`
 
 ## 8. Authentication
 
-Sign-in lives at `/sign-in` (shared with the public site). Magic-link
-flow via Supabase Auth is the working default for the prototype;
+Sign-in lives at `/sign-in` (shared with the public site). Email +
+password via Supabase Auth is the working default for the prototype;
 confirm with the client before launch. Admin sign-out clears the
 session and redirects to `/`.
 

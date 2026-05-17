@@ -30,9 +30,13 @@ export type AuthFormState =
   | { status: "error"; message: string };
 
 /**
- * `/join` server action. Sends a magic-link email and stashes the tier
- * slug + full name in `options.data` so the auth-callback route can
- * create the membership row on first sign-in.
+ * `/join` server action. Creates a new account for an email + password
+ * sign-up flow and stashes the tier slug + full name in `options.data`
+ * so the auth-callback route can create the membership row on first
+ * sign-in.
+ *
+ * NOTE: the underlying call is still `signInWithOtp` while the email +
+ * password swap lands across two PRs — UI surface here, wiring next.
  */
 export async function joinMembership(
   _prev: AuthFormState,
@@ -77,11 +81,16 @@ export async function joinMembership(
 }
 
 /**
- * `/sign-in` server action. Magic-link only — no passwords, no social
+ * `/sign-in` server action. Email + password sign-in
  * (auth-middleware.md §6.2). `shouldCreateUser: false` so the form
  * doesn't quietly create a fresh signup if someone mistypes their email.
+ *
+ * NOTE: the underlying call is still `signInWithOtp` while the email +
+ * password swap lands across two PRs — UI surface here, wiring next.
+ * The `password` field on the form is accepted but ignored until the
+ * follow-up PR swaps in `signInWithPassword`.
  */
-export async function signInWithMagicLink(
+export async function signInWithEmailPassword(
   _prev: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
@@ -106,7 +115,7 @@ export async function signInWithMagicLink(
   if (error) {
     // Don't leak whether the email exists. Surface a generic success-ish
     // message either way, but log the actual error server-side.
-    console.warn("sign-in OTP error", error.message);
+    console.warn("sign-in error", error.message);
   }
 
   return { status: "sent", email: parsed.data.email };

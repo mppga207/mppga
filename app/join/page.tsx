@@ -91,12 +91,12 @@ const steps = [
   {
     n: 1,
     title: "Sign up",
-    body: "Tell us your name, email, and which tier fits. We’ll send a one-tap sign-in link to your inbox.",
+    body: "Tell us your name, email, password, and which tier fits. We’ll send a verification email to your inbox.",
   },
   {
     n: 2,
     title: "Pay your dues",
-    body: "Click the link, land on your dashboard, and complete your dues payment in Stripe. Annual renewal is handled automatically.",
+    body: "Confirm your email, land on your dashboard, and complete your dues payment in Stripe. Annual renewal is handled automatically.",
   },
   {
     n: 3,
@@ -285,9 +285,9 @@ export default function JoinPage() {
                 A few details and we’ll take it from there.
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
-                We’ll send a sign-in link to the email you provide. Click
-                it, complete your dues payment, and your member portal
-                unlocks automatically.
+                We’ll send a verification email to the address you provide.
+                Confirm it, complete your dues payment, and your member
+                portal unlocks automatically.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-mppga-ink-soft">
                 <li className="flex items-start gap-2.5">
@@ -296,7 +296,7 @@ export default function JoinPage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>Magic-link sign-in — no passwords to manage.</span>
+                  <span>Sign in with email and password — pick something memorable.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />

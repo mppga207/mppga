@@ -21,8 +21,7 @@ export default function SignInPage() {
             Welcome back
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
-            Enter your email and we’ll send you a one-tap sign-in link.
-            No passwords to remember.
+            Sign in with your email and password to reach the member portal.
           </p>
         </div>
 
