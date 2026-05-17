@@ -1,6 +1,7 @@
 import { Card } from "@/components/mppga/admin/Card";
 import { PortalPageHeader } from "@/components/mppga/portal/PortalPageHeader";
 import { StatusBadge } from "@/components/mppga/admin/StatusBadge";
+import { DirectoryEditForm } from "@/components/mppga/portal/DirectoryEditForm";
 import { DirectoryToggleRow } from "@/components/mppga/portal/DirectoryToggleRow";
 import { requireSession } from "@/lib/supabase/session";
 import {
@@ -122,7 +123,7 @@ export default async function DirectoryListingPage() {
           </div>
         </Card>
 
-        <Card title="Specialties">
+        <Card title="Current specialties">
           {listing.specialties.length > 0 ? (
             <div className="flex flex-wrap gap-2 px-6 py-5">
               {listing.specialties.map((s) => (
@@ -131,56 +132,46 @@ export default async function DirectoryListingPage() {
             </div>
           ) : (
             <div className="px-6 py-5 text-sm text-mppga-ink-soft">
-              No specialties on file yet.
+              No specialties on file yet. Add some in the edit form below.
             </div>
           )}
-          <div className="px-6 pb-5 text-xs text-mppga-ink-muted">
-            Specialties help owners find the right groomer for their pet. To
-            update them, email{" "}
-            <a
-              href="mailto:mppga207@gmail.com"
-              className="text-mppga-teal hover:text-mppga-teal-hover"
-            >
-              mppga207@gmail.com
-            </a>
-            .
-          </div>
         </Card>
       </div>
 
-      <Card title="Contact details">
+      <Card title="Listing details">
+        <DirectoryEditForm
+          initialDisplayName={listing.displayName}
+          initialBio={listing.bio}
+          initialBusinessPhone={listing.businessPhone}
+          initialPersonalMobile={listing.personalMobile}
+          initialPublicEmail={listing.publicEmail}
+          initialSpecialties={listing.specialties}
+        />
+      </Card>
+
+      <Card title="Address">
         <dl className="divide-y divide-mppga-divider">
-          <ContactRow
-            label="Business phone"
-            value={listing.businessPhone}
-            visible={listing.showBusinessPhone}
-          />
-          <ContactRow
-            label="Personal mobile"
-            value={listing.personalMobile}
-            visible={listing.showPersonalMobile}
-          />
-          <ContactRow
-            label="Public email"
-            value={listing.publicEmail}
-            visible={listing.showPublicEmail}
-          />
           <ContactRow
             label="Street address"
             value={listing.addressLine}
             visible={listing.showAddress}
           />
+          <ContactRow
+            label="City, state"
+            value={`${listing.city}, ${listing.state}`}
+            visible
+          />
         </dl>
         <div className="px-6 py-4 text-xs text-mppga-ink-muted">
-          Editing these fields needs an address re-geocode, coming with the
-          directory map. For now, email{" "}
+          Address edits need to re-geocode the directory pin. That tool is
+          coming soon. In the meantime, email{" "}
           <a
             href="mailto:mppga207@gmail.com"
             className="text-mppga-teal hover:text-mppga-teal-hover"
           >
             mppga207@gmail.com
           </a>{" "}
-          to update anything here.
+          to update your address.
         </div>
       </Card>
     </div>
