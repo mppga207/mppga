@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/mppga/ui/button";
 import { ease, fadeUp, stagger } from "./motion";
 
@@ -19,13 +19,12 @@ export function Hero() {
 
       <div className="relative mx-auto grid max-w-[1140px] grid-cols-1 items-center gap-12 px-6 md:grid-cols-[1.1fr_1fr]">
         <motion.div initial="hidden" animate="visible" variants={stagger}>
-          <motion.span
+          <motion.p
             variants={fadeUp}
-            className="inline-flex items-center gap-2 rounded-full border border-mppga-divider bg-white/70 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.16em] text-mppga-teal backdrop-blur"
+            className="text-xs font-medium uppercase tracking-[0.18em] text-mppga-teal"
           >
-            <Sparkles className="h-3.5 w-3.5 text-mppga-gold" strokeWidth={1.8} />
             Maine Professional Pet Groomers Association
-          </motion.span>
+          </motion.p>
 
           <motion.h1
             variants={fadeUp}
