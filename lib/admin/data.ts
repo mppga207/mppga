@@ -1,6 +1,11 @@
 import { cache } from "react";
 
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { readPreviewMode } from "@/lib/supabase/session";
+import {
+  PREVIEW_MEMBER_ROWS,
+  PREVIEW_TIER_OPTIONS,
+} from "@/lib/admin/preview";
 import type {
   EventLapsedPricing,
   EventPaymentStatus,
@@ -50,6 +55,13 @@ interface ProfileQueryRow {
 export async function loadMembersTable(
   filters: MembersTableFilters = {},
 ): Promise<MemberRow[]> {
+  // Preview-cookie demo path: the prototype shows representative
+  // Maine groomers so the association can walk the admin tools
+  // without a real roster. Falls through to the live query the
+  // moment Supabase is wired and the cookie isn't set.
+  if (await readPreviewMode()) {
+    return filterPreviewMembers(filters);
+  }
   // Admin reads are RLS-permitted on profiles + memberships + tiers +
   // organizations (data-model.md §5.1, §5.2, §5.3, §5.4). The user-scoped
   // client carries the admin JWT claim and is allowed across the table.
@@ -373,12 +385,43 @@ export interface TierOption {
 }
 
 export async function loadTierOptions(): Promise<TierOption[]> {
+  if (await readPreviewMode()) {
+    return [...PREVIEW_TIER_OPTIONS];
+  }
   const supabase = await createClient();
   const { data } = await supabase
     .from("tiers")
     .select("id, name, display_order")
     .order("display_order", { ascending: true });
   return (data ?? []).map((t) => ({ id: t.id, name: t.name }));
+}
+
+function filterPreviewMembers(filters: MembersTableFilters): MemberRow[] {
+  let rows = [...PREVIEW_MEMBER_ROWS];
+  if (filters.search) {
+    const term = filters.search.toLowerCase();
+    rows = rows.filter(
+      (r) =>
+        r.fullName.toLowerCase().includes(term) ||
+        r.email.toLowerCase().includes(term),
+    );
+  }
+  if (filters.statuses && filters.statuses.length > 0) {
+    const set = new Set(filters.statuses);
+    rows = rows.filter(
+      (r) => r.membershipStatus && set.has(r.membershipStatus),
+    );
+  }
+  if (filters.tierIds && filters.tierIds.length > 0) {
+    const set = new Set(filters.tierIds);
+    rows = rows.filter((r) => r.tierId && set.has(r.tierId));
+  }
+  return rows.sort((a, b) => {
+    const aExp = a.expiresAt ? new Date(a.expiresAt).getTime() : Infinity;
+    const bExp = b.expiresAt ? new Date(b.expiresAt).getTime() : Infinity;
+    if (aExp !== bExp) return aExp - bExp;
+    return a.fullName.localeCompare(b.fullName);
+  });
 }
 
 /**

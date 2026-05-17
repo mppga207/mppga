@@ -111,7 +111,7 @@ export default async function AdminMembersPage({ searchParams }: PageProps) {
               );
             })}
           </div>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-mppga-ink-muted">
               {members.length} {members.length === 1 ? "member" : "members"}{" "}
               · {tiers.length} {tiers.length === 1 ? "tier" : "tiers"}{" "}
@@ -134,75 +134,132 @@ export default async function AdminMembersPage({ searchParams }: PageProps) {
           </div>
         </form>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-mppga-page text-left text-[11px] uppercase tracking-[0.14em] text-mppga-ink-muted">
-              <tr>
-                <th className="px-6 py-3 font-medium">Name</th>
-                <th className="px-6 py-3 font-medium">Status</th>
-                <th className="px-6 py-3 font-medium">Tier</th>
-                <th className="px-6 py-3 font-medium">Expires</th>
-                <th className="px-6 py-3 font-medium">Organization</th>
-                <th className="px-6 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-mppga-divider">
-              {members.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center">
-                    <p className="text-sm text-mppga-ink-soft">
-                      No members match the current filters.
-                    </p>
-                  </td>
-                </tr>
-              ) : (
-                members.map((row) => (
-                  <tr key={row.profileId} className="hover:bg-mppga-page">
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/admin/members/${row.profileId}`}
-                        className="font-medium text-mppga-ink hover:text-mppga-teal"
-                      >
-                        {row.fullName}
-                      </Link>
-                      <p className="text-xs text-mppga-ink-muted">
-                        {row.email}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4">
+        {members.length === 0 ? (
+          <div className="px-6 py-16 text-center">
+            <p className="text-sm text-mppga-ink-soft">
+              No members match the current filters.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Desktop: a wide-screen table. Hidden on narrow viewports
+                so we never need horizontal scroll. */}
+            <div className="hidden lg:block">
+              <table className="min-w-full text-sm">
+                <thead className="bg-mppga-page text-left text-[11px] uppercase tracking-[0.14em] text-mppga-ink-muted">
+                  <tr>
+                    <th className="px-6 py-3 font-medium">Name</th>
+                    <th className="px-6 py-3 font-medium">Status</th>
+                    <th className="px-6 py-3 font-medium">Tier</th>
+                    <th className="px-6 py-3 font-medium">Expires</th>
+                    <th className="px-6 py-3 font-medium">Organization</th>
+                    <th className="px-6 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-mppga-divider">
+                  {members.map((row) => (
+                    <tr key={row.profileId} className="hover:bg-mppga-page">
+                      <td className="px-6 py-4">
+                        <Link
+                          href={`/admin/members/${row.profileId}`}
+                          className="font-medium text-mppga-ink hover:text-mppga-teal"
+                        >
+                          {row.fullName}
+                        </Link>
+                        <p className="text-xs text-mppga-ink-muted">
+                          {row.email}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        {row.membershipStatus ? (
+                          <MembershipBadge status={row.membershipStatus} />
+                        ) : (
+                          <span className="text-xs text-mppga-ink-muted">
+                            No membership
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-mppga-ink-soft">
+                        {row.tierName ?? "—"}
+                      </td>
+                      <td className="px-6 py-4 text-mppga-ink-soft">
+                        {row.expiresAt
+                          ? dateFormatter.format(new Date(row.expiresAt))
+                          : "—"}
+                      </td>
+                      <td className="px-6 py-4 text-mppga-ink-soft">
+                        {row.organizationName ?? "—"}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          href={`/admin/members/${row.profileId}`}
+                          className="text-xs font-medium text-mppga-teal hover:text-mppga-teal-hover"
+                        >
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile + tablet: stacked cards, one per member. Matches
+                admin-portal.md §3 ("table becomes a stacked card list"). */}
+            <ul className="divide-y divide-mppga-divider lg:hidden">
+              {members.map((row) => (
+                <li key={row.profileId}>
+                  <Link
+                    href={`/admin/members/${row.profileId}`}
+                    className="block px-5 py-4 transition-colors hover:bg-mppga-page focus-visible:bg-mppga-page focus-visible:outline-none"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-mppga-ink">
+                          {row.fullName}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-mppga-ink-muted">
+                          {row.email}
+                        </p>
+                      </div>
                       {row.membershipStatus ? (
                         <MembershipBadge status={row.membershipStatus} />
                       ) : (
-                        <span className="text-xs text-mppga-ink-muted">
+                        <span className="shrink-0 text-xs text-mppga-ink-muted">
                           No membership
                         </span>
                       )}
-                    </td>
-                    <td className="px-6 py-4 text-mppga-ink-soft">
-                      {row.tierName ?? "—"}
-                    </td>
-                    <td className="px-6 py-4 text-mppga-ink-soft">
-                      {row.expiresAt
-                        ? dateFormatter.format(new Date(row.expiresAt))
-                        : "—"}
-                    </td>
-                    <td className="px-6 py-4 text-mppga-ink-soft">
-                      {row.organizationName ?? "—"}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Link
-                        href={`/admin/members/${row.profileId}`}
-                        className="text-xs font-medium text-mppga-teal hover:text-mppga-teal-hover"
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                    <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                      <div>
+                        <dt className="text-mppga-ink-muted">Tier</dt>
+                        <dd className="mt-0.5 text-mppga-ink-soft">
+                          {row.tierName ?? "—"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-mppga-ink-muted">Renews</dt>
+                        <dd className="mt-0.5 text-mppga-ink-soft">
+                          {row.expiresAt
+                            ? dateFormatter.format(new Date(row.expiresAt))
+                            : "—"}
+                        </dd>
+                      </div>
+                      {row.organizationName ? (
+                        <div className="col-span-2">
+                          <dt className="text-mppga-ink-muted">Organization</dt>
+                          <dd className="mt-0.5 text-mppga-ink-soft">
+                            {row.organizationName}
+                          </dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </Card>
     </div>
   );
