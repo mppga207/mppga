@@ -54,7 +54,7 @@ function buildPreviewSession(role: ProfileRole = "member"): AppSession {
  * present the request is in skip-auth demo mode — see
  * `lib/supabase/preview.ts` for the lifecycle.
  */
-async function readPreviewMode(): Promise<PreviewMode | null> {
+export async function readPreviewMode(): Promise<PreviewMode | null> {
   const store = await cookies();
   const value = store.get(PREVIEW_COOKIE)?.value;
   return isPreviewMode(value) ? value : null;
