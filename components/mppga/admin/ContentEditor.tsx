@@ -224,7 +224,7 @@ export function ContentEditor({
 
         <Card
           title="By the numbers"
-          description="The four credibility stats that sit just below the hero."
+          description="Members, towns, and events this year are pulled live from the database. The fourth stat (nonprofit status) is editable below."
         >
           <div className="space-y-6 px-6 py-6">
             <Field label="Eyebrow">

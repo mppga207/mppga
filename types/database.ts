@@ -351,6 +351,10 @@ export type Database = {
         Args: { p_expiry_hours: number };
         Returns: { registration_id: UUID; event_id: UUID }[];
       };
+      get_landing_stats: {
+        Args: Record<string, never>;
+        Returns: JsonValue;
+      };
     };
     Enums: Record<string, never>;
   };

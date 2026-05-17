@@ -4,22 +4,34 @@ import { motion } from "framer-motion";
 import { CountUp } from "./CountUp";
 import { fadeUp, stagger, viewportOnce } from "./motion";
 
+export type StatsValues = {
+  memberCount: number;
+  townCount: number;
+  eventCountThisYear: number;
+};
+
 type Stat = {
   value: string;
-  suffix?: string;
   label: string;
 };
 
-const stats: Stat[] = [
-  { value: "127", suffix: "+", label: "Maine groomers" },
-  { value: "16", label: "Counties served" },
-  { value: "12", label: "Events per year" },
-  { value: "501(c)(6)", label: "Nonprofit status" },
-];
+function buildStats(values: StatsValues | null): Stat[] {
+  const placeholder = (n: number) => (values === null ? "—" : String(n));
+  return [
+    { value: placeholder(values?.memberCount ?? 0), label: "Members" },
+    { value: placeholder(values?.townCount ?? 0), label: "Towns served" },
+    {
+      value: placeholder(values?.eventCountThisYear ?? 0),
+      label: "Events this year",
+    },
+    { value: "501(c)(6)", label: "Nonprofit status" },
+  ];
+}
 
 const isNumeric = (v: string) => /^\d+$/.test(v);
 
-export function Stats() {
+export function Stats({ values }: { values: StatsValues | null }) {
+  const stats = buildStats(values);
   return (
     <motion.section
       initial="hidden"
@@ -53,9 +65,6 @@ export function Stats() {
               </dt>
               <dd className="order-1 font-serif text-4xl leading-none tracking-tight text-mppga-teal-deep sm:text-5xl">
                 {isNumeric(s.value) ? <CountUp to={Number(s.value)} /> : s.value}
-                {s.suffix ? (
-                  <span className="text-mppga-gold">{s.suffix}</span>
-                ) : null}
               </dd>
             </motion.div>
           ))}
