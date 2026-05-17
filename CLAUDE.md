@@ -6,7 +6,7 @@
 
 **Purpose:** A custom-built membership platform replacing off-the-shelf AMS products (Wild Apricot, MemberClicks, etc.). Handles full member lifecycle: self-serve signup with auto-acceptance on successful payment, tiered dues billing, member portal, public geolocated directory, CE tracking, code of ethics compliance logging, volunteer admin tools, event ticketing, and board elections. Volunteer-run board with limited technical capacity — every feature must reduce manual email, spreadsheet, and approval tasks.
 
-**Public Website — In Scope (Phase 1):** Home, About/Mission, Join Membership, Events, Contact.
+**Public Website — In Scope (Phase 1):** Home, Join Membership, Events, Contact.
 
 **Public Website — Deferred (Phase 2+):** Resources, Sponsor page, Education page, Blog/News. Do not build until explicitly instructed.
 

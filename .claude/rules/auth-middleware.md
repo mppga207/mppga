@@ -114,7 +114,7 @@ flows through `updateSession` (§ 5).
 | Path prefix | Required identity | Required status | Otherwise → |
 |---|---|---|---|
 | `/` | none | — | render |
-| `/about`, `/contact`, `/join` | none | — | render |
+| `/contact`, `/join` | none | — | render |
 | `/events`, `/events/[id]` | none | — | render (only `published` events visible via RLS) |
 | `/events/[id]/confirmation` | authenticated | any | render (404 if no matching registration) |
 | `/sign-in` | none | — | render. If already signed in, redirect to `/dashboard`. |
