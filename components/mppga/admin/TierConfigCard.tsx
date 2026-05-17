@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { Card } from "@/components/mppga/admin/Card";
 import { Button } from "@/components/mppga/ui/button";
 import {
+  moveTierAction,
   updateTierDuesAction,
   updateTierFieldsAction,
 } from "@/lib/admin/tiers-actions";
@@ -14,7 +15,15 @@ function centsToDollars(cents: number): string {
   return (cents / 100).toFixed(0);
 }
 
-export function TierConfigCard({ tier }: { tier: AdminTier }) {
+export function TierConfigCard({
+  tier,
+  canMoveUp,
+  canMoveDown,
+}: {
+  tier: AdminTier;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+}) {
   const [dollars, setDollars] = useState(centsToDollars(tier.annualDuesCents));
   const isBootstrap = !tier.stripePriceId;
 
@@ -63,11 +72,41 @@ export function TierConfigCard({ tier }: { tier: AdminTier }) {
     <Card>
       <div
         id={`tier-${tier.id}`}
-        className="flex items-baseline justify-between border-b border-mppga-divider px-6 py-4"
+        className="flex flex-wrap items-baseline justify-between gap-4 border-b border-mppga-divider px-6 py-4"
       >
-        <div>
-          <h2 className="font-serif text-2xl text-mppga-ink">{tier.name}</h2>
-          <p className="font-mono text-xs text-mppga-ink-muted">{tier.slug}</p>
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-1">
+            <form action={moveTierAction}>
+              <input type="hidden" name="tier_id" value={tier.id} />
+              <input type="hidden" name="direction" value="up" />
+              <button
+                type="submit"
+                disabled={!canMoveUp}
+                aria-label={`Move ${tier.name} up`}
+                title="Move up"
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-mppga-divider text-mppga-ink-soft transition-colors hover:border-mppga-teal hover:text-mppga-teal disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <span aria-hidden>↑</span>
+              </button>
+            </form>
+            <form action={moveTierAction}>
+              <input type="hidden" name="tier_id" value={tier.id} />
+              <input type="hidden" name="direction" value="down" />
+              <button
+                type="submit"
+                disabled={!canMoveDown}
+                aria-label={`Move ${tier.name} down`}
+                title="Move down"
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-mppga-divider text-mppga-ink-soft transition-colors hover:border-mppga-teal hover:text-mppga-teal disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <span aria-hidden>↓</span>
+              </button>
+            </form>
+          </div>
+          <div>
+            <h2 className="font-serif text-2xl text-mppga-ink">{tier.name}</h2>
+            <p className="font-mono text-xs text-mppga-ink-muted">{tier.slug}</p>
+          </div>
         </div>
         <div className="text-right">
           <p className="font-serif text-2xl text-mppga-teal-deep">
@@ -134,21 +173,6 @@ export function TierConfigCard({ tier }: { tier: AdminTier }) {
               defaultChecked={tier.corporateUmbrella}
             />
           </fieldset>
-
-          <Field
-            label="Display order"
-            id={`order-${tier.id}`}
-            helper="Lower numbers appear first."
-          >
-            <input
-              id={`order-${tier.id}`}
-              name="display_order"
-              type="number"
-              required
-              defaultValue={tier.displayOrder}
-              className="h-10 w-32 rounded-md border border-mppga-divider bg-mppga-card px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
-            />
-          </Field>
 
           <div className="flex items-center justify-end border-t border-mppga-divider pt-4">
             <Button type="submit">Save tier</Button>
