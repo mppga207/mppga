@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { BrandLogo } from "@/components/mppga/branding/BrandLogo";
 import { Button } from "@/components/mppga/ui/button";
+import { signOut } from "@/lib/auth/sign-out";
+import { getSession } from "@/lib/supabase/session";
 
 const links = [
   { href: "/", label: "Home" },
@@ -10,6 +12,8 @@ const links = [
 ];
 
 export async function Nav() {
+  const session = await getSession();
+  const isSignedIn = session !== null;
   return (
     <header className="sticky top-0 z-40 border-b border-mppga-divider bg-mppga-page/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1140px] items-center justify-between px-6">
@@ -31,16 +35,26 @@ export async function Nav() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button
-            href="/sign-in"
-            variant="ghost"
-            className="hidden sm:inline-flex"
-          >
-            Sign in
-          </Button>
-          <Button href="/join" variant="primary">
-            Join Now
-          </Button>
+          {isSignedIn ? (
+            <form action={signOut}>
+              <Button type="submit" variant="ghost">
+                Sign out
+              </Button>
+            </form>
+          ) : (
+            <>
+              <Button
+                href="/sign-in"
+                variant="ghost"
+                className="hidden sm:inline-flex"
+              >
+                Sign in
+              </Button>
+              <Button href="/join" variant="primary">
+                Join Now
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
