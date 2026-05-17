@@ -68,14 +68,7 @@ export function ProfileEditForm({
           className="w-full rounded-md border border-mppga-divider bg-mppga-page px-3 py-2 text-sm text-mppga-ink-muted"
         />
         <p className="mt-1 text-xs text-mppga-ink-muted">
-          Email comes from your sign-in account. Contact{" "}
-          <a
-            href="mailto:mppga207@gmail.com"
-            className="text-mppga-teal hover:text-mppga-teal-hover"
-          >
-            mppga207@gmail.com
-          </a>{" "}
-          to change it.
+          Your sign-in email. Change it below.
         </p>
       </Field>
 

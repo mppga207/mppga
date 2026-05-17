@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
+import { env } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { requireSession } from "@/lib/supabase/session";
 
@@ -121,5 +123,68 @@ export async function toggleDirectoryFlag(
 
   revalidatePath("/dashboard/directory");
   revalidatePath("/dashboard");
+  return { status: "ok" };
+}
+
+const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email("Enter a valid email address.");
+
+export interface ChangeEmailInput {
+  newEmail: string;
+}
+
+export interface ChangeEmailResult {
+  status: "ok" | "invalid" | "unchanged" | "error";
+  message?: string;
+}
+
+/**
+ * Begin an email-change flow for the signed-in member. Supabase Auth
+ * sends a confirmation link to the new address; until the member clicks
+ * it, auth.users.email stays on the old address (and so does
+ * profiles.email via the mirror_auth_email trigger). The change is
+ * self-serve: no admin involvement needed, and the confirmation
+ * round-trip is the security gate that prevents someone from hijacking
+ * an account with a one-click form submit.
+ */
+export async function changeEmail(
+  input: ChangeEmailInput,
+): Promise<ChangeEmailResult> {
+  const session = await requireSession("/dashboard/profile");
+
+  const parsed = emailSchema.safeParse(input.newEmail);
+  if (!parsed.success) {
+    const message = parsed.error.issues[0]?.message ?? "Enter a valid email.";
+    return { status: "invalid", message };
+  }
+
+  const newEmail = parsed.data;
+  const currentEmail = (session.user.email ?? "").trim().toLowerCase();
+  if (newEmail === currentEmail) {
+    return {
+      status: "unchanged",
+      message: "That's already your email on file.",
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser(
+    { email: newEmail },
+    { emailRedirectTo: `${env.siteUrl}/auth/callback?next=/dashboard/profile` },
+  );
+
+  if (error) {
+    return {
+      status: "error",
+      message:
+        error.message.includes("already")
+          ? "That email is already linked to another account."
+          : "We couldn't start the email change. Try again in a moment.",
+    };
+  }
+
   return { status: "ok" };
 }
