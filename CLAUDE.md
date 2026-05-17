@@ -157,7 +157,24 @@ Do not infer. Read the relevant file before engaging with each subsystem.
 
 -----
 
-## 9. Verification Workflows
+## 9. Migration Ledger
+
+What's been applied to the production Supabase project. Update this list whenever a new migration ships and is run; it's the only source of truth for "what does the live DB look like right now."
+
+**Applied through `20260517000003_contact_submissions.sql`** (as of 2026-05-17). Every migration file in `supabase/migrations/` up to and including this one is live.
+
+Manual configuration steps that don't live in a migration but must be done per environment:
+
+- Bind `public.handle_auth_jwt_claims` in Supabase Dashboard → Auth → Hooks → Custom Access Token. Without this, the `role` and `membership_status` JWT claims default and the admin portal is unreachable.
+- Deploy Edge Functions: `supabase functions deploy membership-status-sync dunning-cron renewal-reminders-cron event-reminders-cron event-waitlist-cron`.
+- Schedule the cron Edge Functions (Dashboard → Edge Functions → Schedules, or pg_cron): daily for `renewal-reminders-cron` + `dunning-cron`, hourly for `event-reminders-cron` + `event-waitlist-cron`.
+- Configure the 501(c)(6) disclaimer in the Stripe Dashboard's customer-receipt footer per environment (`stripe-architecture.md` §5.1).
+
+When a new migration is added: append its filename to this section in the same PR, and note whether it's been applied yet ("Pending" until it runs).
+
+-----
+
+## 10. Verification Workflows
 
 Before concluding any task:
 
@@ -169,7 +186,7 @@ Before concluding any task:
 
 -----
 
-## 10. Negative Constraints — MUST ADHERE
+## 11. Negative Constraints — MUST ADHERE
 
 1. **NEVER disable RLS on any table:** Security is non-negotiable. Rewrite the query instead.
 1. **NEVER update membership_status from client-side code:** All status transitions go through server-side Edge Functions or Route Handlers only.
