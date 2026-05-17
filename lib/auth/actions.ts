@@ -25,6 +25,18 @@ const joinSchema = z.object({
   tier: z.enum(tierSlugs, {
     message: "Pick a tier.",
   }),
+  salon_id: z
+    .string()
+    .trim()
+    .uuid()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  salon_new_name: z
+    .string()
+    .trim()
+    .max(160, "Salon name is too long.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 
 const signInSchema = z.object({
@@ -52,6 +64,8 @@ export async function joinMembership(
     password: formData.get("password"),
     full_name: formData.get("name"),
     tier: formData.get("tier"),
+    salon_id: formData.get("salon_id"),
+    salon_new_name: formData.get("salon_new_name"),
   });
   if (!parsed.success) {
     const first = parsed.error.issues[0];
@@ -60,6 +74,13 @@ export async function joinMembership(
       message: first?.message ?? "Check the form and try again.",
     };
   }
+
+  // Salon affiliation only applies to non-owners: Salon-tier signups
+  // ARE the salon and don't pick from the directory. Drop any salon
+  // fields that came through anyway.
+  const includeSalon = parsed.data.tier !== "salon";
+  const salonId = includeSalon ? parsed.data.salon_id : undefined;
+  const salonNewName = includeSalon ? parsed.data.salon_new_name : undefined;
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
@@ -71,6 +92,8 @@ export async function joinMembership(
         full_name: parsed.data.full_name,
         tier_slug: parsed.data.tier satisfies TierSlug,
         intent: "join",
+        ...(salonId ? { salon_id: salonId } : {}),
+        ...(salonNewName && !salonId ? { salon_new_name: salonNewName } : {}),
       },
     },
   });

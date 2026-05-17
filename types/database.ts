@@ -379,6 +379,10 @@ export type Database = {
         Args: Record<string, never>;
         Returns: JsonValue;
       };
+      search_organizations: {
+        Args: { p_query: string; p_limit?: number };
+        Returns: { id: UUID; name: string }[];
+      };
     };
     Enums: Record<string, never>;
   };

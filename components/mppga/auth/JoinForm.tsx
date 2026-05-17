@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { SalonCombobox } from "@/components/mppga/auth/SalonCombobox";
 import { Button } from "@/components/mppga/ui/button";
 import {
   joinMembership,
@@ -24,6 +25,10 @@ export function JoinForm({
   defaultTier?: TierOption["slug"];
 }) {
   const [state, formAction] = useActionState(joinMembership, initial);
+  const [tier, setTier] = useState<TierOption["slug"]>(defaultTier);
+  // Salon-tier signups ARE the salon, so they don't pick from the
+  // directory. Hide the combobox for them.
+  const showSalonField = tier !== "salon";
 
   if (state.status === "sent") {
     return (
@@ -98,7 +103,10 @@ export function JoinForm({
           <select
             id="apply-tier"
             name="tier"
-            defaultValue={defaultTier}
+            value={tier}
+            onChange={(event) =>
+              setTier(event.target.value as TierOption["slug"])
+            }
             className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
           >
             {tiers.map((t) => (
@@ -108,6 +116,12 @@ export function JoinForm({
             ))}
           </select>
         </ApplyField>
+
+        {showSalonField ? (
+          <ApplyField label="Salon" htmlFor="apply-salon">
+            <SalonCombobox fieldId="apply-salon" />
+          </ApplyField>
+        ) : null}
 
         <div className="flex items-start gap-2.5 pt-2">
           <input

@@ -24,9 +24,17 @@ export type CreatePendingResult =
   | { status: "unknown_tier"; slug: string }
   | { status: "error"; reason: string };
 
+export interface SalonAffiliation {
+  /** Existing org chosen from the typeahead. */
+  salonId?: string;
+  /** Free-text name typed when no existing org matched. */
+  salonNewName?: string;
+}
+
 export async function createPendingMembership(
   profileId: string,
   tierSlug: string,
+  salon: SalonAffiliation = {},
 ): Promise<CreatePendingResult> {
   // Service role: the join callback has no other route to seed the
   // membership row because data-model.md §5.4 forbids authenticated
@@ -96,5 +104,63 @@ export async function createPendingMembership(
     return { status: "error", reason: metaError.message };
   }
 
+  await linkSalonAffiliation(client, profileId, salon);
+
   return { status: "created" };
+}
+
+/**
+ * Link a non-owner signup to their salon. Resolves the org id from one
+ * of two inputs:
+ *   - `salonId`: typeahead picked an existing row.
+ *   - `salonNewName`: typed free-text; case-insensitive match wins, or
+ *     we create a stub row with primary_contact_profile_id left null
+ *     so a future Salon-tier subscription can claim it.
+ *
+ * Linking failures are logged but never block the membership creation
+ * the caller depends on. The signup completes; an admin can correct
+ * the affiliation later from the Members tab.
+ */
+async function linkSalonAffiliation(
+  client: ReturnType<typeof createServiceRoleClient>,
+  profileId: string,
+  salon: SalonAffiliation,
+): Promise<void> {
+  const trimmedName = salon.salonNewName?.trim();
+  let orgId: string | null = null;
+
+  if (salon.salonId) {
+    orgId = salon.salonId;
+  } else if (trimmedName && trimmedName.length > 0) {
+    const { data: existing } = await client
+      .from("organizations")
+      .select("id")
+      .ilike("name", trimmedName)
+      .limit(1)
+      .maybeSingle();
+    if (existing?.id) {
+      orgId = existing.id;
+    } else {
+      const { data: created, error: insertError } = await client
+        .from("organizations")
+        .insert({ name: trimmedName })
+        .select("id")
+        .single();
+      if (insertError || !created) {
+        console.error("linkSalonAffiliation: org insert failed", insertError);
+        return;
+      }
+      orgId = created.id;
+    }
+  }
+
+  if (!orgId) return;
+
+  const { error: updateError } = await client
+    .from("profiles")
+    .update({ organization_id: orgId })
+    .eq("id", profileId);
+  if (updateError) {
+    console.error("linkSalonAffiliation: profile update failed", updateError);
+  }
 }

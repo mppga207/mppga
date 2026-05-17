@@ -38,7 +38,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const meta = (data.user.user_metadata ?? {}) as Record<string, unknown>;
   const tierSlug = typeof meta.tier_slug === "string" ? meta.tier_slug : null;
   if (tierSlug) {
-    const result = await createPendingMembership(data.user.id, tierSlug);
+    const salonId =
+      typeof meta.salon_id === "string" && meta.salon_id.length > 0
+        ? meta.salon_id
+        : undefined;
+    const salonNewName =
+      typeof meta.salon_new_name === "string" && meta.salon_new_name.length > 0
+        ? meta.salon_new_name
+        : undefined;
+    const result = await createPendingMembership(data.user.id, tierSlug, {
+      salonId,
+      salonNewName,
+    });
     if (result.status === "error") {
       console.error("createPendingMembership failed", result.reason);
     } else if (result.status === "unknown_tier") {
