@@ -14,7 +14,7 @@ export function SettingsTabs({ active }: { active: string }) {
   return (
     <nav
       aria-label="Settings sections"
-      className="-mb-px flex flex-wrap gap-1 border-b border-mppga-divider"
+      className="-mb-px flex touch-pan-x gap-1 overflow-x-auto border-b border-mppga-divider [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {TABS.map((tab) => {
         const isActive = tab.href === active;
@@ -22,8 +22,9 @@ export function SettingsTabs({ active }: { active: string }) {
           <Link
             key={tab.href}
             href={tab.href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
-              "border-b-2 px-4 py-3 text-sm font-medium transition-colors",
+              "shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors",
               isActive
                 ? "border-mppga-teal text-mppga-teal-deep"
                 : "border-transparent text-mppga-ink-soft hover:text-mppga-ink",
