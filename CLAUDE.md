@@ -166,6 +166,7 @@ What's been applied to the production Supabase project. Update this list wheneve
 **Pending:**
 
 - `20260517000004_auth_hook_app_metadata.sql` — fixes the JWT custom-claims hook to write under `app_metadata` so the middleware can actually read `role` and `membership_status` off the JWT. Without this applied, admin sign-ins land on `/dashboard` even with `profiles.role = 'admin'` and the hook bound.
+- `20260517000005_signup_skip_payment.sql` — adds a `signup_skip_payment` boolean column to `site_settings`. Backs the testing toggle in Admin → Settings that promotes new signups straight to `Active` while Stripe isn't wired up.
 
 Manual configuration steps that don't live in a migration but must be done per environment:
 

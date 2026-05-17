@@ -2,7 +2,10 @@ import { AdminPageHeader } from "@/components/mppga/admin/AdminPageHeader";
 import { Card } from "@/components/mppga/admin/Card";
 import { SettingsTabs } from "@/components/mppga/admin/SettingsTabs";
 import { LogoUploader } from "@/components/mppga/admin/LogoUploader";
+import { Button } from "@/components/mppga/ui/button";
 import { loadSiteLogo } from "@/lib/admin/branding-data";
+import { toggleSignupSkipPaymentAction } from "@/lib/admin/settings-actions";
+import { loadSignupSkipPayment } from "@/lib/admin/settings-data";
 import { requireAdmin } from "@/lib/supabase/session";
 
 type Swatch = {
@@ -32,7 +35,10 @@ export default async function AdminSettingsPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const ok = readParam(sp.ok);
   const error = readParam(sp.error);
-  const logo = await loadSiteLogo();
+  const [logo, signupSkipPayment] = await Promise.all([
+    loadSiteLogo(),
+    loadSignupSkipPayment(),
+  ]);
 
   return (
     <div className="space-y-10">
@@ -86,6 +92,41 @@ export default async function AdminSettingsPage({ searchParams }: PageProps) {
       </Card>
 
       <Card
+        title="Testing mode: skip payment on new signups"
+        description="Temporary while Stripe isn't wired up. When ON, new accounts go straight to Active with a one-year expiration, no dues required. Existing accounts are not affected. Turn this OFF before launch."
+      >
+        <div className="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm">
+            <p className="font-medium text-mppga-ink">
+              Currently:{" "}
+              <span
+                className={
+                  signupSkipPayment
+                    ? "text-mppga-teal-deep"
+                    : "text-mppga-ink-soft"
+                }
+              >
+                {signupSkipPayment ? "ON (no payment required)" : "OFF (payment required)"}
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-mppga-ink-muted">
+              This change is logged to the admin activity log.
+            </p>
+          </div>
+          <form action={toggleSignupSkipPaymentAction}>
+            <input
+              type="hidden"
+              name="next"
+              value={signupSkipPayment ? "off" : "on"}
+            />
+            <Button type="submit" variant={signupSkipPayment ? "secondary" : "primary"}>
+              {signupSkipPayment ? "Turn OFF" : "Turn ON"}
+            </Button>
+          </form>
+        </div>
+      </Card>
+
+      <Card
         title="Mission statement"
         description="Shown on the Home page and in the welcome email."
       >
@@ -129,7 +170,11 @@ function Flash({
       ? "Logo uploaded. It now appears in the header and emails."
       : ok === "logo_removed"
         ? "Logo removed. Falling back to the placeholder mark."
-        : null;
+        : ok === "skip_on"
+          ? "Skip-payment is ON. New signups go straight to Active."
+          : ok === "skip_off"
+            ? "Skip-payment is OFF. New signups must pay dues to activate."
+            : null;
   if (!message) return null;
   return (
     <div className="rounded-md border border-mppga-teal bg-mppga-teal-tint px-4 py-3 text-sm text-mppga-teal-deep">

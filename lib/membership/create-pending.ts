@@ -1,14 +1,22 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 /**
- * Insert a `memberships` row in `Awaiting_Payment` for a brand-new
- * signup. Called from the auth-callback route on the first hit after
- * the email-verification exchange.
+ * Insert a `memberships` row for a brand-new signup. Called from the
+ * auth-callback route on the first hit after the email-verification
+ * exchange.
+ *
+ * Default status is `Awaiting_Payment`. When the admin toggle
+ * `site_settings.signup_skip_payment` is true (testing mode while
+ * Stripe isn't wired up), the row goes in as `Active` with a one-year
+ * expires_at and `auth.users.raw_app_meta_data.membership_status` is
+ * updated so the middleware lets the new account straight through to
+ * /dashboard.
  *
  * Idempotent: a UNIQUE on `memberships.profile_id` means a second call
- * for the same profile is a no-op via ON CONFLICT. Service role is
- * required because RLS forbids any authenticated INSERT on
- * `memberships` (data-model.md §5.4).
+ * for the same profile is a no-op via the existence check + the
+ * unique-violation fallback. Service role is required because RLS
+ * forbids any authenticated INSERT on `memberships` (data-model.md
+ * §5.4).
  */
 export type CreatePendingResult =
   | { status: "created" }
@@ -50,10 +58,23 @@ export async function createPendingMembership(
     return { status: "already_exists" };
   }
 
+  const { data: settings } = await client
+    .from("site_settings")
+    .select("signup_skip_payment")
+    .maybeSingle();
+  const skipPayment = settings?.signup_skip_payment === true;
+
+  const oneYearOut = new Date();
+  oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
+
+  const initialStatus = skipPayment ? "Active" : "Awaiting_Payment";
+  const expiresAt = skipPayment ? oneYearOut.toISOString() : null;
+
   const { error: insertError } = await client.from("memberships").insert({
     profile_id: profileId,
     tier_id: tier.id,
-    status: "Awaiting_Payment",
+    status: initialStatus,
+    expires_at: expiresAt,
   });
   if (insertError) {
     // A concurrent insert from a duplicate callback can race past the
@@ -62,6 +83,17 @@ export async function createPendingMembership(
       return { status: "already_exists" };
     }
     return { status: "error", reason: insertError.message };
+  }
+
+  // Mirror the membership status onto auth.users.raw_app_meta_data so
+  // the next call to supabase.auth.getUser() in middleware sees the
+  // current status without waiting for a JWT refresh.
+  const { error: metaError } = await client.auth.admin.updateUserById(
+    profileId,
+    { app_metadata: { membership_status: initialStatus } },
+  );
+  if (metaError) {
+    return { status: "error", reason: metaError.message };
   }
 
   return { status: "created" };
