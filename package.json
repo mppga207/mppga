@@ -16,7 +16,8 @@
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
-    "test:rls": "echo \"RLS tests not yet implemented\" && exit 0"
+    "test:rls": "echo \"RLS tests not yet implemented\" && exit 0",
+    "admin:create": "node --experimental-strip-types --no-warnings scripts/create-admin.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
