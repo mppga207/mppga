@@ -21,7 +21,7 @@ Companion specs:
 - `@.claude/rules/stripe-architecture.md` — webhook handlers that
   flip `memberships.status` (and therefore the claim)
 - `@.claude/rules/admin-portal.md` — what the admin role unlocks
-- `@.claude/rules/email-automation.md` — magic-link template
+- `@.claude/rules/email-automation.md` — verification email template
 
 -----
 
@@ -29,8 +29,8 @@ Companion specs:
 
 - **Supabase Auth** is the only identity provider. Never propose
   NextAuth, Clerk, or any alternative (CLAUDE.md §7).
-- **Magic-link** is the default sign-in. No passwords, no social
-  providers. Confirmed with the client per `admin-portal.md` §8.
+- **Email + password** is the default sign-in. No social providers.
+  Confirmed with the client per `admin-portal.md` §8.
 - Each `auth.users` row has exactly one `public.profiles` row,
   created by the `create_profile_on_signup` trigger
   (`data-model.md` §7).
@@ -249,18 +249,19 @@ Constraints on the middleware:
 
 The join flow at `/join`:
 
-1. Member enters email + name + tier selection on the marketing
-   page.
-2. Server action calls `supabase.auth.signInWithOtp()` to send a
-   magic link. The tier slug travels in `options.data.tier_slug`
-   so the auth callback can finish setup. (`shouldCreateUser: true`
-   — the default.)
-3. `auth.users` row created on first link click. The
+1. Member enters email + password + name + tier selection on the
+   marketing page.
+2. Server action calls `supabase.auth.signUp()` with the email and
+   password. The tier slug travels in `options.data.tier_slug` so
+   the auth callback can finish setup. Supabase sends a
+   verification email; the link's redirect URL points at
+   `/auth/callback?next=/dashboard`.
+3. `auth.users` row created on signup. The
    `create_profile_on_signup` trigger inserts `profiles` with
    `role = 'member'` (see `data-model.md` §7).
-4. The `/auth/callback` route exchanges the code, reads
-   `user_metadata.tier_slug`, and inserts the `memberships` row
-   with `tier_id` resolved against `tiers.slug` and
+4. The `/auth/callback` route exchanges the verification code,
+   reads `user_metadata.tier_slug`, and inserts the `memberships`
+   row with `tier_id` resolved against `tiers.slug` and
    `status = 'Awaiting_Payment'` via the service-role client
    (`data-model.md` §5.4 RLS). The insert is idempotent on
    `profile_id`.
@@ -277,18 +278,18 @@ members on the payment page until dues clear.
 
 `/sign-in`:
 
-1. Email input → server action → `signInWithOtp()`.
-2. Email arrives via Resend (template key TBD in
-   `email-automation.md`). The redirect URL embedded in the link
-   points at `/auth/callback?next=<original>`.
-3. `/auth/callback/route.ts` exchanges the code for a session
-   (`supabase.auth.exchangeCodeForSession`) and writes the cookies,
-   then redirects to `next` (default `/dashboard`).
-4. Middleware on the next request reads the cookies, refreshes the
+1. Email + password input → server action → `signInWithPassword()`.
+2. On success, Supabase issues the session cookie directly — no
+   email round-trip. Server action redirects to the post-sign-in
+   destination (default `/dashboard`).
+3. Middleware on the next request reads the cookies, refreshes the
    token if needed, and applies the matrix.
 
 Sign-in is idempotent — a successful sign-in over an existing
 session is a no-op token refresh.
+
+`/auth/callback` is still used for the verification email link
+issued at sign-up (and for any future password-reset link).
 
 ### 6.3 Sign-out
 
@@ -344,7 +345,7 @@ non-_next/static asset path needed session-aware caching headers.
 
 ### 9.1 Trigger race during sign-up
 
-If a user clicks the magic link faster than the
+If a user clicks the verification email link faster than the
 `create_profile_on_signup` trigger fires (rare but possible), the
 auth hook returns default claims (`role = 'member'`,
 `membership_status = 'Awaiting_Payment'`) and middleware sends them
@@ -394,8 +395,8 @@ navigation.
 7. NEVER skip `updateSession` in middleware for protected routes.
    The cookie refresh is what keeps the session alive.
 8. NEVER log the JWT, the session cookie, or the user's email.
-9. NEVER add a sign-in method without explicit instruction. Magic
-   link is the only flow.
+9. NEVER add a sign-in method without explicit instruction. Email
+   + password is the only flow.
 10. NEVER let a non-admin see any admin chrome long enough to click
     it — the matrix in § 3 always wins over any conditional render
     inside an admin page.

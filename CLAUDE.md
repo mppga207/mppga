@@ -86,7 +86,7 @@ Awaiting_Payment → Active → Grace_Period → Lapsed
 - `Suspended` = admin-only override, requires admin action
 - `Honorary` = lifetime access, no billing, admin-assigned only
 
-There is no board-review step. A successful magic-link signup creates the membership row in `Awaiting_Payment`; the first successful Stripe invoice promotes it to `Active`. Admins can still manually flip status (suspend, grant Honorary) via the status-override path.
+There is no board-review step. A successful email + password signup creates the membership row in `Awaiting_Payment`; the first successful Stripe invoice promotes it to `Active`. Admins can still manually flip status (suspend, grant Honorary) via the status-override path.
 
 Grace period = 30 days from `expires_at`. Status transitions handled exclusively by the Supabase Edge Function in `functions/membership-status-sync`. NEVER apply transition logic in client-side code.
 

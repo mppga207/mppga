@@ -30,10 +30,10 @@ export function JoinForm({
       <div className="rounded-2xl border border-mppga-divider bg-mppga-card p-7 text-center shadow-sm">
         <p className="font-serif text-2xl text-mppga-ink">Check your email</p>
         <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
-          We sent a sign-in link to{" "}
+          We sent a verification email to{" "}
           <span className="font-medium text-mppga-ink">{state.email}</span>.
-          Click it to finish creating your account — you’ll land on your
-          dashboard with a one-time dues payment to complete.
+          Confirm your address to finish creating your account — you’ll land
+          on your dashboard with a one-time dues payment to complete.
         </p>
         <p className="mt-4 text-xs text-mppga-ink-muted">
           Didn’t get the email? Check your spam folder and the address you
@@ -68,6 +68,18 @@ export function JoinForm({
             type="email"
             autoComplete="email"
             required
+            className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+          />
+        </ApplyField>
+
+        <ApplyField label="Password" htmlFor="apply-password">
+          <input
+            id="apply-password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
             className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
           />
         </ApplyField>
@@ -123,8 +135,8 @@ export function JoinForm({
         </div>
 
         <p id="apply-form-note" className="text-xs text-mppga-ink-muted">
-          We’ll send a one-tap sign-in link. After you click it, complete
-          your dues payment and your member portal unlocks immediately.
+          We’ll send a verification email. Confirm your address, complete
+          your dues payment, and your member portal unlocks immediately.
         </p>
       </div>
     </form>
@@ -135,7 +147,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" size="lg" className="w-full" disabled={pending}>
-      {pending ? "Sending…" : "Send my sign-in link"}
+      {pending ? "Creating account…" : "Create account"}
     </Button>
   );
 }

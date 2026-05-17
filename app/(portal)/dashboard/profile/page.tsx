@@ -54,11 +54,11 @@ export default async function ProfilePage() {
 
       <Card
         title="Password & sign-in"
-        description="Magic-link sign-in is the default. You'll never need to remember a password."
+        description="Sign in with your email and password."
       >
         <div className="px-6 py-6 text-sm text-mppga-ink-soft">
-          We&rsquo;ll email you a one-time sign-in link whenever you need to log in.
-          If you need to update the email on file, contact us at{" "}
+          You can change your password from the sign-in page. If you need to
+          update the email on file, contact us at{" "}
           <a
             href="mailto:mppga207@gmail.com"
             className="text-mppga-teal hover:text-mppga-teal-hover"

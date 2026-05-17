@@ -35,7 +35,7 @@ the next where the chain demands it.
 | # | Track | Blocks | Owned-by spec |
 |---|---|---|---|
 | 1 | Foundation — schema, RLS, types, session helpers, real middleware | everything | `data-model.md`, `auth-middleware.md` |
-| 2 | Member lifecycle — status sync function, magic-link signup, auto-accept on payment | 3, 5, 6, 7 | `auth-middleware.md`, `data-model.md` §4 |
+| 2 | Member lifecycle — status sync function, email + password signup, auto-accept on payment | 3, 5, 6, 7 | `auth-middleware.md`, `data-model.md` §4 |
 | 3 | Stripe billing — webhook, Customer Portal, subscription Checkout, dunning | 5 (billing tab), 6 (members admin), 7 | `stripe-architecture.md` |
 | 4 | Resend email layer — send helper, dedup log, templates, scheduled cron | 6 (admin emails) | `email-automation.md` |
 | 5 | Member portal data wiring — profile, directory, events, billing tab | — | `admin-portal.md` §5, `directory-search.md` §5 |
@@ -131,8 +131,8 @@ Track 1.
    (30-day window), Lapsed transitions, admin overrides. Calls
    `auth.admin.signOut(scope: 'others')` after status writes
    (`auth-middleware.md` §2.2).
-2. **`/join` application server action.** Magic-link signup via
-   `signInWithOtp`. The tier slug travels in `options.data` so the
+2. **`/join` application server action.** Email + password signup
+   via `signUp`. The tier slug travels in `options.data` so the
    auth-callback route can create the `memberships` row in
    `Awaiting_Payment` via the service-role client
    (`auth-middleware.md` §6.1).
@@ -148,8 +148,9 @@ Track 1.
 
 ### Done-when
 
-- A new email completes the join form, gets a magic link, lands on
-  `/dashboard/checkout`, and sees the "Complete your dues" CTA.
+- A new email completes the join form, confirms the verification
+  email, lands on `/dashboard/checkout`, and sees the "Complete
+  your dues" CTA.
 - The first successful `invoice.paid` webhook from Track 3 flips
   the member to `Active` and the next request lands on
   `/dashboard`.
@@ -168,9 +169,12 @@ Shipped:
   Service-role-gated via the Authorization header. Calls
   `auth.admin.signOut(user_id, 'others')` after every write.
 - `/join` form is wired through `joinMembership` server action;
-  `/sign-in` is rewritten as a magic-link form via
-  `signInWithMagicLink`. Both stash tier slug / full name in
-  `options.data` and route through `/auth/callback`.
+  `/sign-in` is rewritten as an email + password form via
+  `signInWithEmailPassword`. Both stash tier slug / full name in
+  `options.data` and route through `/auth/callback`. (The
+  underlying call is still `signInWithOtp` pending a follow-up
+  PR that swaps in `signUp` / `signInWithPassword` on the
+  server actions.)
 - `/auth/callback/route.ts` exchanges the code, idempotently
   inserts the `memberships` row in `Awaiting_Payment` via
   `createPendingMembership`, and redirects to `next`.

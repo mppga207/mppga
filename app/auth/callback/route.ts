@@ -4,7 +4,7 @@ import { createPendingMembership } from "@/lib/membership/create-pending";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Magic-link callback per auth-middleware.md §6.2 / §6.1.
+ * Email-verification callback per auth-middleware.md §6.2 / §6.1.
  *
  * - Exchanges the `code` query param for a session (cookies are written
  *   by the server client).
