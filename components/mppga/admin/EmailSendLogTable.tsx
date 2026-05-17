@@ -11,12 +11,14 @@ const STATUS_TONE: Record<AdminEmailLogEntry["status"], string> = {
   sent: "text-mppga-teal-deep",
   failed: "text-mppga-ink",
   bounced: "text-mppga-ink",
+  skipped_disabled: "text-mppga-ink-muted",
 };
 
 const STATUS_LABEL: Record<AdminEmailLogEntry["status"], string> = {
   sent: "Sent",
   failed: "Failed",
   bounced: "Bounced",
+  skipped_disabled: "Skipped (turned off)",
 };
 
 const TRIGGER_LABEL: Record<AdminEmailLogEntry["triggerType"], string> = {

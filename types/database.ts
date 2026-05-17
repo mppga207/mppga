@@ -51,7 +51,11 @@ export type AdminAction =
   | "template_edit"
   | "setting_change";
 
-export type EmailSendStatus = "sent" | "failed" | "bounced";
+export type EmailSendStatus =
+  | "sent"
+  | "failed"
+  | "bounced"
+  | "skipped_disabled";
 
 export type EmailTriggerType = "automated" | "manual" | "webhook";
 
@@ -266,6 +270,7 @@ type EmailTemplatesRow = {
   body_text: string;
   is_dues_related: boolean;
   is_system: boolean;
+  is_enabled: boolean;
   description: string;
   available_variables: string[];
   created_at: Timestamp;
