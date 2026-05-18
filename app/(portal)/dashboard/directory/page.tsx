@@ -1,4 +1,5 @@
 import { Card } from "@/components/mppga/admin/Card";
+import { Button } from "@/components/mppga/ui/button";
 import { PortalPageHeader } from "@/components/mppga/portal/PortalPageHeader";
 import { StatusBadge } from "@/components/mppga/admin/StatusBadge";
 import { DirectoryToggleRow } from "@/components/mppga/portal/DirectoryToggleRow";
@@ -7,40 +8,73 @@ import {
   loadDirectoryListing,
   loadMemberOverview,
 } from "@/lib/mppga/portal/data";
+import { requestDirectoryListingAction } from "@/lib/mppga/portal/directory-listing-request";
 
-export default async function DirectoryListingPage() {
+type DirectoryStatus = "requested" | "invalid" | "error" | null;
+
+function readStatus(value: string | string[] | undefined): DirectoryStatus {
+  const v = Array.isArray(value) ? value[0] : value;
+  if (v === "requested" || v === "invalid" || v === "error") return v;
+  return null;
+}
+
+export default async function DirectoryListingPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requireSession("/dashboard/directory");
-  const [listing, member] = await Promise.all([
+  const [listing, member, sp] = await Promise.all([
     loadDirectoryListing(session),
     loadMemberOverview(session),
+    searchParams,
   ]);
+  const status = readStatus(sp.status);
 
   if (!listing) {
     return (
       <div className="space-y-10">
         <PortalPageHeader
-          title="Your directory listing"
-          description="How your business appears to pet owners searching for a Maine groomer."
+          title="Set up your directory listing"
+          description="Tell us how your business should appear to pet owners searching for a Maine groomer. We'll build the public listing from what you enter here."
         />
 
-        <Card className="p-6">
-          <p className="font-serif text-xl text-mppga-ink">
-            We haven&rsquo;t set up your listing yet.
-          </p>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-mppga-ink-soft">
-            Listings include your business name, city, and the specialties
-            you offer, and they&rsquo;re what pet owners see when they search
-            the directory. Email us your business address and we&rsquo;ll get
-            your listing live.
-          </p>
-          <p className="mt-4 text-sm">
+        {status === "requested" ? (
+          <div
+            className="rounded-lg border border-mppga-teal/40 bg-mppga-teal-tint px-5 py-4 text-sm text-mppga-teal-darker"
+            role="status"
+          >
+            Thanks, your listing details are in. We&rsquo;ll publish your
+            directory listing within a few business days.
+          </div>
+        ) : null}
+        {status === "invalid" ? (
+          <div
+            className="rounded-lg border border-mppga-divider bg-mppga-sand px-5 py-4 text-sm text-mppga-ink"
+            role="alert"
+          >
+            We couldn&rsquo;t read every field. Double-check the required
+            fields and try again.
+          </div>
+        ) : null}
+        {status === "error" ? (
+          <div
+            className="rounded-lg border border-mppga-divider bg-mppga-sand px-5 py-4 text-sm text-mppga-ink"
+            role="alert"
+          >
+            Something went wrong on our end. Please try again, or email{" "}
             <a
               href="mailto:mppga207@gmail.com"
               className="text-mppga-teal hover:text-mppga-teal-hover"
             >
               mppga207@gmail.com
-            </a>
-          </p>
+            </a>{" "}
+            directly while we look into it.
+          </div>
+        ) : null}
+
+        <Card className="p-6">
+          <DirectoryListingForm member={member} />
         </Card>
       </div>
     );
@@ -184,6 +218,175 @@ export default async function DirectoryListingPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+type MemberDefaults = Awaited<ReturnType<typeof loadMemberOverview>>;
+
+function DirectoryListingForm({ member }: { member: MemberDefaults }) {
+  const defaultDisplayName =
+    member.organizationName ?? member.fullName ?? "";
+  const defaultAddress =
+    member.ownedSalon?.addressLine ?? member.addressLine ?? "";
+  const defaultCity = member.ownedSalon?.city ?? member.city ?? "";
+  const defaultZip = member.ownedSalon?.zip ?? member.zip ?? "";
+  const defaultState = member.ownedSalon?.state ?? member.state ?? "ME";
+  const defaultBusinessPhone =
+    member.ownedSalon?.phone ?? member.phone ?? "";
+  const defaultPublicEmail = member.email ?? "";
+
+  return (
+    <form action={requestDirectoryListingAction} className="space-y-5">
+      <input type="hidden" name="contact_name" value={member.fullName} />
+      <input type="hidden" name="contact_email" value={member.email} />
+
+      <FormField label="Business or display name" htmlFor="listing-name">
+        <input
+          id="listing-name"
+          name="display_name"
+          type="text"
+          required
+          maxLength={120}
+          defaultValue={defaultDisplayName}
+          className={inputClass}
+        />
+      </FormField>
+
+      <FormField
+        label="Short bio"
+        htmlFor="listing-bio"
+        hint="Optional. One or two sentences about your grooming work."
+      >
+        <textarea
+          id="listing-bio"
+          name="bio"
+          rows={3}
+          maxLength={1000}
+          className="w-full rounded-md border border-mppga-divider bg-mppga-card px-3 py-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+        />
+      </FormField>
+
+      <FormField label="Street address" htmlFor="listing-address">
+        <input
+          id="listing-address"
+          name="address_line"
+          type="text"
+          required
+          maxLength={160}
+          defaultValue={defaultAddress}
+          autoComplete="street-address"
+          className={inputClass}
+        />
+      </FormField>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-[2fr_1fr_1fr]">
+        <FormField label="City" htmlFor="listing-city">
+          <input
+            id="listing-city"
+            name="city"
+            type="text"
+            required
+            maxLength={80}
+            defaultValue={defaultCity}
+            autoComplete="address-level2"
+            className={inputClass}
+          />
+        </FormField>
+        <FormField label="State" htmlFor="listing-state">
+          <input
+            id="listing-state"
+            name="state"
+            type="text"
+            maxLength={40}
+            defaultValue={defaultState}
+            autoComplete="address-level1"
+            className={inputClass}
+          />
+        </FormField>
+        <FormField label="Zip" htmlFor="listing-zip">
+          <input
+            id="listing-zip"
+            name="zip"
+            type="text"
+            required
+            maxLength={20}
+            defaultValue={defaultZip}
+            autoComplete="postal-code"
+            className={inputClass}
+          />
+        </FormField>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <FormField
+          label="Business phone"
+          htmlFor="listing-phone"
+          hint="Optional. Shown publicly if you turn the toggle on."
+        >
+          <input
+            id="listing-phone"
+            name="business_phone"
+            type="tel"
+            maxLength={40}
+            defaultValue={defaultBusinessPhone}
+            autoComplete="tel"
+            className={inputClass}
+          />
+        </FormField>
+        <FormField
+          label="Public email"
+          htmlFor="listing-email"
+          hint="Optional. Shown publicly if you turn the toggle on."
+        >
+          <input
+            id="listing-email"
+            name="public_email"
+            type="email"
+            maxLength={200}
+            defaultValue={defaultPublicEmail}
+            autoComplete="email"
+            className={inputClass}
+          />
+        </FormField>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <p className="text-xs text-mppga-ink-muted">
+          Personal contact fields stay hidden by default. You can toggle
+          visibility once the listing is live.
+        </p>
+        <Button type="submit">Submit for review</Button>
+      </div>
+    </form>
+  );
+}
+
+const inputClass =
+  "h-11 w-full rounded-md border border-mppga-divider bg-mppga-card px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30";
+
+function FormField({
+  label,
+  htmlFor,
+  children,
+  hint,
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <label htmlFor={htmlFor} className="block">
+      <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-mppga-ink-muted">
+        {label}
+      </span>
+      {children}
+      {hint ? (
+        <span className="mt-1.5 block text-xs text-mppga-ink-muted">
+          {hint}
+        </span>
+      ) : null}
+    </label>
   );
 }
 
