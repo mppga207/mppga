@@ -4,12 +4,19 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
-import { createClient } from "@/lib/supabase/server";
+import {
+  createClient,
+  createServiceRoleClient,
+} from "@/lib/supabase/server";
 import { requireSession } from "@/lib/supabase/session";
 
 export interface UpdateProfileInput {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   phone: string | null;
+  addressLine: string | null;
+  city: string | null;
+  zip: string | null;
 }
 
 export interface UpdateProfileResult {
@@ -18,33 +25,197 @@ export interface UpdateProfileResult {
 }
 
 /**
- * Updates the signed-in member's editable profile fields. RLS limits the
- * write to `full_name` and `phone` (`data-model.md` §5.2) — role and
- * organization are admin-only and not exposed here.
+ * Updates the signed-in member's editable profile fields. RLS limits
+ * the write to the owner row (data-model.md §5.2). The column split
+ * (member-editable contact vs. admin-only role/org) is enforced here
+ * in the server action — `role` and `organization_id` are never
+ * passed through, so a malicious caller couldn't elevate themselves
+ * even by tampering with the form.
+ *
+ * Writes first_name + last_name + a recomposed full_name in the same
+ * update so legacy code reading full_name keeps working.
  */
 export async function updateProfile(
   input: UpdateProfileInput,
 ): Promise<UpdateProfileResult> {
   const session = await requireSession("/dashboard/profile");
 
-  const fullName = input.fullName.trim();
-  if (fullName.length < 1 || fullName.length > 120) {
-    return { status: "invalid", message: "Enter a name between 1 and 120 characters." };
+  const firstName = input.firstName.trim();
+  const lastName = input.lastName.trim();
+  if (firstName.length < 1 || firstName.length > 80) {
+    return { status: "invalid", message: "Enter a first name." };
   }
+  if (lastName.length < 1 || lastName.length > 80) {
+    return { status: "invalid", message: "Enter a last name." };
+  }
+  const fullName = `${firstName} ${lastName}`.trim();
 
-  const phone = input.phone?.trim() ? input.phone.trim() : null;
-  if (phone && phone.length > 40) {
+  const phone = trimToNull(input.phone, 40);
+  if (phone instanceof Error) {
     return { status: "invalid", message: "Phone is too long." };
+  }
+  const addressLine = trimToNull(input.addressLine, 160);
+  if (addressLine instanceof Error) {
+    return { status: "invalid", message: "Address is too long." };
+  }
+  const city = trimToNull(input.city, 80);
+  if (city instanceof Error) {
+    return { status: "invalid", message: "City is too long." };
+  }
+  const zip = trimToNull(input.zip, 20);
+  if (zip instanceof Error) {
+    return { status: "invalid", message: "Zip code is too long." };
   }
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("profiles")
-    .update({ full_name: fullName, phone })
+    .update({
+      first_name: firstName,
+      last_name: lastName,
+      full_name: fullName,
+      phone,
+      address_line: addressLine,
+      city,
+      zip,
+    })
     .eq("id", session.user.id);
 
   if (error) {
     return { status: "error", message: error.message };
+  }
+
+  revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard");
+  return { status: "ok" };
+}
+
+function trimToNull(raw: string | null, max: number): string | null | Error {
+  if (raw == null) return null;
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed.length > max) return new Error("too long");
+  return trimmed;
+}
+
+export interface UpdateSalonInput {
+  /**
+   * If the member already owns a salon (their organization_id row has
+   * primary_contact_profile_id === their id), the form sends the same
+   * id back and we update the row in place.
+   *
+   * If they're declaring themselves a salon owner for the first time
+   * (no current org, or affiliated to someone else's salon), the id
+   * is null and we create a new organization, link it as their
+   * `organization_id`, and set them as `primary_contact_profile_id`.
+   */
+  organizationId: string | null;
+  name: string;
+  addressLine: string | null;
+  city: string | null;
+  zip: string | null;
+  phone: string | null;
+  website: string | null;
+}
+
+export interface UpdateSalonResult {
+  status: "ok" | "invalid" | "error";
+  message?: string;
+}
+
+/**
+ * Create or update the signed-in member's owned-salon record. Creating
+ * goes through the service role because the new org needs the member's
+ * organization_id set as part of the same logical change, and the
+ * profiles RLS policy lets them write their own row but the org
+ * insert needs a paired profile.organization_id write. Updates of an
+ * existing owned org use the user-scoped client and the
+ * `organizations_owner_update` policy added in the same migration.
+ */
+export async function updateSalonInfo(
+  input: UpdateSalonInput,
+): Promise<UpdateSalonResult> {
+  const session = await requireSession("/dashboard/profile");
+
+  const name = input.name.trim();
+  if (name.length < 1 || name.length > 160) {
+    return { status: "invalid", message: "Enter your salon's name." };
+  }
+  const addressLine = trimToNull(input.addressLine, 160);
+  if (addressLine instanceof Error) {
+    return { status: "invalid", message: "Salon address is too long." };
+  }
+  const city = trimToNull(input.city, 80);
+  if (city instanceof Error) {
+    return { status: "invalid", message: "Salon city is too long." };
+  }
+  const zip = trimToNull(input.zip, 20);
+  if (zip instanceof Error) {
+    return { status: "invalid", message: "Salon zip is too long." };
+  }
+  const phone = trimToNull(input.phone, 40);
+  if (phone instanceof Error) {
+    return { status: "invalid", message: "Salon phone is too long." };
+  }
+  const website = trimToNull(input.website, 200);
+  if (website instanceof Error) {
+    return { status: "invalid", message: "Salon website is too long." };
+  }
+
+  if (input.organizationId) {
+    // Update path: the user-scoped client + the
+    // `organizations_owner_update` policy keep this owner-only.
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("organizations")
+      .update({
+        name,
+        address_line: addressLine,
+        city,
+        zip,
+        phone,
+        website,
+      })
+      .eq("id", input.organizationId);
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+  } else {
+    // First-time owner declaration. Service role: we need to insert
+    // the org AND set the profile's organization_id in the same
+    // logical change. Organizations INSERT is admin-only in RLS, so
+    // the user-scoped client can't do the insert itself. Justified
+    // here per auth-middleware.md §4.2: the request is from the
+    // authenticated owner setting up their own salon, and the
+    // primary_contact gets pinned to their own profile id so they
+    // can never claim someone else's row.
+    const client = createServiceRoleClient();
+    const { data: created, error: insertError } = await client
+      .from("organizations")
+      .insert({
+        name,
+        address_line: addressLine,
+        city,
+        zip,
+        phone,
+        website,
+        primary_contact_profile_id: session.user.id,
+      })
+      .select("id")
+      .single();
+    if (insertError || !created) {
+      return {
+        status: "error",
+        message: insertError?.message ?? "Could not create your salon.",
+      };
+    }
+    const { error: linkError } = await client
+      .from("profiles")
+      .update({ organization_id: created.id })
+      .eq("id", session.user.id);
+    if (linkError) {
+      return { status: "error", message: linkError.message };
+    }
   }
 
   revalidatePath("/dashboard/profile");
