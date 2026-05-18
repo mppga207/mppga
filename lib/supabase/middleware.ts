@@ -161,10 +161,22 @@ function decideRedirect(user: User | null, pathname: string): string | null {
 
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
     if (!user) return "/sign-in";
-    // Admins don't have a membership row, so the status-based redirects
-    // below would always send them to /dashboard/checkout. Route them
-    // to their own surface instead.
-    if (isAdmin) return "/admin";
+    // Admins can use the member portal once they've set up their own
+    // member profile via the "Set up your member profile" panel on
+    // /admin. That writes an Honorary memberships row and the JWT
+    // claim refreshes to match. Without a real member row the
+    // claim defaults to Awaiting_Payment and the checkout flow
+    // doesn't apply, so bounce back to /admin.
+    if (isAdmin) {
+      if (
+        status === "Active" ||
+        status === "Honorary" ||
+        status === "Grace_Period"
+      ) {
+        return null;
+      }
+      return "/admin";
+    }
     if (pathname === "/dashboard/checkout" && status === "Awaiting_Payment") {
       return null;
     }

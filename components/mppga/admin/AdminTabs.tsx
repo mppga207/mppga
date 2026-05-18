@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { adminTabs } from "@/lib/mppga/admin/tabs";
 import { cn } from "@/lib/cn";
@@ -10,15 +11,15 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AdminTabs() {
+export function AdminTabs({ extraRight }: { extraRight?: ReactNode }) {
   const pathname = usePathname();
 
   return (
     <div className="border-b border-mppga-divider bg-mppga-page">
-      <div className="mx-auto max-w-[1280px]">
+      <div className="mx-auto flex max-w-[1280px] items-center gap-4 px-6">
         <nav
           aria-label="Admin sections"
-          className="flex gap-7 touch-pan-x overflow-x-auto px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-1 gap-7 touch-pan-x overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {adminTabs.map((tab) => {
             const active = isActive(pathname, tab.href);
@@ -45,6 +46,7 @@ export function AdminTabs() {
             );
           })}
         </nav>
+        {extraRight ? <div className="shrink-0">{extraRight}</div> : null}
       </div>
     </div>
   );
