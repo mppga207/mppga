@@ -167,6 +167,7 @@ What's been applied to the production Supabase project. Update this list wheneve
 - `20260517000007_search_organizations_rpc.sql` — adds a `search_organizations(p_query, p_limit)` security-definer function that returns up to 8 `(id, name)` matches for the `/join` salon typeahead. Anon + authenticated execute; the row-level policy on `organizations` stays admin-only.
 - `20260517000008_profile_full_name_from_metadata.sql` — patches the `create_profile_on_signup` trigger to copy `full_name` out of `raw_user_meta_data` so the join form's name actually lands on the profile. Backfills any existing rows whose name went missing from the previous version of the trigger.
 - `20260517000009_tiers_employee_limit.sql` — adds `umbrella_employee_limit` (nullable integer) to `tiers` so the admin tier editor and public Join page can render "Covers a salon with up to N employees" instead of the bare "Umbrella account" flag. Constrained positive when set, and gated on `umbrella_account = true`. Seeds Salon to 5.
+- `20260518000001_professional_tier_realignment.sql` — re-prices the Professional tier from $75 to $45 (`annual_dues_cents = 4500`) and rewrites the description to match the client's 2026-05-18 benefit list (directory listing, private member community, member event pricing, MPPGA plaque, future continuing education). Stripe-side price swap isn't needed because Stripe isn't provisioned yet.
 
 Manual configuration steps that don't live in a migration but must be done per environment:
 
