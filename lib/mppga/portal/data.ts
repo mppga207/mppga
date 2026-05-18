@@ -17,17 +17,38 @@ import type {
 
 export interface MemberOverview {
   fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string | null;
+  addressLine: string | null;
+  city: string | null;
+  zip: string | null;
+  state: string;
   status: MembershipStatus;
   billingStatus: BillingStatus | null;
   tierName: string | null;
+  tierSlug: string | null;
   tierId: string | null;
   organizationName: string | null;
   organizationId: string | null;
+  /** True when the signed-in profile is this org's primary contact. */
+  isSalonOwner: boolean;
+  ownedSalon: OwnedSalonInfo | null;
   expiresAt: string | null;
   memberSinceISO: string;
   stripeCustomerId: string | null;
+}
+
+export interface OwnedSalonInfo {
+  id: string;
+  name: string;
+  addressLine: string | null;
+  city: string | null;
+  zip: string | null;
+  state: string;
+  phone: string | null;
+  website: string | null;
 }
 
 export interface MemberDirectoryListing {
@@ -76,7 +97,7 @@ export const loadMemberOverview = cache(
       supabase
         .from("profiles")
         .select(
-          "id, full_name, email, phone, organization_id, created_at",
+          "id, full_name, first_name, last_name, email, phone, address_line, city, zip, state, organization_id, created_at",
         )
         .eq("id", profileId)
         .maybeSingle(),
@@ -96,29 +117,63 @@ export const loadMemberOverview = cache(
       tierId
         ? supabase
             .from("tiers")
-            .select("id, name")
+            .select("id, name, slug")
             .eq("id", tierId)
             .maybeSingle()
         : Promise.resolve({ data: null }),
       orgId
         ? supabase
             .from("organizations")
-            .select("id, name")
+            .select(
+              "id, name, address_line, city, zip, state, phone, website, primary_contact_profile_id",
+            )
             .eq("id", orgId)
             .maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
 
+    const org = orgResult.data ?? null;
+    const isSalonOwner =
+      org !== null && org.primary_contact_profile_id === profileId;
+    const ownedSalon: OwnedSalonInfo | null = isSalonOwner && org
+      ? {
+          id: org.id,
+          name: org.name,
+          addressLine: org.address_line ?? null,
+          city: org.city ?? null,
+          zip: org.zip ?? null,
+          state: org.state ?? "ME",
+          phone: org.phone ?? null,
+          website: org.website ?? null,
+        }
+      : null;
+
+    const firstName = profile?.first_name ?? "";
+    const lastName = profile?.last_name ?? "";
+    const fullName =
+      profile?.full_name && profile.full_name.trim().length > 0
+        ? profile.full_name
+        : `${firstName} ${lastName}`.trim();
+
     return {
-      fullName: profile?.full_name ?? "",
+      fullName,
+      firstName,
+      lastName,
       email: profile?.email ?? session.user.email ?? "",
       phone: profile?.phone ?? null,
+      addressLine: profile?.address_line ?? null,
+      city: profile?.city ?? null,
+      zip: profile?.zip ?? null,
+      state: profile?.state ?? "ME",
       status: membership?.status ?? session.membershipStatus,
       billingStatus: membership?.billing_status ?? null,
       tierName: tierResult.data?.name ?? null,
+      tierSlug: tierResult.data?.slug ?? null,
       tierId: tierResult.data?.id ?? null,
-      organizationName: orgResult.data?.name ?? null,
-      organizationId: orgResult.data?.id ?? null,
+      organizationName: org?.name ?? null,
+      organizationId: org?.id ?? null,
+      isSalonOwner,
+      ownedSalon,
       expiresAt: membership?.expires_at ?? null,
       memberSinceISO: membership?.created_at ?? profile?.created_at ?? "",
       stripeCustomerId: membership?.stripe_customer_id ?? null,

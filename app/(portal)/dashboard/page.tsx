@@ -39,8 +39,10 @@ export default async function DashboardOverviewPage() {
     )
     .slice(0, 3);
 
-  const displayName = member.fullName || member.email;
-  const firstName = displayName.split(" ")[0] ?? displayName;
+  const firstName =
+    member.firstName ||
+    (member.fullName || member.email).split(" ")[0] ||
+    member.email;
   const listingCity = listing
     ? `${listing.city}, ${listing.state}`
     : null;

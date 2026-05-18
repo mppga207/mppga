@@ -26,9 +26,14 @@ export function JoinForm({
 }) {
   const [state, formAction] = useActionState(joinMembership, initial);
   const [tier, setTier] = useState<TierOption["slug"]>(defaultTier);
-  // Salon-tier signups ARE the salon, so they don't pick from the
-  // directory. Hide the combobox for them.
-  const showSalonField = tier !== "salon";
+  // Per-tier behavior:
+  //   - Salon-tier signups ARE the salon: the toggle is locked on and
+  //     the affiliation combobox is hidden.
+  //   - Other tiers: optional "I own a salon" toggle. When off, the
+  //     existing-salon combobox lets them affiliate as an employee.
+  const isSalonTier = tier === "salon";
+  const [ownSalon, setOwnSalon] = useState(false);
+  const effectiveOwn = isSalonTier || ownSalon;
 
   if (state.status === "sent") {
     return (
@@ -55,16 +60,31 @@ export function JoinForm({
       aria-describedby="apply-form-note"
     >
       <div className="space-y-5">
-        <ApplyField label="Your name" htmlFor="apply-name">
-          <input
-            id="apply-name"
-            name="name"
-            type="text"
-            autoComplete="name"
-            required
-            className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
-          />
-        </ApplyField>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <ApplyField label="First name" htmlFor="apply-first-name">
+            <input
+              id="apply-first-name"
+              name="first_name"
+              type="text"
+              autoComplete="given-name"
+              required
+              maxLength={80}
+              className={inputClass}
+            />
+          </ApplyField>
+
+          <ApplyField label="Last name" htmlFor="apply-last-name">
+            <input
+              id="apply-last-name"
+              name="last_name"
+              type="text"
+              autoComplete="family-name"
+              required
+              maxLength={80}
+              className={inputClass}
+            />
+          </ApplyField>
+        </div>
 
         <ApplyField label="Email" htmlFor="apply-email">
           <input
@@ -73,7 +93,7 @@ export function JoinForm({
             type="email"
             autoComplete="email"
             required
-            className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+            className={inputClass}
           />
         </ApplyField>
 
@@ -85,19 +105,59 @@ export function JoinForm({
             autoComplete="new-password"
             required
             minLength={8}
-            className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+            className={inputClass}
           />
         </ApplyField>
 
-        <ApplyField label="Where you groom" htmlFor="apply-location">
+        <ApplyField label="Phone" htmlFor="apply-phone">
           <input
-            id="apply-location"
-            name="location"
-            type="text"
-            placeholder="City or town in Maine"
-            className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+            id="apply-phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            maxLength={40}
+            placeholder="(207) 555 0142"
+            className={inputClass}
           />
         </ApplyField>
+
+        <ApplyField label="Address" htmlFor="apply-address">
+          <input
+            id="apply-address"
+            name="address_line"
+            type="text"
+            autoComplete="street-address"
+            maxLength={160}
+            placeholder="123 Maine Street"
+            className={inputClass}
+          />
+        </ApplyField>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-[2fr_1fr]">
+          <ApplyField label="City" htmlFor="apply-city">
+            <input
+              id="apply-city"
+              name="city"
+              type="text"
+              autoComplete="address-level2"
+              maxLength={80}
+              placeholder="Brunswick"
+              className={inputClass}
+            />
+          </ApplyField>
+
+          <ApplyField label="Zip" htmlFor="apply-zip">
+            <input
+              id="apply-zip"
+              name="zip"
+              type="text"
+              autoComplete="postal-code"
+              maxLength={20}
+              placeholder="04011"
+              className={inputClass}
+            />
+          </ApplyField>
+        </div>
 
         <ApplyField label="Tier" htmlFor="apply-tier">
           <select
@@ -107,7 +167,7 @@ export function JoinForm({
             onChange={(event) =>
               setTier(event.target.value as TierOption["slug"])
             }
-            className="h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+            className={inputClass}
           >
             {tiers.map((t) => (
               <option key={t.slug} value={t.slug}>
@@ -117,8 +177,113 @@ export function JoinForm({
           </select>
         </ApplyField>
 
-        {showSalonField ? (
-          <ApplyField label="Salon" htmlFor="apply-salon">
+        <div className="rounded-lg border border-mppga-divider bg-mppga-page p-4">
+          <label className="flex items-start gap-2.5">
+            <input
+              type="checkbox"
+              name="salon_owner"
+              checked={effectiveOwn}
+              disabled={isSalonTier}
+              onChange={(event) => setOwnSalon(event.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-mppga-divider text-mppga-teal focus:ring-mppga-teal/40 disabled:opacity-60"
+            />
+            <span className="text-sm leading-relaxed text-mppga-ink">
+              I own or operate a salon.
+              {isSalonTier ? (
+                <span className="ml-1 text-mppga-ink-muted">
+                  (Required for the Salon tier.)
+                </span>
+              ) : (
+                <span className="ml-1 text-mppga-ink-muted">
+                  Tell us about it below.
+                </span>
+              )}
+            </span>
+          </label>
+
+          {effectiveOwn ? (
+            <div className="mt-5 space-y-5 border-t border-mppga-divider pt-5">
+              <ApplyField label="Salon name" htmlFor="apply-salon-name">
+                <input
+                  id="apply-salon-name"
+                  name="salon_name"
+                  type="text"
+                  autoComplete="organization"
+                  required
+                  maxLength={160}
+                  className={inputClass}
+                />
+              </ApplyField>
+
+              <ApplyField label="Salon address" htmlFor="apply-salon-address">
+                <input
+                  id="apply-salon-address"
+                  name="salon_address_line"
+                  type="text"
+                  autoComplete="street-address"
+                  maxLength={160}
+                  placeholder="Salon street address"
+                  className={inputClass}
+                />
+              </ApplyField>
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-[2fr_1fr]">
+                <ApplyField label="Salon city" htmlFor="apply-salon-city">
+                  <input
+                    id="apply-salon-city"
+                    name="salon_city"
+                    type="text"
+                    autoComplete="address-level2"
+                    maxLength={80}
+                    className={inputClass}
+                  />
+                </ApplyField>
+
+                <ApplyField label="Salon zip" htmlFor="apply-salon-zip">
+                  <input
+                    id="apply-salon-zip"
+                    name="salon_zip"
+                    type="text"
+                    autoComplete="postal-code"
+                    maxLength={20}
+                    className={inputClass}
+                  />
+                </ApplyField>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <ApplyField label="Salon phone" htmlFor="apply-salon-phone">
+                  <input
+                    id="apply-salon-phone"
+                    name="salon_phone"
+                    type="tel"
+                    autoComplete="tel"
+                    maxLength={40}
+                    className={inputClass}
+                  />
+                </ApplyField>
+
+                <ApplyField label="Salon website" htmlFor="apply-salon-website">
+                  <input
+                    id="apply-salon-website"
+                    name="salon_website"
+                    type="url"
+                    autoComplete="url"
+                    maxLength={200}
+                    placeholder="https://"
+                    className={inputClass}
+                  />
+                </ApplyField>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {!effectiveOwn ? (
+          <ApplyField
+            label="Salon you work at (optional)"
+            htmlFor="apply-salon"
+          >
             <SalonCombobox fieldId="apply-salon" />
           </ApplyField>
         ) : null}
@@ -156,6 +321,9 @@ export function JoinForm({
     </form>
   );
 }
+
+const inputClass =
+  "h-11 w-full rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink placeholder:text-mppga-ink-muted focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30";
 
 function SubmitButton() {
   const { pending } = useFormStatus();

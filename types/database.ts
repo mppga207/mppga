@@ -75,6 +75,12 @@ type OrganizationsRow = {
   name: string;
   primary_contact_profile_id: UUID | null;
   stripe_customer_id: string | null;
+  address_line: string | null;
+  city: string | null;
+  zip: string | null;
+  state: string;
+  phone: string | null;
+  website: string | null;
   created_at: Timestamp;
   updated_at: Timestamp;
 }
@@ -99,8 +105,14 @@ type TiersRow = {
 type ProfilesRow = {
   id: UUID;
   full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string | null;
+  address_line: string | null;
+  city: string | null;
+  zip: string | null;
+  state: string;
   role: ProfileRole;
   organization_id: UUID | null;
   created_at: Timestamp;

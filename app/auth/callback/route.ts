@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { createPendingMembership } from "@/lib/membership/create-pending";
+import {
+  createPendingMembership,
+  type OwnedSalon,
+} from "@/lib/membership/create-pending";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -8,10 +11,11 @@ import { createClient } from "@/lib/supabase/server";
  *
  * - Exchanges the `code` query param for a session (cookies are written
  *   by the server client).
- * - For new joins, reads `user_metadata.tier_slug` and creates the
- *   `memberships` row in `Awaiting_Payment` via the service role. The
- *   tier slug was stashed server-side by `joinMembership` before the
- *   email was sent, and the insert is idempotent on `profile_id`.
+ * - For new joins, reads the metadata stashed by `joinMembership`
+ *   (tier slug, contact details, salon affiliation or owned-salon
+ *   payload) and creates the `memberships` row in `Awaiting_Payment`
+ *   plus the owner's organization via the service role. The insert is
+ *   idempotent on `profile_id`.
  * - Redirects to `next` (default `/dashboard`). Middleware then routes
  *   the user to `/dashboard/checkout` while their status is
  *   `Awaiting_Payment`.
@@ -46,10 +50,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       typeof meta.salon_new_name === "string" && meta.salon_new_name.length > 0
         ? meta.salon_new_name
         : undefined;
-    const result = await createPendingMembership(data.user.id, tierSlug, {
-      salonId,
-      salonNewName,
-    });
+    const ownedSalon = readOwnedSalon(meta.owned_salon);
+    const result = await createPendingMembership(
+      data.user.id,
+      tierSlug,
+      { salonId, salonNewName, ownedSalon },
+      {
+        phone: readOptionalString(meta.phone),
+        addressLine: readOptionalString(meta.address_line),
+        city: readOptionalString(meta.city),
+        zip: readOptionalString(meta.zip),
+      },
+    );
     if (result.status === "error") {
       console.error("createPendingMembership failed", result.reason);
     } else if (result.status === "unknown_tier") {
@@ -58,4 +70,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.redirect(new URL(nextPath, request.url));
+}
+
+function readOptionalString(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function readOwnedSalon(raw: unknown): OwnedSalon | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const r = raw as Record<string, unknown>;
+  const name = typeof r.name === "string" ? r.name.trim() : "";
+  if (!name) return undefined;
+  return {
+    name,
+    address_line: readOptionalString(r.address_line),
+    city: readOptionalString(r.city),
+    zip: readOptionalString(r.zip),
+    phone: readOptionalString(r.phone),
+    website: readOptionalString(r.website),
+  };
 }
