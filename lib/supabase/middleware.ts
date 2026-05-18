@@ -184,6 +184,7 @@ function isPublicPath(pathname: string): boolean {
   if (pathname === "/") return true;
   if (pathname === "/contact") return true;
   if (pathname === "/join") return true;
+  if (pathname === "/join/apply") return true;
   if (pathname === "/sign-in") return true;
   if (pathname === "/events") return true;
   // /events/[id] and /events/[id]/confirmation are public-facing; the
