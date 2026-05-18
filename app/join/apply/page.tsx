@@ -4,7 +4,7 @@ import { JoinForm } from "@/components/mppga/auth/JoinForm";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { Nav } from "@/components/mppga/landing/Nav";
 import { createClient } from "@/lib/supabase/server";
-import { Check, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 export const metadata = {
   title: "Apply · MPPGA",
@@ -78,27 +78,6 @@ export default async function ApplyPage({
             <h1 className="mt-3 font-serif text-3xl tracking-tight text-mppga-ink md:text-4xl">
               Complete your application.
             </h1>
-            <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
-              Three short steps: about you, where you work, and a final review.
-              Nothing is submitted until the last step.
-            </p>
-
-            <ul className="mt-6 space-y-2.5 text-sm text-mppga-ink-soft">
-              <li className="flex items-start gap-2.5">
-                <Check
-                  className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal"
-                  strokeWidth={2}
-                />
-                <span>No credit card required to sign up, only at checkout.</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <Check
-                  className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal"
-                  strokeWidth={2}
-                />
-                <span>Step back any time. Nothing is submitted until the final review.</span>
-              </li>
-            </ul>
 
             <div className="mt-10">
               <JoinForm tiers={tiers} defaultTier={initialTier} />
