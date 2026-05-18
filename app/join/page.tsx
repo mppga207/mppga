@@ -1,7 +1,6 @@
 import { Nav } from "@/components/mppga/landing/Nav";
 import { Footer } from "@/components/mppga/landing/Footer";
 import { Button } from "@/components/mppga/ui/button";
-import { JoinForm } from "@/components/mppga/auth/JoinForm";
 import { createClient } from "@/lib/supabase/server";
 import {
   ArrowRight,
@@ -115,23 +114,8 @@ const steps = [
   },
 ];
 
-const TIER_SLUGS: readonly TierSlug[] = ["basic", "professional", "salon"];
-
-function parseTierParam(value: string | string[] | undefined): TierSlug {
-  const v = Array.isArray(value) ? value[0] : value;
-  if (v && (TIER_SLUGS as readonly string[]).includes(v)) {
-    return v as TierSlug;
-  }
-  return "professional";
-}
-
-export default async function JoinPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tier?: string | string[] }>;
-}) {
-  const [tiers, sp] = await Promise.all([loadJoinTiers(), searchParams]);
-  const initialTier = parseTierParam(sp.tier);
+export default async function JoinPage() {
+  const tiers = await loadJoinTiers();
   return (
     <div className="min-h-screen bg-mppga-page text-mppga-ink">
       <Nav />
@@ -221,7 +205,7 @@ export default async function JoinPage({
 
                     <div className="mt-7">
                       <Button
-                        href={`?tier=${tier.slug}#apply`}
+                        href={`/join/apply?tier=${tier.slug}`}
                         variant={featured ? "primary" : "secondary"}
                         className="w-full"
                       >
@@ -303,47 +287,6 @@ export default async function JoinPage({
           </div>
         </section>
 
-        <section
-          id="apply"
-          className="scroll-mt-24 border-b border-mppga-divider bg-mppga-page py-20"
-        >
-          <div className="mx-auto grid max-w-[1140px] grid-cols-1 gap-12 px-6 md:grid-cols-[1fr_1.1fr]">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-teal">
-                Application
-              </p>
-              <h2 className="mt-3 font-serif text-3xl tracking-tight text-mppga-ink md:text-4xl">
-                A short, guided application.
-              </h2>
-              <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
-                Three quick steps: a little about you, where you work, and a
-                final review before you submit. Confirm the verification
-                email, complete your dues payment, and your member portal
-                unlocks automatically.
-              </p>
-              <ul className="mt-6 space-y-2.5 text-sm text-mppga-ink-soft">
-                <li className="flex items-start gap-2.5">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>No credit card required to sign up, only at checkout.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>You can change tiers any time from the tier list above.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>Step back any time. Nothing is submitted until the final review.</span>
-                </li>
-              </ul>
-            </div>
-
-            <JoinForm
-              tiers={tiers.map(({ slug, name }) => ({ slug, name }))}
-              defaultTier={initialTier}
-            />
-          </div>
-        </section>
-
         <section className="relative overflow-hidden bg-mppga-teal-deep py-24 text-white">
           <div
             aria-hidden
@@ -365,8 +308,8 @@ export default async function JoinPage({
               Takes about two minutes. You’ll be in the directory as soon as your dues clear.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Button href="#apply" variant="inverse" size="lg">
-                Begin application
+              <Button href="#tiers" variant="inverse" size="lg">
+                Pick a tier
               </Button>
               <Button href="/contact" variant="ghost" size="lg" className="text-white hover:text-white/80">
                 Questions? Contact the board

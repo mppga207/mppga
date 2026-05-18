@@ -562,7 +562,7 @@ function TierBanner({ tierName }: { tierName: string }) {
         </p>
       </div>
       <Link
-        href="#tiers"
+        href="/join#tiers"
         className="text-xs font-medium text-mppga-teal hover:text-mppga-teal-hover"
       >
         Change tier
