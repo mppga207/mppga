@@ -57,7 +57,7 @@ Resolve them before opening that track's first PR.
 | # | Question | Affects | Source | Status |
 |---|---|---|---|---|
 | 1 | **Geocoder provider** — Mapbox / Google / Nominatim | Track 5 (directory edit), Track 8 | `directory-search.md` §4.1 | Deferred to Track 5 (client, 2026-05-16) |
-| 2 | **Tier pricing** — annual_dues_cents for Basic Membership, Professional, Salon | Track 3 (subscription Checkout), Track 1 (seed migration) | `CLAUDE.md` §1 | Resolved 2026-05-16: $25 / $75 / $200 (seeded as 2500 / 7500 / 20000 cents) |
+| 2 | **Tier pricing** — annual_dues_cents for Basic Membership, Professional, Salon | Track 3 (subscription Checkout), Track 1 (seed migration) | `CLAUDE.md` §1 | Resolved 2026-05-18: $25 / $45 / $200 (Basic / Professional / Salon). Professional dropped from the original $75 placeholder once the client confirmed her benefit list. Migration `20260518000001_professional_tier_realignment.sql` rewrites the row. |
 | 3 | **Production domain** | Track 3 (Stripe live keys), Track 4 (Resend domain verification) | `CLAUDE.md` §1 | Open |
 | 4 | **Renewal-receipt template** — new key vs. reuse `welcome` | Track 4 | `stripe-architecture.md` §6.2 | Resolved 2026-05-16: dedicated `renewal-receipt` key. Templates live in DB (`email_templates`) so the admin Emails tab can edit copy and add new (non-system) templates without a code change. |
 | 5 | **`/directory`** — Phase 1 acceleration or Phase 2 as planned | Track 8 timing | `CLAUDE.md` §1 | Open |

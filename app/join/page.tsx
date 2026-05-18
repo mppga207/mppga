@@ -53,9 +53,10 @@ const TIER_PRESENTATION: Record<TierSlug, TierPresentation> = {
     tagline: "The working groomer.",
     benefits: [
       "Public directory listing across Maine",
+      "Private member community (Facebook group and portal)",
       "Member event pricing",
-      "Continuing education tracking",
-      "Member community access",
+      "MPPGA membership plaque",
+      "Access to future continuing education",
     ],
     featured: true,
   },
