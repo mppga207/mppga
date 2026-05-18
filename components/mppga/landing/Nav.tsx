@@ -7,6 +7,7 @@ import { getSession } from "@/lib/supabase/session";
 
 const links = [
   { href: "/", label: "Home" },
+  { href: "/directory", label: "Salons" },
   { href: "/events", label: "Events" },
   { href: "/contact", label: "Contact" },
 ];

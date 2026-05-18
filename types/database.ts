@@ -397,6 +397,21 @@ export type Database = {
         Args: { p_query: string; p_limit?: number };
         Returns: { id: UUID; name: string }[];
       };
+      public_salons: {
+        Args: { p_city?: string | null; p_limit?: number };
+        Returns: {
+          id: UUID;
+          name: string;
+          city: string | null;
+          state: string | null;
+          phone: string | null;
+          website: string | null;
+        }[];
+      };
+      public_salon_cities: {
+        Args: Record<string, never>;
+        Returns: { city: string }[];
+      };
     };
     Enums: Record<string, never>;
   };

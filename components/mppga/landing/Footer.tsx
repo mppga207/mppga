@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const explore = [
+  { href: "/directory", label: "Salons" },
   { href: "/events", label: "Events" },
   { href: "/join", label: "Join" },
   { href: "/contact", label: "Contact" },
