@@ -25,51 +25,32 @@ interface TierPresentation {
   shortLabel: string;
   icon: LucideIcon;
   tagline: string;
-  benefits: string[];
   featured: boolean;
 }
 
-// Slug-keyed presentation: icon, tagline, "apply as ___" label, and the
-// benefit bullet list. Name + description + dues read live from the
-// `tiers` table so admin edits in Settings → Tier configuration appear
-// on the public Join page immediately (revalidatePath("/join") fires
-// from lib/admin/tiers-actions.ts).
+// Slug-keyed presentation: icon, tagline, "apply as ___" label, and
+// the "Most popular" highlight. Everything that's not a presentation
+// chrome (name, description, perks bullets, dues) reads live from the
+// `tiers` table so admin edits in Settings → Tier configuration
+// appear on the public Join page immediately (revalidatePath("/join")
+// fires from lib/admin/tiers-actions.ts).
 const TIER_PRESENTATION: Record<TierSlug, TierPresentation> = {
   basic: {
     shortLabel: "a basic member",
     icon: GraduationCap,
     tagline: "Learning the craft.",
-    benefits: [
-      "Access to continuing education resources",
-      "Member event pricing",
-      "Member community access",
-      "Directory listing optional",
-    ],
     featured: false,
   },
   professional: {
     shortLabel: "professional",
     icon: UserRound,
     tagline: "The working groomer.",
-    benefits: [
-      "Public directory listing across Maine",
-      "Private member community (Facebook group and portal)",
-      "Member event pricing",
-      "MPPGA membership plaque",
-      "Access to future continuing education",
-    ],
     featured: true,
   },
   salon: {
     shortLabel: "a salon",
     icon: Building2,
     tagline: "For shop owners and salons.",
-    benefits: [
-      "Priority placement in the public directory",
-      "Sub-profiles for every staff groomer",
-      "Member event pricing for the whole team",
-      "Salon-level recognition at MPPGA events",
-    ],
     featured: false,
   },
 };
@@ -78,7 +59,7 @@ interface JoinTier {
   slug: TierSlug;
   name: string;
   description: string;
-  benefits: string[];
+  perks: string[];
   presentation: TierPresentation;
 }
 
@@ -86,31 +67,15 @@ interface TierRow {
   slug: string;
   name: string;
   description: string;
+  perks: string[] | null;
   display_order: number;
-  umbrella_account: boolean;
-  umbrella_employee_limit: number | null;
-}
-
-function resolveBenefits(row: TierRow, presentation: TierPresentation): string[] {
-  if (row.slug !== "salon") return presentation.benefits;
-  // On the Salon tier, swap the static "sub-profiles" line for the
-  // admin-configured coverage cap when one is set.
-  if (!row.umbrella_account || !row.umbrella_employee_limit) {
-    return presentation.benefits;
-  }
-  const coverage = `Covers a salon with up to ${row.umbrella_employee_limit} employees`;
-  return presentation.benefits.map((b) =>
-    b === "Sub-profiles for every staff groomer" ? coverage : b,
-  );
 }
 
 async function loadJoinTiers(): Promise<JoinTier[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("tiers")
-    .select(
-      "slug, name, description, display_order, umbrella_account, umbrella_employee_limit",
-    )
+    .select("slug, name, description, perks, display_order")
     .order("display_order", { ascending: true })
     .returns<TierRow[]>();
   if (!data) return [];
@@ -125,7 +90,7 @@ async function loadJoinTiers(): Promise<JoinTier[]> {
       slug: row.slug,
       name: row.name,
       description: row.description,
-      benefits: resolveBenefits(row, presentation),
+      perks: row.perks ?? [],
       presentation,
     });
   }
@@ -224,7 +189,7 @@ export default async function JoinPage() {
                     <div className="my-6 h-px w-full bg-mppga-divider" />
 
                     <ul className="space-y-2.5 text-sm text-mppga-ink-soft">
-                      {tier.benefits.map((b) => (
+                      {tier.perks.map((b) => (
                         <li key={b} className="flex items-start gap-2.5">
                           <Check
                             className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal"

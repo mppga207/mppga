@@ -31,6 +31,9 @@ export function TierConfigCard({
   const [employeeLimit, setEmployeeLimit] = useState(
     String(tier.umbrellaEmployeeLimit ?? DEFAULT_EMPLOYEE_LIMIT),
   );
+  const [perks, setPerks] = useState<string[]>(
+    tier.perks.length > 0 ? tier.perks : [""],
+  );
   const isBootstrap = !tier.stripePriceId;
 
   function handleDuesSubmit(event: FormEvent<HTMLFormElement>): void {
@@ -165,7 +168,7 @@ export function TierConfigCard({
 
           <fieldset className="space-y-3 rounded-md border border-mppga-divider bg-mppga-page p-4">
             <legend className="px-2 text-[11px] font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
-              Benefits
+              Feature flags
             </legend>
             <BenefitRow
               id={`directory-${tier.id}`}
@@ -181,6 +184,8 @@ export function TierConfigCard({
               onEmployeeLimitChange={setEmployeeLimit}
             />
           </fieldset>
+
+          <PerksEditor tierId={tier.id} perks={perks} onChange={setPerks} />
 
           <div className="flex items-center justify-end border-t border-mppga-divider pt-4">
             <Button type="submit">Save tier</Button>
@@ -289,6 +294,113 @@ function BenefitRow({
       />
       <span className="text-mppga-ink">{label}</span>
     </label>
+  );
+}
+
+function PerksEditor({
+  tierId,
+  perks,
+  onChange,
+}: {
+  tierId: string;
+  perks: string[];
+  onChange: (next: string[]) => void;
+}) {
+  function updateAt(index: number, value: string): void {
+    const next = perks.slice();
+    next[index] = value;
+    onChange(next);
+  }
+  function removeAt(index: number): void {
+    const next = perks.filter((_, i) => i !== index);
+    onChange(next.length > 0 ? next : [""]);
+  }
+  function swap(i: number, j: number): void {
+    if (i < 0 || j < 0 || i >= perks.length || j >= perks.length) return;
+    const a = perks[i] ?? "";
+    const b = perks[j] ?? "";
+    const next = perks.slice();
+    next[i] = b;
+    next[j] = a;
+    onChange(next);
+  }
+  function moveUp(index: number): void {
+    swap(index, index - 1);
+  }
+  function moveDown(index: number): void {
+    swap(index, index + 1);
+  }
+  function add(): void {
+    onChange([...perks, ""]);
+  }
+
+  return (
+    <fieldset className="space-y-3 rounded-md border border-mppga-divider bg-mppga-page p-4">
+      <legend className="px-2 text-[11px] font-medium uppercase tracking-[0.16em] text-mppga-ink-muted">
+        Marketing bullets
+      </legend>
+      <p className="-mt-1 text-xs text-mppga-ink-soft">
+        Shown under the tier on the public Join page. One bullet per line.
+      </p>
+      <ul className="space-y-2">
+        {perks.map((perk, index) => {
+          const inputId = `perk-${tierId}-${index}`;
+          return (
+            <li key={index} className="flex items-center gap-2">
+              <div className="flex items-center overflow-hidden rounded-md border border-mppga-divider">
+                <button
+                  type="button"
+                  onClick={() => moveUp(index)}
+                  disabled={index === 0}
+                  aria-label="Move bullet up"
+                  title="Move up"
+                  className="flex h-9 w-8 items-center justify-center border-r border-mppga-divider text-mppga-ink-soft transition-colors hover:bg-mppga-teal-tint hover:text-mppga-teal-deep disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-mppga-ink-soft"
+                >
+                  <span aria-hidden>↑</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveDown(index)}
+                  disabled={index === perks.length - 1}
+                  aria-label="Move bullet down"
+                  title="Move down"
+                  className="flex h-9 w-8 items-center justify-center text-mppga-ink-soft transition-colors hover:bg-mppga-teal-tint hover:text-mppga-teal-deep disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-mppga-ink-soft"
+                >
+                  <span aria-hidden>↓</span>
+                </button>
+              </div>
+              <input
+                id={inputId}
+                name="perks"
+                type="text"
+                value={perk}
+                onChange={(e) => updateAt(index, e.target.value)}
+                placeholder="e.g. Member event pricing"
+                className="h-9 flex-1 rounded-md border border-mppga-divider bg-mppga-card px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+              />
+              <button
+                type="button"
+                onClick={() => removeAt(index)}
+                aria-label="Remove bullet"
+                title="Remove"
+                className="flex h-9 w-9 items-center justify-center rounded-md border border-mppga-divider text-mppga-ink-soft transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+              >
+                <span aria-hidden>×</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <div>
+        <button
+          type="button"
+          onClick={add}
+          className="inline-flex items-center gap-1.5 rounded-md border border-mppga-divider bg-mppga-card px-3 py-1.5 text-xs font-medium text-mppga-teal-deep transition-colors hover:border-mppga-teal/40 hover:bg-mppga-teal-tint"
+        >
+          + Add bullet
+        </button>
+      </div>
+    </fieldset>
   );
 }
 
