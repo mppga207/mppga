@@ -7,12 +7,19 @@ import {
   CreditCard,
   Mail,
   Sparkles,
+  UserPlus,
 } from "lucide-react";
 
 import { AdminPageHeader } from "@/components/mppga/admin/AdminPageHeader";
 import { Button } from "@/components/mppga/ui/button";
 import { loadAdminOverview } from "@/lib/admin/overview-data";
 import { markContactSubmissionReadAction } from "@/lib/admin/overview-actions";
+import {
+  loadAdminHasOwnMembership,
+  loadAdminTierOptions,
+  type OwnMembershipTierOption,
+} from "@/lib/admin/own-membership-data";
+import { createOwnAdminMembership } from "@/lib/admin/own-membership-actions";
 import { requireAdmin } from "@/lib/supabase/session";
 import type {
   ContactSubmissionItem,
@@ -64,9 +71,33 @@ function relativeFromNow(iso: string): string {
   return dateFmt.format(target);
 }
 
-export default async function AdminOverviewPage() {
-  await requireAdmin();
-  const overview = await loadAdminOverview();
+type OwnMembershipBanner = "ok" | "already" | "invalid_tier" | "error" | null;
+
+function readOwnMembershipBanner(
+  value: string | string[] | undefined,
+): OwnMembershipBanner {
+  const v = Array.isArray(value) ? value[0] : value;
+  if (v === "ok" || v === "already" || v === "invalid_tier" || v === "error") {
+    return v;
+  }
+  return null;
+}
+
+type AdminPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AdminOverviewPage({
+  searchParams,
+}: AdminPageProps) {
+  const session = await requireAdmin();
+  const [overview, hasOwnMembership, tierOptions, sp] = await Promise.all([
+    loadAdminOverview(),
+    loadAdminHasOwnMembership(session.user.id),
+    loadAdminTierOptions(),
+    searchParams,
+  ]);
+  const ownMembershipBanner = readOwnMembershipBanner(sp.own_membership);
 
   const totalActionable =
     overview.contactSubmissions.total +
@@ -83,6 +114,12 @@ export default async function AdminOverviewPage() {
             ? "Nothing needs board attention right now. Check back when new contact messages, signups, or billing events arrive."
             : "Items that need board attention: new messages from the contact form, signups awaiting payment, past-due billing, and events not yet published."
         }
+      />
+
+      <OwnMembershipPanel
+        hasMembership={hasOwnMembership}
+        tiers={tierOptions}
+        banner={ownMembershipBanner}
       />
 
       <Section
@@ -174,6 +211,97 @@ export default async function AdminOverviewPage() {
         ))}
       </Section>
     </div>
+  );
+}
+
+function OwnMembershipPanel({
+  hasMembership,
+  tiers,
+  banner,
+}: {
+  hasMembership: boolean;
+  tiers: OwnMembershipTierOption[];
+  banner: OwnMembershipBanner;
+}) {
+  if (hasMembership) {
+    if (banner === "ok" || banner === "already") {
+      return (
+        <div
+          className="rounded-lg border border-mppga-teal/40 bg-mppga-teal-tint px-5 py-4 text-sm text-mppga-teal-darker"
+          role="status"
+        >
+          Your member profile is ready. Sign out and back in once to refresh
+          your session, then open{" "}
+          <Link href="/dashboard" className="underline underline-offset-2">
+            the member portal
+          </Link>
+          .
+        </div>
+      );
+    }
+    return null;
+  }
+
+  return (
+    <section className="rounded-2xl border border-mppga-divider bg-mppga-card p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-mppga-teal-tint text-mppga-teal">
+            <UserPlus className="h-4 w-4" strokeWidth={1.8} />
+          </span>
+          <div>
+            <h2 className="font-serif text-xl text-mppga-ink">
+              Set up your member profile
+            </h2>
+            <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-mppga-ink-soft">
+              You don&rsquo;t have a member record yet. Pick the tier that fits
+              your role and we&rsquo;ll create an Honorary membership for you,
+              so you can use the member portal as yourself without paying dues.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {banner === "invalid_tier" ? (
+        <p className="mt-4 text-sm text-red-700">
+          That tier didn&rsquo;t look right. Pick one from the list and try again.
+        </p>
+      ) : null}
+      {banner === "error" ? (
+        <p className="mt-4 text-sm text-red-700">
+          Something went wrong creating the membership. Try again, or check the
+          server logs for details.
+        </p>
+      ) : null}
+
+      <form
+        action={createOwnAdminMembership}
+        className="mt-5 flex flex-wrap items-end gap-3"
+      >
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-mppga-ink-muted">
+            Tier
+          </span>
+          <select
+            name="tier"
+            defaultValue={tiers.find((t) => t.slug === "professional")?.slug ?? tiers[0]?.slug ?? ""}
+            className="h-11 min-w-[220px] rounded-md border border-mppga-divider bg-mppga-page px-3 text-sm text-mppga-ink focus:border-mppga-teal focus:outline-none focus:ring-2 focus:ring-mppga-teal/30"
+          >
+            {tiers.length === 0 ? (
+              <option value="">No tiers configured</option>
+            ) : null}
+            {tiers.map((t) => (
+              <option key={t.slug} value={t.slug}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Button type="submit" disabled={tiers.length === 0}>
+          Set up profile
+        </Button>
+      </form>
+    </section>
   );
 }
 
