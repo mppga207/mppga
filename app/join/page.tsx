@@ -309,7 +309,7 @@ export default async function JoinPage() {
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Button href="#tiers" variant="inverse" size="lg">
-                Pick a tier
+                Join now
               </Button>
               <Button href="/contact" variant="ghost" size="lg" className="text-white hover:text-white/80">
                 Questions? Contact the board
