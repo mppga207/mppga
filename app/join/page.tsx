@@ -101,7 +101,7 @@ const steps = [
   {
     n: 1,
     title: "Sign up",
-    body: "Tell us your name, email, password, and which tier fits. We’ll send a verification email to your inbox.",
+    body: "Pick a tier and walk through a short guided application: about you, where you work, and a final review. We’ll send a verification email to your inbox.",
   },
   {
     n: 2,
@@ -115,8 +115,23 @@ const steps = [
   },
 ];
 
-export default async function JoinPage() {
-  const tiers = await loadJoinTiers();
+const TIER_SLUGS: readonly TierSlug[] = ["basic", "professional", "salon"];
+
+function parseTierParam(value: string | string[] | undefined): TierSlug {
+  const v = Array.isArray(value) ? value[0] : value;
+  if (v && (TIER_SLUGS as readonly string[]).includes(v)) {
+    return v as TierSlug;
+  }
+  return "professional";
+}
+
+export default async function JoinPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tier?: string | string[] }>;
+}) {
+  const [tiers, sp] = await Promise.all([loadJoinTiers(), searchParams]);
+  const initialTier = parseTierParam(sp.tier);
   return (
     <div className="min-h-screen bg-mppga-page text-mppga-ink">
       <Nav />
@@ -138,7 +153,10 @@ export default async function JoinPage() {
           </div>
         </section>
 
-        <section className="border-b border-mppga-divider bg-mppga-page py-20">
+        <section
+          id="tiers"
+          className="scroll-mt-24 border-b border-mppga-divider bg-mppga-page py-20"
+        >
           <div className="mx-auto max-w-[1140px] px-6">
             <div className="mb-12 max-w-2xl">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-teal">
@@ -148,9 +166,10 @@ export default async function JoinPage() {
                 Three ways to join.
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-mppga-ink-soft">
-                Annual dues are reviewed by the board each year. Final pricing
-                will be confirmed on your application before any payment is
-                taken.
+                Pick the tier that fits and we&rsquo;ll walk you through a
+                short guided application. Annual dues are reviewed by the
+                board each year, and final pricing will be confirmed before
+                any payment is taken.
               </p>
             </div>
 
@@ -202,7 +221,7 @@ export default async function JoinPage() {
 
                     <div className="mt-7">
                       <Button
-                        href="#apply"
+                        href={`?tier=${tier.slug}#apply`}
                         variant={featured ? "primary" : "secondary"}
                         className="w-full"
                       >
@@ -294,12 +313,13 @@ export default async function JoinPage() {
                 Application
               </p>
               <h2 className="mt-3 font-serif text-3xl tracking-tight text-mppga-ink md:text-4xl">
-                A few details and we’ll take it from there.
+                A short, guided application.
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-mppga-ink-soft">
-                We’ll send a verification email to the address you provide.
-                Confirm it, complete your dues payment, and your member
-                portal unlocks automatically.
+                Three quick steps: a little about you, where you work, and a
+                final review before you submit. Confirm the verification
+                email, complete your dues payment, and your member portal
+                unlocks automatically.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-mppga-ink-soft">
                 <li className="flex items-start gap-2.5">
@@ -308,16 +328,19 @@ export default async function JoinPage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>Sign in with email and password. Pick something memorable.</span>
+                  <span>You can change tiers any time from the tier list above.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mppga-teal" strokeWidth={2} />
-                  <span>You can change tiers later if your situation changes.</span>
+                  <span>Step back any time. Nothing is submitted until the final review.</span>
                 </li>
               </ul>
             </div>
 
-            <JoinForm tiers={tiers.map(({ slug, name }) => ({ slug, name }))} />
+            <JoinForm
+              tiers={tiers.map(({ slug, name }) => ({ slug, name }))}
+              defaultTier={initialTier}
+            />
           </div>
         </section>
 
