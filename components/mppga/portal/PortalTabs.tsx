@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { portalTabs } from "@/lib/mppga/portal/tabs";
 import { cn } from "@/lib/cn";
@@ -10,15 +11,15 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function PortalTabs() {
+export function PortalTabs({ extraRight }: { extraRight?: ReactNode }) {
   const pathname = usePathname();
 
   return (
     <div className="border-b border-mppga-divider bg-mppga-page">
-      <div className="mx-auto max-w-[1140px]">
+      <div className="mx-auto flex max-w-[1140px] items-center gap-4 px-6">
         <nav
           aria-label="Dashboard sections"
-          className="flex gap-7 touch-pan-x overflow-x-auto px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-1 gap-7 touch-pan-x overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {portalTabs.map((tab) => {
             const active = isActive(pathname, tab.href);
@@ -45,6 +46,7 @@ export function PortalTabs() {
             );
           })}
         </nav>
+        {extraRight ? <div className="shrink-0">{extraRight}</div> : null}
       </div>
     </div>
   );

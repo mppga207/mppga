@@ -230,12 +230,12 @@ function OwnMembershipPanel({
           className="rounded-lg border border-mppga-teal/40 bg-mppga-teal-tint px-5 py-4 text-sm text-mppga-teal-darker"
           role="status"
         >
-          Your member profile is ready. Sign out and back in once to refresh
-          your session, then open{" "}
+          Your member profile is ready. Jump over to{" "}
           <Link href="/dashboard" className="underline underline-offset-2">
             the member portal
-          </Link>
-          .
+          </Link>{" "}
+          anytime, or use the &ldquo;Member portal&rdquo; link in the top
+          navigation.
         </div>
       );
     }
