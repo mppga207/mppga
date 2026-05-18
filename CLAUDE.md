@@ -175,7 +175,7 @@ Manual configuration steps that don't live in a migration but must be done per e
 - Schedule the cron Edge Functions (Dashboard → Edge Functions → Schedules, or pg_cron): daily for `renewal-reminders-cron` + `dunning-cron`, hourly for `event-reminders-cron` + `event-waitlist-cron`.
 - Configure the 501(c)(6) disclaimer in the Stripe Dashboard's customer-receipt footer per environment (`stripe-architecture.md` §5.1).
 
-When a new migration is added: append its filename to this section in the same PR, and note whether it's been applied yet ("Pending" until it runs).
+When a new migration is added: append its filename to this section in the same PR, and note whether it's been applied yet ("Pending" until it runs). Also paste the full SQL of the new migration back into the chat in a fenced code block so the user can copy it into the Supabase SQL editor without opening the file. The committed file in `supabase/migrations/` and the in-chat code block are both required, every time.
 
 -----
 
