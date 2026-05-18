@@ -91,6 +91,7 @@ type TiersRow = {
   umbrella_employee_limit: number | null;
   display_order: number;
   description: string;
+  perks: string[];
   created_at: Timestamp;
   updated_at: Timestamp;
 }

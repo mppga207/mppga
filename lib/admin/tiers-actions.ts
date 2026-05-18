@@ -50,7 +50,7 @@ export async function updateTierFieldsAction(formData: FormData): Promise<void> 
   const { data: prior } = await supabase
     .from("tiers")
     .select(
-      "name, description, directory_listing, umbrella_account, umbrella_employee_limit",
+      "name, description, directory_listing, umbrella_account, umbrella_employee_limit, perks",
     )
     .eq("id", tierId)
     .maybeSingle();
@@ -66,12 +66,21 @@ export async function updateTierFieldsAction(formData: FormData): Promise<void> 
     umbrellaEmployeeLimit = parsed;
   }
 
+  // Repeated <input name="perks"> rows from the admin form. Trim each
+  // line and drop empties so a leftover blank row doesn't end up as a
+  // rendered bullet on /join.
+  const perks = formData
+    .getAll("perks")
+    .map((v) => String(v).trim())
+    .filter((v) => v.length > 0);
+
   const updates = {
     name,
     description,
     directory_listing: formData.get("directory_listing") != null,
     umbrella_account: umbrellaOn,
     umbrella_employee_limit: umbrellaEmployeeLimit,
+    perks,
   };
 
   const { error } = await supabase.from("tiers").update(updates).eq("id", tierId);
