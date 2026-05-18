@@ -14,7 +14,6 @@ import {
   defaultLandingContent,
   type LandingContent,
   type LandingPillar,
-  type LandingStat,
 } from "@/lib/mppga/admin/landingContent";
 
 function clone(content: LandingContent): LandingContent {
@@ -58,22 +57,6 @@ export function ContentEditor({
     setContent((prev) => ({
       ...prev,
       [section]: { ...prev[section], ...patch },
-    }));
-  }
-
-  function patchStat<K extends keyof LandingStat>(
-    index: number,
-    key: K,
-    value: LandingStat[K],
-  ) {
-    setContent((prev) => ({
-      ...prev,
-      stats: {
-        ...prev.stats,
-        items: prev.stats.items.map((item, i) =>
-          i === index ? { ...item, [key]: value } : item,
-        ),
-      },
     }));
   }
 
@@ -219,55 +202,6 @@ export function ContentEditor({
                 onChange={(v) => patchSection("hero", { photoCaption: v })}
               />
             </Field>
-          </div>
-        </Card>
-
-        <Card
-          title="By the numbers"
-          description="Members, towns, and events this year are pulled live from the database. The fourth stat (nonprofit status) is editable below."
-        >
-          <div className="space-y-6 px-6 py-6">
-            <Field label="Eyebrow">
-              <TextInput
-                value={content.stats.eyebrow}
-                onChange={(v) => patchSection("stats", { eyebrow: v })}
-              />
-            </Field>
-
-            <div className="space-y-5">
-              {content.stats.items.map((stat, index) => (
-                <div
-                  key={index}
-                  className="rounded-md border border-mppga-divider p-4"
-                >
-                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-mppga-teal">
-                    Stat {String(index + 1).padStart(2, "0")}
-                  </p>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_1fr]">
-                    <Field label="Value">
-                      <TextInput
-                        value={stat.value}
-                        onChange={(v) => patchStat(index, "value", v)}
-                      />
-                    </Field>
-                    <Field label="Suffix" helper="Optional. Example: +">
-                      <TextInput
-                        value={stat.suffix}
-                        onChange={(v) => patchStat(index, "suffix", v)}
-                      />
-                    </Field>
-                  </div>
-                  <div className="mt-4">
-                    <Field label="Label">
-                      <TextInput
-                        value={stat.label}
-                        onChange={(v) => patchStat(index, "label", v)}
-                      />
-                    </Field>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </Card>
 

@@ -1,9 +1,3 @@
-export type LandingStat = {
-  value: string;
-  suffix: string;
-  label: string;
-};
-
 export type LandingPillar = {
   title: string;
   body: string;
@@ -17,10 +11,6 @@ export type LandingContent = {
     primaryButtonLabel: string;
     secondaryButtonLabel: string;
     photoCaption: string;
-  };
-  stats: {
-    eyebrow: string;
-    items: LandingStat[];
   };
   whoWeAre: {
     eyebrow: string;
@@ -68,15 +58,6 @@ export const defaultLandingContent: LandingContent = {
     primaryButtonLabel: "Join Now",
     secondaryButtonLabel: "See upcoming events",
     photoCaption: "Photo placeholder · groomer at work",
-  },
-  stats: {
-    eyebrow: "By the numbers",
-    items: [
-      { value: "0", suffix: "", label: "Members" },
-      { value: "0", suffix: "", label: "Towns served" },
-      { value: "0", suffix: "", label: "Events this year" },
-      { value: "501(c)(6)", suffix: "", label: "Nonprofit status" },
-    ],
   },
   whoWeAre: {
     eyebrow: "Who we are",
